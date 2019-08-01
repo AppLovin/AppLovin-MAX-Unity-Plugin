@@ -1,4 +1,4 @@
-# AppLovin MAX SDK
+# AppLovin MAX Unity Plugin
 
 ## Overview
 MAX is AppLovin's in-app header bidding monetization solution. 
