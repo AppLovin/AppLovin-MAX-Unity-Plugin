@@ -29,23 +29,6 @@ public class HomeScreen : MonoBehaviour
             // AppLovin SDK is initialized, configure and start loading ads
             Debug.Log("MAX SDK Initialized");
 
-            if (sdkConfiguration.ConsentDialogState == MaxSdkBase.ConsentDialogState.Applies)
-            {
-                // Show user consent dialog
-            }
-            else if (sdkConfiguration.ConsentDialogState == MaxSdkBase.ConsentDialogState.DoesNotApply)
-            {
-                // No need to show consent dialog, proceed with initialization
-            }
-            else
-            {
-                // Consent dialog state is unknown. Proceed with initialization, but check if the consent
-                // dialog should be shown on the next application initialization
-            }
-
-            MaxSdk.SetHasUserConsent(true);
-            MaxSdk.SetIsAgeRestrictedUser(false);
-
             InitializeInterstitialAds();
             InitializeRewardedAds();
             InitializeBannerAds();
