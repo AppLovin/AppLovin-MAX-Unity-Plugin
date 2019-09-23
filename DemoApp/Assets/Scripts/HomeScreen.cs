@@ -71,45 +71,49 @@ public class HomeScreen : MonoBehaviour
 
     void LoadInterstitial()
     {
-        MaxSdk.LoadInterstitial(InterstitialAdUnitId);
         interstitialStatusText.text = "Loading...";
+        MaxSdk.LoadInterstitial(InterstitialAdUnitId);
     }
 
     void ShowInterstitial()
     {
         if (MaxSdk.IsInterstitialReady(InterstitialAdUnitId))
         {
-            MaxSdk.ShowInterstitial(InterstitialAdUnitId);
             interstitialStatusText.text = "Showing";
+            MaxSdk.ShowInterstitial(InterstitialAdUnitId);
+        }
+        else
+        {
+            interstitialStatusText.text = "Ad not ready";
         }
     }
 
     private void OnInterstitialLoadedEvent(string adUnitId)
     {
         // Interstitial ad is ready to be shown. MaxSdk.IsInterstitialReady(interstitialAdUnitId) will now return 'true'
-        Debug.Log("Interstitial loaded");
         interstitialStatusText.text = "Loaded";
+        Debug.Log("Interstitial loaded");
     }
 
     private void OnInterstitialFailedEvent(string adUnitId, int errorCode)
     {
         // Interstitial ad failed to load. We recommend re-trying in 3 seconds.
-        Invoke("LoadInterstitial", 3);
-        Debug.Log("Interstitial failed to load with error code: " + errorCode);
         interstitialStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
+        Debug.Log("Interstitial failed to load with error code: " + errorCode);
+        Invoke("LoadInterstitial", 3);
     }
 
     private void InterstitialFailedToDisplayEvent(string adUnitId, int errorCode)
     {
-        Debug.Log("Interstitial failed to display with error code: " + errorCode);
         // Interstitial ad failed to display. We recommend loading the next ad
+        Debug.Log("Interstitial failed to display with error code: " + errorCode);
         LoadInterstitial();
     }
 
     private void OnInterstitialDismissedEvent(string adUnitId)
     {
-        Debug.Log("Interstitial dismissed");
         // Interstitial ad is hidden. Pre-load the next ad
+        Debug.Log("Interstitial dismissed");
         LoadInterstitial();
     }
 
@@ -134,38 +138,42 @@ public class HomeScreen : MonoBehaviour
 
     private void LoadRewardedAd()
     {
-        MaxSdk.LoadRewardedAd(RewardedAdUnitId);
         rewardedStatusText.text = "Loading...";
+        MaxSdk.LoadRewardedAd(RewardedAdUnitId);
     }
 
     private void ShowRewardedAd()
     {
         if (MaxSdk.IsRewardedAdReady(RewardedAdUnitId))
         {
-            MaxSdk.ShowRewardedAd(RewardedAdUnitId);
             rewardedStatusText.text = "Showing";
+            MaxSdk.ShowRewardedAd(RewardedAdUnitId);
+        }
+        else
+        {
+            rewardedStatusText.text = "Ad not ready";
         }
     }
 
     private void OnRewardedAdLoadedEvent(string adUnitId)
     {
         // Rewarded ad is ready to be shown. MaxSdk.IsRewardedAdReady(rewardedAdUnitId) will now return 'true'
-        Debug.Log("Rewarded ad loaded");
         rewardedStatusText.text = "Loaded";
+        Debug.Log("Rewarded ad loaded");
     }
 
     private void OnRewardedAdFailedEvent(string adUnitId, int errorCode)
     {
         // Rewarded ad failed to load. We recommend re-trying in 3 seconds.
-        Invoke("LoadRewardedAd", 3);
-        Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
         rewardedStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
+        Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
+        Invoke("LoadRewardedAd", 3);
     }
 
     private void OnRewardedAdFailedToDisplayEvent(string adUnitId, int errorCode)
     {
-        Debug.Log("Rewarded ad failed to display with error code: " + errorCode);
         // Rewarded ad failed to display. We recommend loading the next ad
+        Debug.Log("Rewarded ad failed to display with error code: " + errorCode);
         LoadRewardedAd();
     }
 
@@ -181,8 +189,8 @@ public class HomeScreen : MonoBehaviour
 
     private void OnRewardedAdDismissedEvent(string adUnitId)
     {
-        Debug.Log("Rewarded ad dismissed");
         // Rewarded ad is hidden. Pre-load the next ad
+        Debug.Log("Rewarded ad dismissed");
         LoadRewardedAd();
     }
 
