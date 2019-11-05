@@ -11,7 +11,7 @@ Please check out our [documentation](https://dash.applovin.com/documentation/med
 To get started with the demo apps, follow the instructions below:
 
 1. Clone this project and open the DemoApp project in the Unity Editor.
-2. Download the AppLovin Unity Plugin from our [documentation](https://dash.applovin.com/documentation/mediation/unity/getting-started), open the plugin, and import the files to the DemoApp project.
+2. Import the [AppLovin Unity Plugin](https://dash.applovin.com/documentation/mediation/unity/getting-started) files to the project.
 3. Under `File > Build Settings`, click on the mobile platform of choice and click on `Player Settings`.
 4. Update the iOS bundle identifier and/or Android package name with your own unique identifier(s) associated with the application you will create in the MAX dashboard (or already created, if it is an existing app).
 5. Open the `HomeScreen.cs` file under `DemoApp/Assets/Scripts/`.
