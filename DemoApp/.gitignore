@@ -50,7 +50,7 @@ sysinfo.txt
 
 # Jar resolver and its generated libraries
 Assets/PlayServicesResolver
-Assets/Plugins/Android/
+Assets/Plugins/Android/*[.jar, .aar]
 ProjectSettings/GvhProjectSettings.xml
 ProjectSettings/AndroidResolverDependencies.xml
 
