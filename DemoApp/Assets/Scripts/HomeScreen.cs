@@ -17,6 +17,9 @@ public class HomeScreen : MonoBehaviour
 
     private bool isBannerShowing = false;
 
+    private int interstitialRetryAttempt;
+    private int rewardedRetryAttempt;
+
     void Start()
     {
         showInterstitialButton.onClick.AddListener(ShowInterstitial);
@@ -76,14 +79,22 @@ public class HomeScreen : MonoBehaviour
         // Interstitial ad is ready to be shown. MaxSdk.IsInterstitialReady(interstitialAdUnitId) will now return 'true'
         interstitialStatusText.text = "Loaded";
         Debug.Log("Interstitial loaded");
+        
+        // Reset retry attempt
+        interstitialRetryAttempt = 0;
     }
 
     private void OnInterstitialFailedEvent(string adUnitId, int errorCode)
     {
-        // Interstitial ad failed to load. We recommend re-trying in 3 seconds.
         interstitialStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
         Debug.Log("Interstitial failed to load with error code: " + errorCode);
-        Invoke("LoadInterstitial", 3);
+        
+        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays.
+
+        interstitialRetryAttempt++;
+        double retryDelay = Math.Pow(2, interstitialRetryAttempt);
+        
+        Invoke("LoadInterstitial", (float) retryDelay);
     }
 
     private void InterstitialFailedToDisplayEvent(string adUnitId, int errorCode)
@@ -143,14 +154,22 @@ public class HomeScreen : MonoBehaviour
         // Rewarded ad is ready to be shown. MaxSdk.IsRewardedAdReady(rewardedAdUnitId) will now return 'true'
         rewardedStatusText.text = "Loaded";
         Debug.Log("Rewarded ad loaded");
+        
+        // Reset retry attempt
+        rewardedRetryAttempt = 0;
     }
 
     private void OnRewardedAdFailedEvent(string adUnitId, int errorCode)
     {
-        // Rewarded ad failed to load. We recommend re-trying in 3 seconds.
         rewardedStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
         Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
-        Invoke("LoadRewardedAd", 3);
+        
+        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays.
+
+        rewardedRetryAttempt++;
+        double retryDelay = Math.Pow(2, rewardedRetryAttempt);
+        
+        Invoke("LoadRewardedAd", (float) retryDelay);
     }
 
     private void OnRewardedAdFailedToDisplayEvent(string adUnitId, int errorCode)
