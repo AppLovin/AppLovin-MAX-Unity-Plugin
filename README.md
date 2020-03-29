@@ -19,5 +19,13 @@ To get started with the demo apps, follow the instructions below:
 7. Update the MAX ad unit IDs for the ad formats you would like to test. Each ad format will correspond to a unique MAX ad unit ID you created in the AppLovin dashboard for the bundle id used before.
 8. Under `File > Build Settings`, click on the mobile platform of choice and click `Switch Platform` then `Build` to create a project to test the Demo App.
 
+## Error Codes
+| Code          | Description   |
+| ------------- |:-------------:|
+| -1            | Indicates an unspecified error with one of the mediated network SDKs. |
+| 204           | Indicates that no ads are currently eligible for your device. |
+| -5001         | Indicates that the ad failed to load due to various reasons (such as no networks being able to fill). |
+| -5201         | Indicates an internal state error with the AppLovin MAX SDK. |
+
 ## Support
 We recommend using GitHub to file issues. For feature requests, improvements, questions or any other integration issues using MAX Mediation by AppLovin, please reach out to your account team and copy devsupport@applovin.com.
