@@ -7,15 +7,18 @@ public class HomeScreen : MonoBehaviour
     private const string InterstitialAdUnitId = "ENTER_INTERSTITIAL_AD_UNIT_ID_HERE";
     private const string RewardedAdUnitId = "ENTER_REWARD_AD_UNIT_ID_HERE";
     private const string BannerAdUnitId = "ENTER_BANNER_AD_UNIT_ID_HERE";
+    private const string MRecAdUnitId = "ENTER_MREC_AD_UNIT_ID_HERE";
 
     public Button showInterstitialButton;
     public Button showRewardedButton;
     public Button showBannerButton;
+    public Button showMRecButton;
     public Button mediationDebuggerButton;
     public Text interstitialStatusText;
     public Text rewardedStatusText;
 
-    private bool isBannerShowing = false;
+    private bool isBannerShowing;
+    private bool isMRecShowing;
 
     private int interstitialRetryAttempt;
     private int rewardedRetryAttempt;
@@ -25,16 +28,18 @@ public class HomeScreen : MonoBehaviour
         showInterstitialButton.onClick.AddListener(ShowInterstitial);
         showRewardedButton.onClick.AddListener(ShowRewardedAd);
         showBannerButton.onClick.AddListener(ToggleBannerVisibility);
+        showMRecButton.onClick.AddListener(ToggleMRecVisibility);
         mediationDebuggerButton.onClick.AddListener(MaxSdk.ShowMediationDebugger);
 
-        MaxSdkCallbacks.OnSdkInitializedEvent += (MaxSdkBase.SdkConfiguration sdkConfiguration) =>
+        MaxSdkCallbacks.OnSdkInitializedEvent += sdkConfiguration =>
         {
-            // AppLovin SDK is initialized, configure and start loading ads
+            // AppLovin SDK is initialized, configure and start loading ads.
             Debug.Log("MAX SDK Initialized");
 
             InitializeInterstitialAds();
             InitializeRewardedAds();
             InitializeBannerAds();
+            InitializeMRecAds();
         };
 
         MaxSdk.SetSdkKey(MaxSdkKey);
@@ -208,11 +213,11 @@ public class HomeScreen : MonoBehaviour
 
     private void InitializeBannerAds()
     {
-        // Banners are automatically sized to 320x50 on phones and 728x90 on tablets
-        // You may use the utility method `MaxSdkUtils.isTablet()` to help with view sizing adjustments
-        MaxSdk.CreateBanner(BannerAdUnitId, MaxSdkBase.BannerPosition.BottomCenter);
+        // Banners are automatically sized to 320x50 on phones and 728x90 on tablets.
+        // You may use the utility method `MaxSdkUtils.isTablet()` to help with view sizing adjustments.
+        MaxSdk.CreateBanner(BannerAdUnitId, MaxSdkBase.BannerPosition.TopCenter);
 
-        // Set background or background color for banners to be fully functional
+        // Set background or background color for banners to be fully functional.
         MaxSdk.SetBannerBackgroundColor(BannerAdUnitId, Color.black);
     }
 
@@ -221,15 +226,41 @@ public class HomeScreen : MonoBehaviour
         if (!isBannerShowing)
         {
             MaxSdk.ShowBanner(BannerAdUnitId);
-            isBannerShowing = true;
             showBannerButton.GetComponentInChildren<Text>().text = "Hide Banner";
         }
         else
         {
             MaxSdk.HideBanner(BannerAdUnitId);
-            isBannerShowing = false;
             showBannerButton.GetComponentInChildren<Text>().text = "Show Banner";
         }
+
+        isBannerShowing = !isBannerShowing;
+    }
+
+    #endregion
+
+    #region MREC Ad Methods
+
+    private void InitializeMRecAds()
+    {
+        // MRECs are automatically sized to 300x250.
+        MaxSdk.CreateMRec(MRecAdUnitId, MaxSdkBase.AdViewPosition.BottomCenter);
+    }
+
+    private void ToggleMRecVisibility()
+    {
+        if (!isMRecShowing)
+        {
+            MaxSdk.ShowMRec(MRecAdUnitId);
+            showMRecButton.GetComponentInChildren<Text>().text = "Hide MREC";
+        }
+        else
+        {
+            MaxSdk.HideMRec(MRecAdUnitId);
+            showMRecButton.GetComponentInChildren<Text>().text = "Show MREC";
+        }
+
+        isMRecShowing = !isMRecShowing;
     }
 
     #endregion
