@@ -7,27 +7,32 @@ public class HomeScreen : MonoBehaviour
     private const string MaxSdkKey = "ENTER_MAX_SDK_KEY_HERE";
     private const string InterstitialAdUnitId = "ENTER_INTERSTITIAL_AD_UNIT_ID_HERE";
     private const string RewardedAdUnitId = "ENTER_REWARD_AD_UNIT_ID_HERE";
+    private const string RewardedInterstitialAdUnitId = "ENTER_REWARD_INTER_AD_UNIT_ID_HERE";
     private const string BannerAdUnitId = "ENTER_BANNER_AD_UNIT_ID_HERE";
     private const string MRecAdUnitId = "ENTER_MREC_AD_UNIT_ID_HERE";
 
     public Button showInterstitialButton;
     public Button showRewardedButton;
+    public Button showRewardedInterstitialButton;
     public Button showBannerButton;
     public Button showMRecButton;
     public Button mediationDebuggerButton;
     public Text interstitialStatusText;
     public Text rewardedStatusText;
+    public Text rewardedInterstitialStatusText;
 
     private bool isBannerShowing;
     private bool isMRecShowing;
 
     private int interstitialRetryAttempt;
     private int rewardedRetryAttempt;
+    private int rewardedInterstitialRetryAttempt;
 
     void Start()
     {
         showInterstitialButton.onClick.AddListener(ShowInterstitial);
         showRewardedButton.onClick.AddListener(ShowRewardedAd);
+        showRewardedInterstitialButton.onClick.AddListener(ShowRewardedInterstitialAd);
         showBannerButton.onClick.AddListener(ToggleBannerVisibility);
         showMRecButton.onClick.AddListener(ToggleMRecVisibility);
         mediationDebuggerButton.onClick.AddListener(MaxSdk.ShowMediationDebugger);
@@ -39,6 +44,7 @@ public class HomeScreen : MonoBehaviour
 
             InitializeInterstitialAds();
             InitializeRewardedAds();
+            InitializeRewardedInterstitialAds();
             InitializeBannerAds();
             InitializeMRecAds();
         };
@@ -92,13 +98,12 @@ public class HomeScreen : MonoBehaviour
 
     private void OnInterstitialFailedEvent(string adUnitId, int errorCode)
     {
-        interstitialStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
-        Debug.Log("Interstitial failed to load with error code: " + errorCode);
-        
         // Interstitial ad failed to load. We recommend retrying with exponentially higher delays.
-
         interstitialRetryAttempt++;
         double retryDelay = Math.Pow(2, interstitialRetryAttempt);
+        
+        interstitialStatusText.text = "Load failed: " + errorCode + "\nRetrying in " + retryDelay + "s...";
+        Debug.Log("Interstitial failed to load with error code: " + errorCode);
         
         Invoke("LoadInterstitial", (float) retryDelay);
     }
@@ -167,13 +172,12 @@ public class HomeScreen : MonoBehaviour
 
     private void OnRewardedAdFailedEvent(string adUnitId, int errorCode)
     {
-        rewardedStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
-        Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
-        
         // Rewarded ad failed to load. We recommend retrying with exponentially higher delays.
-
         rewardedRetryAttempt++;
         double retryDelay = Math.Pow(2, rewardedRetryAttempt);
+        
+        rewardedStatusText.text = "Load failed: " + errorCode + "\nRetrying in " + retryDelay + "s...";
+        Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
         
         Invoke("LoadRewardedAd", (float) retryDelay);
     }
@@ -206,6 +210,96 @@ public class HomeScreen : MonoBehaviour
     {
         // Rewarded ad was displayed and user should receive the reward
         Debug.Log("Rewarded ad received reward");
+    }
+
+    #endregion
+    
+    #region Rewarded Interstitial Ad Methods
+
+    private void InitializeRewardedInterstitialAds()
+    {
+        // Attach callbacks
+        MaxSdkCallbacks.OnRewardedInterstitialAdLoadedEvent += OnRewardedInterstitialAdLoadedEvent;
+        MaxSdkCallbacks.OnRewardedInterstitialAdLoadFailedEvent += OnRewardedInterstitialAdFailedEvent;
+        MaxSdkCallbacks.OnRewardedInterstitialAdFailedToDisplayEvent += OnRewardedInterstitialAdFailedToDisplayEvent;
+        MaxSdkCallbacks.OnRewardedInterstitialAdDisplayedEvent += OnRewardedInterstitialAdDisplayedEvent;
+        MaxSdkCallbacks.OnRewardedInterstitialAdClickedEvent += OnRewardedInterstitialAdClickedEvent;
+        MaxSdkCallbacks.OnRewardedInterstitialAdHiddenEvent += OnRewardedInterstitialAdDismissedEvent;
+        MaxSdkCallbacks.OnRewardedInterstitialAdReceivedRewardEvent += OnRewardedInterstitialAdReceivedRewardEvent;
+
+        // Load the first RewardedInterstitialAd
+        LoadRewardedInterstitialAd();
+    }
+
+    private void LoadRewardedInterstitialAd()
+    {
+        rewardedInterstitialStatusText.text = "Loading...";
+        MaxSdk.LoadRewardedInterstitialAd(RewardedInterstitialAdUnitId);
+    }
+
+    private void ShowRewardedInterstitialAd()
+    {
+        if (MaxSdk.IsRewardedInterstitialAdReady(RewardedInterstitialAdUnitId))
+        {
+            rewardedInterstitialStatusText.text = "Showing";
+            MaxSdk.ShowRewardedInterstitialAd(RewardedInterstitialAdUnitId);
+        }
+        else
+        {
+            rewardedInterstitialStatusText.text = "Ad not ready";
+        }
+    }
+
+    private void OnRewardedInterstitialAdLoadedEvent(string adUnitId)
+    {
+        // Rewarded interstitial ad is ready to be shown. MaxSdk.IsRewardedInterstitialAdReady(rewardedInterstitialAdUnitId) will now return 'true'
+        rewardedInterstitialStatusText.text = "Loaded";
+        Debug.Log("Rewarded interstitial ad loaded");
+        
+        // Reset retry attempt
+        rewardedInterstitialRetryAttempt = 0;
+    }
+
+    private void OnRewardedInterstitialAdFailedEvent(string adUnitId, int errorCode)
+    {
+        // Rewarded interstitial ad failed to load. We recommend retrying with exponentially higher delays.
+        rewardedInterstitialRetryAttempt++;
+        double retryDelay = Math.Pow(2, rewardedInterstitialRetryAttempt);
+        
+        rewardedInterstitialStatusText.text = "Load failed: " + errorCode + "\nRetrying in " + retryDelay + "s...";
+        Debug.Log("Rewarded interstitial ad failed to load with error code: " + errorCode);
+        
+        Invoke("LoadRewardedInterstitialAd", (float) retryDelay);
+    }
+
+    private void OnRewardedInterstitialAdFailedToDisplayEvent(string adUnitId, int errorCode)
+    {
+        // Rewarded interstitial ad failed to display. We recommend loading the next ad
+        Debug.Log("Rewarded interstitial ad failed to display with error code: " + errorCode);
+        LoadRewardedInterstitialAd();
+    }
+
+    private void OnRewardedInterstitialAdDisplayedEvent(string adUnitId)
+    {
+        Debug.Log("Rewarded interstitial ad displayed");
+    }
+
+    private void OnRewardedInterstitialAdClickedEvent(string adUnitId)
+    {
+        Debug.Log("Rewarded interstitial ad clicked");
+    }
+
+    private void OnRewardedInterstitialAdDismissedEvent(string adUnitId)
+    {
+        // Rewarded interstitial ad is hidden. Pre-load the next ad
+        Debug.Log("Rewarded interstitial ad dismissed");
+        LoadRewardedInterstitialAd();
+    }
+
+    private void OnRewardedInterstitialAdReceivedRewardEvent(string adUnitId, MaxSdk.Reward reward)
+    {
+        // Rewarded interstitial ad was displayed and user should receive the reward
+        Debug.Log("Rewarded interstitial ad received reward");
     }
 
     #endregion
