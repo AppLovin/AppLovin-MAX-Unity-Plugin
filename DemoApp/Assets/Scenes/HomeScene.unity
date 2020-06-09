@@ -1140,11 +1140,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showInterstitialButton: {fileID: 1034179793}
   showRewardedButton: {fileID: 1665391392}
+  showRewardedInterstitialButton: {fileID: 638423881}
   showBannerButton: {fileID: 846627338}
   showMRecButton: {fileID: 1170807041}
   mediationDebuggerButton: {fileID: 434471907}
   interstitialStatusText: {fileID: 636086476}
   rewardedStatusText: {fileID: 1382241164}
+  rewardedInterstitialStatusText: {fileID: 406167204}
 --- !u!1 &1034179792
 GameObject:
   m_ObjectHideFlags: 0
