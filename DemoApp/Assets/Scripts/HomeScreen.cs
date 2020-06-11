@@ -95,10 +95,10 @@ public class HomeScreen : MonoBehaviour
         interstitialStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
         Debug.Log("Interstitial failed to load with error code: " + errorCode);
         
-        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays.
+        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay.
 
         interstitialRetryAttempt++;
-        double retryDelay = Math.Pow(2, interstitialRetryAttempt);
+        double retryDelay = Math.Pow(2, Math.Min(6, interstitialRetryAttempt));
         
         Invoke("LoadInterstitial", (float) retryDelay);
     }
@@ -170,10 +170,10 @@ public class HomeScreen : MonoBehaviour
         rewardedStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
         Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
         
-        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays.
+        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay.
 
         rewardedRetryAttempt++;
-        double retryDelay = Math.Pow(2, rewardedRetryAttempt);
+        double retryDelay = Math.Pow(2, Math.Min(6, rewardedRetryAttempt));
         
         Invoke("LoadRewardedAd", (float) retryDelay);
     }
