@@ -4,11 +4,11 @@ using UnityEngine.UI;
 
 public class HomeScreen : MonoBehaviour
 {
-    private const string MaxSdkKey = "ENTER_MAX_SDK_KEY_HERE";
-    private const string InterstitialAdUnitId = "ENTER_INTERSTITIAL_AD_UNIT_ID_HERE";
-    private const string RewardedAdUnitId = "ENTER_REWARD_AD_UNIT_ID_HERE";
-    private const string BannerAdUnitId = "ENTER_BANNER_AD_UNIT_ID_HERE";
-    private const string MRecAdUnitId = "ENTER_MREC_AD_UNIT_ID_HERE";
+    private const string MaxSdkKey = "05TMDQ5tZabpXQ45_UTbmEGNUtVAzSTzT6KmWQc5_CuWdzccS4DCITZoL3yIWUG3bbq60QC_d4WF28tUC4gVTF";
+    private const string InterstitialAdUnitId = "669b9232b93315b8";
+    private const string RewardedAdUnitId = "72948f99c2065dfa";
+    private const string BannerAdUnitId = "ee3f36bb0f16e195";
+    private const string MRecAdUnitId = "7d4836a418a8e27d";
 
     public Button showInterstitialButton;
     public Button showRewardedButton;
