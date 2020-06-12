@@ -95,7 +95,7 @@ public class HomeScreen : MonoBehaviour
         interstitialStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
         Debug.Log("Interstitial failed to load with error code: " + errorCode);
         
-        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay.
+        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay (in this case 64 seconds).
 
         interstitialRetryAttempt++;
         double retryDelay = Math.Pow(2, Math.Min(6, interstitialRetryAttempt));
