@@ -170,7 +170,7 @@ public class HomeScreen : MonoBehaviour
         rewardedStatusText.text = "Failed load: " + errorCode + "\nRetrying in 3s...";
         Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
         
-        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay.
+        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay (in this case 64 seconds).
 
         rewardedRetryAttempt++;
         double retryDelay = Math.Pow(2, Math.Min(6, rewardedRetryAttempt));
