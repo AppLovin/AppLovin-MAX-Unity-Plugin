@@ -98,9 +98,9 @@ public class HomeScreen : MonoBehaviour
 
     private void OnInterstitialFailedEvent(string adUnitId, int errorCode)
     {
-        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays.
+        // Interstitial ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay (in this case 64 seconds).
         interstitialRetryAttempt++;
-        double retryDelay = Math.Pow(2, interstitialRetryAttempt);
+        double retryDelay = Math.Pow(2, Math.Min(6, interstitialRetryAttempt));
         
         interstitialStatusText.text = "Load failed: " + errorCode + "\nRetrying in " + retryDelay + "s...";
         Debug.Log("Interstitial failed to load with error code: " + errorCode);
@@ -172,9 +172,9 @@ public class HomeScreen : MonoBehaviour
 
     private void OnRewardedAdFailedEvent(string adUnitId, int errorCode)
     {
-        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays.
+        // Rewarded ad failed to load. We recommend retrying with exponentially higher delays up to a maximum delay (in this case 64 seconds).
         rewardedRetryAttempt++;
-        double retryDelay = Math.Pow(2, rewardedRetryAttempt);
+        double retryDelay = Math.Pow(2, Math.Min(6, rewardedRetryAttempt));
         
         rewardedStatusText.text = "Load failed: " + errorCode + "\nRetrying in " + retryDelay + "s...";
         Debug.Log("Rewarded ad failed to load with error code: " + errorCode);
