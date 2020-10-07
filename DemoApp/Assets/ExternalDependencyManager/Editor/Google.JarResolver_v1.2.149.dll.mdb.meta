@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: da58551d62ae43b897e9a6d354525e28
+labels:
+- gvh
+- gvh_version-1.2.149
+- gvhp_exportpath-ExternalDependencyManager/Editor/Google.JarResolver_v1.2.149.dll.mdb
+- gvhp_targets-editor
+timeCreated: 1538009133
+licenseType: Pro
+DefaultImporter:
+  userData:
+  assetBundleName:
+  assetBundleVariant:

@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: b11a3ed8daba4833b0e2ee364bd66aad
+labels:
+- gvh
+- gvh_version-1.2.149
+- gvhp_exportpath-ExternalDependencyManager/Editor/Google.VersionHandlerImpl_v1.2.149.dll.mdb
+- gvhp_targets-editor
+timeCreated: 1538009133
+licenseType: Pro
+DefaultImporter:
+  userData:
+  assetBundleName:
+  assetBundleVariant:
