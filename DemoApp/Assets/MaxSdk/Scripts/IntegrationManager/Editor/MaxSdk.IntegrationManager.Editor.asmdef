@@ -1,0 +1,10 @@
+{
+    "name": "MaxSdk.Scripts.IntegrationManager.Editor",
+    "references": [
+        "MaxSdk.Scripts"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

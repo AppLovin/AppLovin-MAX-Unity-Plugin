@@ -1,5 +1,6 @@
-# Ignore the Max Unity Plugin in the Test App
-Assets/MaxSdk/
+# Ignore mediated networks in the MAX Unity Plugin
+Assets/MaxSdk/Mediation
+Assets/MaxSdk/Mediation.meta
 
 # Jetbrain Rider Cache
 .idea/
@@ -49,7 +50,6 @@ sysinfo.txt
 *.unitypackage
 
 # Jar resolver and its generated libraries
-Assets/PlayServicesResolver
 Assets/Plugins/Android/*[.jar, .aar]
 ProjectSettings/GvhProjectSettings.xml
 ProjectSettings/AndroidResolverDependencies.xml
