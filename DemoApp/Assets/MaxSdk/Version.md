@@ -1,5 +1,8 @@
 ## Versions
 
+## 3.1.8
+     * Add native vertical banner support.
+     * Update behavior change for method calls to `MaxSdk` before the initialization completes.
 ## 3.1.7
     * Add `MaxSdk.SetAdInfoButtonEnabled()` API to enable the ad info button.
     * Fix an issue where `MaxSdkUtils.ParseColor()` improperly casts `(int)`.

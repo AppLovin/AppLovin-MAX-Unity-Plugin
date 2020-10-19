@@ -15,7 +15,7 @@ public class MaxSdk :
     MaxSdkiOS
 #endif
 {
-    private const string _version = "3.1.7";
+    private const string _version = "3.1.8";
 
     /// <summary>
     /// Returns the current plugin version.

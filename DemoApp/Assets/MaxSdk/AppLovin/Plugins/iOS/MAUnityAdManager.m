@@ -5,7 +5,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"3.1.7"
+#define VERSION @"3.1.8"
 
 #define DEVICE_SPECIFIC_ADVIEW_AD_FORMAT ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? MAAdFormat.leader : MAAdFormat.banner
 
@@ -333,7 +333,7 @@ static NSString *ALSerializeKeyValuePairSeparator;
 {
     NSString *name;
     MAAdFormat *adFormat = ad.format;
-    if ( MAAdFormat.banner == adFormat || MAAdFormat.leader == adFormat || MAAdFormat.mrec == adFormat )
+    if ( [adFormat isAdViewAd] )
     {
         MAAdView *adView = [self retrieveAdViewForAdUnitIdentifier: ad.adUnitIdentifier adFormat: adFormat];
         // An ad is now being shown, enable user interaction.
@@ -936,7 +936,7 @@ static NSString *ALSerializeKeyValuePairSeparator;
              */
             self.safeAreaBackground.hidden = YES;
             
-            adView.transform = CGAffineTransformRotate(CGAffineTransformIdentity, ( 3.0 * M_PI / 2.0 ));
+            adView.transform = CGAffineTransformRotate(CGAffineTransformIdentity, M_PI_2);
             
             CGFloat width;
             // If the publiser has a background color set - set the width to the longest side of the screen, to span the ad across the screen after it is rotated.
