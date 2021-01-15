@@ -2,12 +2,12 @@ fileFormatVersion: 2
 guid: d9df245831da49848183e03f8cdcb44e
 labels:
 - gvh
+- gvh_rename_to_disable
 - gvh_version-1.2.149
 - gvhp_exportpath-ExternalDependencyManager/Editor/Google.UnityPackageManagerResolver_v1.2.149.dll.mdb
 - gvhp_targets-editor
-timeCreated: 1538009133
-licenseType: Pro
 DefaultImporter:
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
