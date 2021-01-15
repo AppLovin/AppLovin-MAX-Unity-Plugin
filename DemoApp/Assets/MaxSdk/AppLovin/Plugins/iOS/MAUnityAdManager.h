@@ -13,20 +13,28 @@ NS_ASSUME_NONNULL_BEGIN
 - (ALSdk *)initializeSdkWithAdUnitIdentifiers:(NSString *)serializedAdUnitIdentifiers metaData:(NSString *)serializedMetaData andCompletionHandler:(ALSdkInitializationCompletionHandler)completionHandler;
 
 - (void)createBannerWithAdUnitIdentifier:(NSString *)adUnitIdentifier atPosition:(NSString *)bannerPosition;
+- (void)createBannerWithAdUnitIdentifier:(NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset;
 - (void)setBannerBackgroundColorForAdUnitIdentifier:(NSString *)adUnitIdentifier hexColorCode:(NSString *)hexColorCode;
 - (void)setBannerPlacement:(nullable NSString *)placement forAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)setBannerExtraParameterForAdUnitIdentifier:(NSString *)adUnitIdentifier key:(NSString *)key value:(nullable NSString *)value;
+- (void)setBannerWidth:(CGFloat)width forAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)updateBannerPosition:(NSString *)bannerPosition forAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)updateBannerPosition:(CGFloat)xOffset y:(CGFloat)yOffset forAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)showBannerWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)destroyBannerWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)hideBannerWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (NSString *)bannerLayoutForAdUnitIdentifier:(NSString *)adUnitIdentifier;
++ (CGFloat)adaptiveBannerHeightForWidth:(CGFloat)width;
 
 - (void)createMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier atPosition:(NSString *)mrecPosition;
+- (void)createMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset;
 - (void)setMRecPlacement:(nullable NSString *)placement forAdUnitIdentifier:(NSString *)adUnitIdentifier;
-- (void)updateMRecPosition:(NSString *)mrecPosition forAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)showMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)destroyMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)hideMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)updateMRecPosition:(NSString *)mrecPosition forAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)updateMRecPosition:(CGFloat)xOffset y:(CGFloat)yOffset forAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (NSString *)mrecLayoutForAdUnitIdentifier:(NSString *)adUnitIdentifier;
 
 - (void)loadInterstitialWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (BOOL)isInterstitialReadyWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
@@ -48,6 +56,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Ad Info
 - (NSString *)adInfoForAdUnitIdentifier:(NSString *)adUnitIdentifier;
+
+// User Service
+- (void)didDismissUserConsentDialog;
 
 /**
  * Creates an instance of @c MAUnityAdManager if needed and returns the singleton instance.

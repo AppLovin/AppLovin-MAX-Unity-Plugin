@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 public abstract class MaxSdkBase
 {
+    // Shared Properties
+    protected static readonly MaxUserSegment SharedUserSegment = new MaxUserSegment();
+
     /// <summary>
     /// This enum represents whether or not the consent dialog should be shown for this user.
     /// The state where no such determination could be made is represented by <see cref="ConsentDialogState.Unknown"/>.
@@ -105,7 +108,7 @@ public abstract class MaxSdkBase
     {
         if (string.IsNullOrEmpty(adUnitIdentifier))
         {
-            Debug.LogError("[AppLovin MAX] No MAX Ads Ad Unit ID specified for: " + debugPurpose);
+            MaxSdkLogger.UserError("No MAX Ads Ad Unit ID specified for: " + debugPurpose);
         }
     }
 
@@ -117,8 +120,7 @@ public abstract class MaxSdkBase
             .GetComponent<MaxSdkCallbacks>(); // Its Awake() method sets Instance.
         if (MaxSdkCallbacks.Instance != mgr)
         {
-            Debug.LogWarning("[AppLovin MAX] It looks like you have the " + type.Name +
-                             " on a GameObject in your scene. Please remove the script from your scene.");
+            MaxSdkLogger.UserWarning("It looks like you have the " + type.Name + " on a GameObject in your scene. Please remove the script from your scene.");
         }
     }
 
@@ -132,6 +134,35 @@ public abstract class MaxSdkBase
         metaData.Add("UnityVersion", Application.unityVersion);
 
         return MaxSdkUtils.DictToPropsString(metaData);
+    }
+
+    /// <summary>
+    /// Parses the prop string provided to a <see cref="Rect"/>.
+    /// </summary>
+    /// <param name="rectPropString">A prop string representing a Rect</param>
+    /// <returns>A <see cref="Rect"/> the prop string represents.</returns>
+    protected static Rect GetRectFromString(string rectPropString)
+    {
+        var rectDict = MaxSdkUtils.PropsStringToDict(rectPropString);
+        float originX;
+        float originY;
+        float width;
+        float height;
+
+        string output;
+        rectDict.TryGetValue("origin_x", out output);
+        float.TryParse(output, out originX);
+
+        rectDict.TryGetValue("origin_y", out output);
+        float.TryParse(output, out originY);
+
+        rectDict.TryGetValue("width", out output);
+        float.TryParse(output, out width);
+
+        rectDict.TryGetValue("height", out output);
+        float.TryParse(output, out height);
+
+        return new Rect(originX, originY, width, height);
     }
 }
 

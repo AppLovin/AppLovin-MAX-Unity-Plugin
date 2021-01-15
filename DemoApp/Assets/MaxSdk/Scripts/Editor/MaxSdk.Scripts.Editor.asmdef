@@ -1,6 +1,7 @@
 {
     "name": "MaxSdk.Scripts.Editor",
     "references": [
+        "MaxSdk.Scripts",
         "MaxSdk.Scripts.IntegrationManager.Editor"
     ],
     "includePlatforms": [

@@ -51,7 +51,7 @@ namespace AppLovinMax
             }
             catch (Exception exception)
             {
-                Debug.LogError("Failed to enable AndroidX and Jetifier. gradle.properties file write failed.");
+                MaxSdkLogger.UserError("Failed to enable AndroidX and Jetifier. gradle.properties file write failed.");
                 Console.WriteLine(exception);
             }
         }

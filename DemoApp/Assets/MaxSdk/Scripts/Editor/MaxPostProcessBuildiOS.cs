@@ -8,6 +8,9 @@
 
 #if UNITY_IOS || UNITY_IPHONE
 
+#if UNITY_2019_3_OR_NEWER
+using UnityEditor.iOS.Xcode.Extensions;
+#endif
 using UnityEngine.Networking;
 using System;
 using System.Linq;
@@ -35,10 +38,53 @@ namespace AppLovinMax
             "Fyber",
             "Google",
             "GoogleAdManager",
+            "HyprMX",
             "InMobi",
             "IronSource",
             "Smaato"
         };
+
+        private static readonly List<string> DynamicLibraryPathsToEmbed = new List<string>
+        {
+            Path.Combine("Pods/", "HyprMX/HyprMX.xcframework")
+        };
+
+        [PostProcessBuildAttribute(int.MaxValue)]
+        public static void MaxPostProcessEmbedDynamicLibraries(BuildTarget buildTarget, string path)
+        {
+            var dynamicLibraryPathsPresentInProject = DynamicLibraryPathsToEmbed.Where(dynamicLibraryPath => Directory.Exists(Path.Combine(path, dynamicLibraryPath))).ToList();
+            if (dynamicLibraryPathsPresentInProject.Count <= 0) return;
+
+            var projectPath = PBXProject.GetPBXProjectPath(path);
+            var project = new PBXProject();
+            project.ReadFromFile(projectPath);
+
+#if UNITY_2019_3_OR_NEWER
+            var targetGuid = project.GetUnityMainTargetGuid();
+            foreach (var dynamicLibraryPath in dynamicLibraryPathsPresentInProject)
+            {
+                var fileGuid = project.AddFile(dynamicLibraryPath, dynamicLibraryPath);
+                project.AddFileToEmbedFrameworks(targetGuid, fileGuid);
+            }
+#else
+            var targetGuid = project.TargetGuidByName("Unity-iPhone");
+            string runpathSearchPaths;
+#if UNITY_2018_2_OR_NEWER
+            runpathSearchPaths = project.GetBuildPropertyForAnyConfig(targetGuid, "LD_RUNPATH_SEARCH_PATHS");
+#else
+            runpathSearchPaths = "$(inherited)";          
+#endif
+            runpathSearchPaths += string.IsNullOrEmpty(runpathSearchPaths) ? "" : " ";
+
+            // Check if runtime search paths already contains the required search paths for dynamic libraries.
+            if (runpathSearchPaths.Contains("@executable_path/Frameworks")) return;
+
+            runpathSearchPaths += "@executable_path/Frameworks";
+            project.SetBuildProperty(targetGuid, "LD_RUNPATH_SEARCH_PATHS", runpathSearchPaths);
+#endif
+
+            project.WriteToFile(projectPath);
+        }
 
         [PostProcessBuildAttribute(int.MaxValue)]
         public static void MaxPostProcessPlist(BuildTarget buildTarget, string path)
@@ -106,7 +152,8 @@ namespace AppLovinMax
             //        </dict>
             //    </array>
             //
-            var skAdNetworkItems = plist.root["SKAdNetworkItems"];
+            PlistElement skAdNetworkItems;
+            plist.root.values.TryGetValue("SKAdNetworkItems", out skAdNetworkItems);
             var existingSkAdNetworkIds = new HashSet<string>();
             // Check if SKAdNetworkItems array is already in the Plist document and collect all the IDs that are already present.
             if (skAdNetworkItems != null && skAdNetworkItems.GetType() == typeof(PlistElementArray))
@@ -114,7 +161,8 @@ namespace AppLovinMax
                 var plistElementDictionaries = skAdNetworkItems.AsArray().values.Where(plistElement => plistElement.GetType() == typeof(PlistElementDict));
                 foreach (var plistElement in plistElementDictionaries)
                 {
-                    var existingId = plistElement.AsDict()["SKAdNetworkIdentifier"];
+                    PlistElement existingId;
+                    plistElement.AsDict().values.TryGetValue("SKAdNetworkIdentifier", out existingId);
                     if (existingId == null || existingId.GetType() != typeof(PlistElementString) || string.IsNullOrEmpty(existingId.AsString())) continue;
 
                     existingSkAdNetworkIds.Add(existingId.AsString());
@@ -145,7 +193,7 @@ namespace AppLovinMax
             if (Directory.Exists(maxMediationDirectory))
             {
                 var mediationNetworkDirectories = Directory.GetDirectories(maxMediationDirectory);
-                var installedNetworks = mediationNetworkDirectories.Select(Path.GetFileName).ToList();
+                var installedNetworks = mediationNetworkDirectories.Select(Path.GetFileName).ToArray();
                 var adNetworks = string.Join(",", installedNetworks);
                 if (!string.IsNullOrEmpty(adNetworks))
                 {
@@ -169,7 +217,7 @@ namespace AppLovinMax
             if (unityWebRequest.isError)
 #endif
             {
-                Debug.LogError("Failed to retrieve SKAdNetwork IDs with error: " + unityWebRequest.error);
+                MaxSdkLogger.UserError("Failed to retrieve SKAdNetwork IDs with error: " + unityWebRequest.error);
                 return new SkAdNetworkData();
             }
 
@@ -179,7 +227,7 @@ namespace AppLovinMax
             }
             catch (Exception exception)
             {
-                Debug.LogError("Failed to parse data '" + unityWebRequest.downloadHandler.text + "' with exception: " + exception);
+                MaxSdkLogger.UserError("Failed to parse data '" + unityWebRequest.downloadHandler.text + "' with exception: " + exception);
                 return new SkAdNetworkData();
             }
         }
@@ -190,11 +238,13 @@ namespace AppLovinMax
             if (!projectHasAtsRequiringNetworks) return;
 
             var root = plist.root.values;
-            var atsRoot = root["NSAppTransportSecurity"];
+            PlistElement atsRoot;
+            root.TryGetValue("NSAppTransportSecurity", out atsRoot);
+
             if (atsRoot == null || atsRoot.GetType() != typeof(PlistElementDict))
             {
                 // Add the missing App Transport Security settings for publishers if needed. 
-                Debug.Log("[AppLovin MAX] Adding App Transport Security settings...");
+                MaxSdkLogger.UserDebug("Adding App Transport Security settings...");
                 atsRoot = plist.root.CreateDict("NSAppTransportSecurity");
                 atsRoot.AsDict().SetBoolean("NSAllowsArbitraryLoads", true);
             }
@@ -203,7 +253,7 @@ namespace AppLovinMax
             // Check if both NSAllowsArbitraryLoads and NSAllowsArbitraryLoadsInWebContent are present and remove NSAllowsArbitraryLoadsInWebContent if both are present.
             if (atsRootDict.ContainsKey("NSAllowsArbitraryLoads") && atsRootDict.ContainsKey("NSAllowsArbitraryLoadsInWebContent"))
             {
-                Debug.Log("[AppLovin MAX] Removing NSAllowsArbitraryLoadsInWebContent");
+                MaxSdkLogger.UserDebug("Removing NSAllowsArbitraryLoadsInWebContent");
                 atsRootDict.Remove("NSAllowsArbitraryLoadsInWebContent");
             }
         }

@@ -37,7 +37,7 @@ public class AppLovinPostProcessGradleProject : AppLovinProcessGradleBuildFile, 
 
         if (!File.Exists(applicationGradleBuildFilePath))
         {
-            Debug.LogWarning("Couldn't find build.gradle file. Failed to add AppLovin Quality Service plugin to the gradle project.");
+            MaxSdkLogger.UserWarning("Couldn't find build.gradle file. Failed to add AppLovin Quality Service plugin to the gradle project.");
             return;
         }
 

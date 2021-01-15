@@ -19,6 +19,11 @@ public class MaxSdkiOS : MaxSdkBase
         get { return MaxVariableServiceiOS.Instance; }
     }
 
+    public static MaxUserServiceiOS UserService
+    {
+        get { return MaxUserServiceiOS.Instance; }
+    }
+
     #region Initialization
 
     [DllImport("__Internal")]
@@ -36,7 +41,7 @@ public class MaxSdkiOS : MaxSdkBase
 
     [DllImport("__Internal")]
     private static extern void _MaxInitializeSdk(string serializedAdUnitIds, string serializedMetaData);
-    
+
     /// <summary>
     /// Initialize the default instance of AppLovin SDK.
     ///
@@ -45,7 +50,7 @@ public class MaxSdkiOS : MaxSdkBase
     /// OPTIONAL: Set the MAX ad unit ids to be used for this instance of the SDK. 3rd-party SDKs will be initialized with the credentials configured for these ad unit ids.
     /// This should only be used if you have different sets of ad unit ids / credentials for the same package name.</param>
     /// </summary>
-    public static void InitializeSdk(String[] adUnitIds=null)
+    public static void InitializeSdk(String[] adUnitIds = null)
     {
         String serializedAdUnitIds = (adUnitIds != null) ? String.Join(",", adUnitIds) : "";
         _MaxInitializeSdk(serializedAdUnitIds, GenerateMetaData());
@@ -65,7 +70,7 @@ public class MaxSdkiOS : MaxSdkBase
 
     #endregion
 
-    #region User Identifier
+    #region User Info
 
     [DllImport("__Internal")]
     private static extern void _MaxSetUserId(string userId);
@@ -81,6 +86,14 @@ public class MaxSdkiOS : MaxSdkBase
     public static void SetUserId(string userId)
     {
         _MaxSetUserId(userId);
+    }
+
+    /// <summary>
+    /// User segments allow us to serve ads using custom-defined rules based on which segment the user is in. For now, we only support a custom string 32 alphanumeric characters or less as the user segment.
+    /// </summary>
+    public static MaxUserSegment UserSegment
+    {
+        get { return SharedUserSegment; }
     }
 
     #endregion
@@ -134,8 +147,8 @@ public class MaxSdkiOS : MaxSdkBase
     {
         if (!IsInitialized())
         {
-            Debug.LogWarning(
-                "[AppLovin MAX] MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
+            MaxSdkLogger.UserWarning(
+                "MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
         }
 
         return (ConsentDialogState) _MaxConsentDialogState();
@@ -229,6 +242,24 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
+    private static extern void _MaxCreateBannerXY(string adUnitIdentifier, float x, float y);
+
+    /// <summary>
+    /// Create a new banner with a custom position.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the banner to create</param>
+    /// <param name="x">The X coordinate (horizontal position) of the banner relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the banner relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetBannerLayout">
+    /// The banner is placed within the safe area of the screen. You can use this to get the absolute position of the banner on screen.
+    /// </seealso>
+    public static void CreateBanner(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "create banner");
+        _MaxCreateBannerXY(adUnitIdentifier, x, y);
+    }
+
+    [DllImport("__Internal")]
     private static extern void _MaxSetBannerPlacement(string adUnitIdentifier, string placement);
 
     /// <summary>
@@ -254,6 +285,38 @@ public class MaxSdkiOS : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "update banner position");
         _MaxUpdateBannerPosition(adUnitIdentifier, bannerPosition.ToSnakeCaseString());
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxUpdateBannerPositionXY(string adUnitIdentifier, float x, float y);
+
+    /// <summary>
+    /// Updates the position of the banner to the new coordinates provided.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the banner for which to update the position</param>
+    /// <param name="x">The X coordinate (horizontal position) of the banner relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the banner relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetBannerLayout">
+    /// The banner is placed within the safe area of the screen. You can use this to get the absolute position of the banner on screen.
+    /// </seealso>
+    public static void UpdateBannerPosition(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "update banner position");
+        _MaxUpdateBannerPositionXY(adUnitIdentifier, x, y);
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxSetBannerWidth(string adUnitIdentifier, float width);
+
+    /// <summary>
+    /// Overrides the width of the banner in points.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the banner for which to override the width for</param>
+    /// <param name="width">The desired width of the banner in points</param>
+    public static void SetBannerWidth(string adUnitIdentifier, float width)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "set banner width");
+        _MaxSetBannerWidth(adUnitIdentifier, width);
     }
 
     [DllImport("__Internal")]
@@ -324,6 +387,22 @@ public class MaxSdkiOS : MaxSdkBase
         _MaxSetBannerExtraParameter(adUnitIdentifier, key, value);
     }
 
+    [DllImport("__Internal")]
+    private static extern string _MaxGetBannerLayout(string adUnitIdentifier);
+
+    /// <summary>
+    /// The banner position on the screen. When setting the banner position via <see cref="CreateBanner(string, float, float)"/> or <see cref="UpdateBannerPosition(string, float, float)"/>,
+    /// the banner is placed within the safe area of the screen. This returns the absolute position of the banner on screen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the banner for which to get the position on screen.</param>
+    /// <returns>A <see cref="Rect"/> representing the banner position on screen.</returns>
+    public static Rect GetBannerLayout(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "get banner layout");
+        var positionRect = _MaxGetBannerLayout(adUnitIdentifier);
+        return GetRectFromString(positionRect);
+    }
+
     #endregion
 
     #region MRECs
@@ -340,6 +419,24 @@ public class MaxSdkiOS : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
         _MaxCreateMRec(adUnitIdentifier, mrecPosition.ToSnakeCaseString());
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxCreateMRecXY(string adUnitIdentifier, float x, float y);
+
+    /// <summary>
+    /// Create a new MREC with a custom position.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to create</param>
+    /// <param name="x">The X coordinate (horizontal position) of the MREC relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the MREC relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetMRecLayout">
+    /// The MREC is placed within the safe area of the screen. You can use this to get the absolute position Rect of the MREC on screen.
+    /// </seealso>
+    public static void CreateMRec(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
+        _MaxCreateMRecXY(adUnitIdentifier, x, y);
     }
 
     [DllImport("__Internal")]
@@ -368,6 +465,24 @@ public class MaxSdkiOS : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "update MREC position");
         _MaxUpdateMRecPosition(adUnitIdentifier, mrecPosition.ToSnakeCaseString());
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxUpdateMRecPositionXY(string adUnitIdentifier, float x, float y);
+
+    /// <summary>
+    /// Updates the position of the MREC to the new coordinates provided.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the MREC for which to update the position</param>
+    /// <param name="x">The X coordinate (horizontal position) of the MREC relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the MREC relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetMRecLayout">
+    /// The MREC is placed within the safe area of the screen. You can use this to get the absolute position Rect of the MREC on screen.
+    /// </seealso>
+    public static void UpdateMRecPosition(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "update MREC position");
+        _MaxUpdateMRecPositionXY(adUnitIdentifier, x, y);
     }
 
     [DllImport("__Internal")]
@@ -407,6 +522,22 @@ public class MaxSdkiOS : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "hide MREC");
         _MaxHideMRec(adUnitIdentifier);
+    }
+
+    [DllImport("__Internal")]
+    private static extern string _MaxGetMRecLayout(string adUnitIdentifier);
+
+    /// <summary>
+    /// The MREC position on the screen. When setting the banner position via <see cref="CreateMRec(string, float, float)"/> or <see cref="UpdateMRecPosition(string, float, float)"/>,
+    /// the banner is placed within the safe area of the screen. This returns the absolute position of the MREC on screen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC for which to get the position on screen.</param>
+    /// <returns>A <see cref="Rect"/> representing the banner position on screen.</returns>
+    public static Rect GetMRecLayout(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "get MREC layout");
+        var positionRect = _MaxGetMRecLayout(adUnitIdentifier);
+        return GetRectFromString(positionRect);
     }
 
     #endregion
@@ -467,7 +598,7 @@ public class MaxSdkiOS : MaxSdkBase
         }
         else
         {
-            Debug.LogWarning("[AppLovin MAX] Not showing MAX Ads interstitial: ad not ready");
+            MaxSdkLogger.UserWarning("Not showing MAX Ads interstitial: ad not ready");
         }
     }
 
@@ -545,7 +676,7 @@ public class MaxSdkiOS : MaxSdkBase
         }
         else
         {
-            Debug.LogWarning("[AppLovin MAX] Not showing MAX Ads rewarded ad: ad not ready");
+            MaxSdkLogger.UserWarning("Not showing MAX Ads rewarded ad: ad not ready");
         }
     }
 
@@ -565,7 +696,7 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     #endregion
-    
+
     #region Rewarded Interstitials
 
     [DllImport("__Internal")]
@@ -623,7 +754,7 @@ public class MaxSdkiOS : MaxSdkBase
         }
         else
         {
-            Debug.LogWarning("[AppLovin MAX] Not showing MAX Ads rewarded interstitial ad: ad not ready");
+            MaxSdkLogger.UserWarning("Not showing MAX Ads rewarded interstitial ad: ad not ready");
         }
     }
 
@@ -704,6 +835,18 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
+    private static extern bool _MaxIsVerboseLoggingEnabled();
+
+    /// <summary>
+    ///  Whether or not verbose logging is enabled.
+    /// </summary>
+    /// <returns><c>true</c> if verbose logging is enabled.</returns>
+    public static bool IsVerboseLoggingEnabled()
+    {
+        return _MaxIsVerboseLoggingEnabled();
+    }
+
+    [DllImport("__Internal")]
     private static extern bool _MaxSetAdInfoButtonEnabled(bool enabled);
 
     /// <summary>
@@ -726,6 +869,30 @@ public class MaxSdkiOS : MaxSdkBase
     public static void SetTestDeviceAdvertisingIdentifiers(string[] advertisingIdentifiers)
     {
         _MaxSetTestDeviceAdvertisingIdentifiers(advertisingIdentifiers, advertisingIdentifiers.Length);
+    }
+
+    [DllImport("__Internal")]
+    private static extern bool _MaxSetExceptionHandlerEnabled(bool enabled);
+
+    /// <summary>
+    /// Whether or not the native AppLovin SDKs listen to exceptions. Defaults to <c>true</c>.
+    /// </summary>
+    /// <param name="enabled"><c>true</c> if the native AppLovin SDKs should not listen to exceptions.</param>
+    public static void SetExceptionHandlerEnabled(bool enabled)
+    {
+        _MaxSetExceptionHandlerEnabled(enabled);
+    }
+
+    #endregion
+
+    #region Private
+
+    [DllImport("__Internal")]
+    private static extern bool _MaxSetUserSegmentField(string name, string value);
+
+    internal static void SetUserSegmentField(string name, string value)
+    {
+        _MaxSetUserSegmentField(name, value);
     }
 
     #endregion

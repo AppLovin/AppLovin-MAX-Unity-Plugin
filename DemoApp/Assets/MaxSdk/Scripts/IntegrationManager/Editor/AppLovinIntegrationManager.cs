@@ -14,6 +14,7 @@ using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
+using VersionComparisonResult = MaxSdkUtils.VersionComparisonResult;
 
 [Serializable]
 public class PluginData
@@ -50,7 +51,8 @@ public class Network
     public string[] PluginFilePaths;
     public Versions LatestVersions;
     [NonSerialized] public Versions CurrentVersions;
-    [NonSerialized] public int CurrentToLatestVersionComparison = -1;
+    [NonSerialized] public VersionComparisonResult CurrentToLatestVersionComparisonResult = VersionComparisonResult.Lesser;
+    [NonSerialized] public bool RequiresUpdate;
 }
 
 /// <summary>
@@ -184,7 +186,7 @@ public class AppLovinIntegrationManager
         {
             if (!IsImportingNetwork(packageName)) return;
 
-            Debug.Log("Package import cancelled.");
+            MaxSdkLogger.UserDebug("Package import cancelled.");
             importingNetwork = null;
         };
 
@@ -192,7 +194,7 @@ public class AppLovinIntegrationManager
         {
             if (!IsImportingNetwork(packageName)) return;
 
-            Debug.LogError(errorMessage);
+            MaxSdkLogger.UserError(errorMessage);
             importingNetwork = null;
         };
     }
@@ -265,17 +267,56 @@ public class AppLovinIntegrationManager
 
         network.CurrentVersions = currentVersions;
 
-        // If adapter is indeed installed, compare the current (installed) and the latest (from db) versions, so that we can determine if the publisher is on an older, current or a newer version of the adapter.
-        // If the publisher is on a newer version of the adapter than the db version, that means they are on a beta version.
-        if (!string.IsNullOrEmpty(currentVersions.Unity))
-        {
-            network.CurrentToLatestVersionComparison = MaxSdkUtils.CompareUnityMediationVersions(currentVersions.Unity, network.LatestVersions.Unity);
-        }
-
-        // If AppLovin mediation plugin, get the version from MaxSdk.
+        // If AppLovin mediation plugin, get the version from MaxSdk and the latest and current version comparison.
         if (network.Name.Equals("APPLOVIN_NETWORK"))
         {
             network.CurrentVersions.Unity = MaxSdk.Version;
+
+            var unityVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Unity, network.LatestVersions.Unity);
+            var androidVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Android, network.LatestVersions.Android);
+            var iosVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Ios, network.LatestVersions.Ios);
+
+            // Overall version is same if all the current and latest (from db) versions are same.
+            if (unityVersionComparison == VersionComparisonResult.Equal &&
+                androidVersionComparison == VersionComparisonResult.Equal &&
+                iosVersionComparison == VersionComparisonResult.Equal)
+            {
+                network.CurrentToLatestVersionComparisonResult = VersionComparisonResult.Equal;
+            }
+            // One of the installed versions is newer than the latest versions which means that the publisher is on a beta version.
+            else if (unityVersionComparison == VersionComparisonResult.Greater ||
+                     androidVersionComparison == VersionComparisonResult.Greater ||
+                     iosVersionComparison == VersionComparisonResult.Greater)
+            {
+                network.CurrentToLatestVersionComparisonResult = VersionComparisonResult.Greater;
+            }
+            // We have a new version available if all Android, iOS and Unity has a newer version available in db.
+            else
+            {
+                network.CurrentToLatestVersionComparisonResult = VersionComparisonResult.Lesser;
+            }
+        }
+        // For all other mediation adapters, get the version comparison using their Unity versions.
+        else
+        {
+            // If adapter is indeed installed, compare the current (installed) and the latest (from db) versions, so that we can determine if the publisher is on an older, current or a newer version of the adapter.
+            // If the publisher is on a newer version of the adapter than the db version, that means they are on a beta version.
+            if (!string.IsNullOrEmpty(currentVersions.Unity))
+            {
+                network.CurrentToLatestVersionComparisonResult = MaxSdkUtils.CompareUnityMediationVersions(currentVersions.Unity, network.LatestVersions.Unity);
+            }
+
+            if (!string.IsNullOrEmpty(network.CurrentVersions.Unity) && AppLovinAutoUpdater.MinAdapterVersions.ContainsKey(network.Name))
+            {
+                var comparisonResult = MaxSdkUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, AppLovinAutoUpdater.MinAdapterVersions[network.Name]);
+                // Requires update if current version is lower than the min required version.
+                network.RequiresUpdate = comparisonResult < 0;
+            }
+            else
+            {
+                // Reset value so that the Integration manager can hide the alert icon once adapter is updated.
+                network.RequiresUpdate = false;
+            }
         }
     }
 
@@ -317,7 +358,7 @@ public class AppLovinIntegrationManager
         if (webRequest.isError)
 #endif
         {
-            Debug.LogError(webRequest.error);
+            MaxSdkLogger.UserError(webRequest.error);
         }
         else
         {
@@ -350,7 +391,7 @@ public class AppLovinIntegrationManager
             AppLovinIntegrationManagerWindow.ShowManager();
         }
 
-        Debug.LogError("[AppLovin MAX] " + message);
+        MaxSdkLogger.UserError(message);
     }
 
     #region Utility Methods

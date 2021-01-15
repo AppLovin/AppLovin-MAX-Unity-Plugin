@@ -58,7 +58,7 @@ public abstract class AppLovinProcessGradleBuildFile
         var sdkKey = AppLovinSettings.Instance.SdkKey;
         if (string.IsNullOrEmpty(sdkKey))
         {
-            Debug.LogError("Failed to install AppLovin Quality Service plugin. SDK Key is empty. Please enter the AppLovin SDK Key in the Integration Manager.");
+            MaxSdkLogger.UserError("Failed to install AppLovin Quality Service plugin. SDK Key is empty. Please enter the AppLovin SDK Key in the Integration Manager.");
             return;
         }
 
@@ -67,7 +67,7 @@ public abstract class AppLovinProcessGradleBuildFile
         var apiKey = qualityServiceData.api_key;
         if (string.IsNullOrEmpty(apiKey))
         {
-            Debug.LogError("Failed to install AppLovin Quality Service plugin. API Key is empty.");
+            MaxSdkLogger.UserError("Failed to install AppLovin Quality Service plugin. API Key is empty.");
             return;
         }
 
@@ -92,7 +92,7 @@ public abstract class AppLovinProcessGradleBuildFile
         }
         catch (Exception exception)
         {
-            Debug.LogError("Failed to install AppLovin Quality Service plugin. Gradle file write failed.");
+            MaxSdkLogger.UserError("Failed to install AppLovin Quality Service plugin. Gradle file write failed.");
             Console.WriteLine(exception);
         }
     }
@@ -117,7 +117,7 @@ public abstract class AppLovinProcessGradleBuildFile
         }
         catch (Exception exception)
         {
-            Debug.LogError("Failed to install AppLovin Quality Service plugin. Root Gradle file write failed.");
+            MaxSdkLogger.UserError("Failed to install AppLovin Quality Service plugin. Root Gradle file write failed.");
             Console.WriteLine(exception);
             return false;
         }
@@ -141,7 +141,7 @@ public abstract class AppLovinProcessGradleBuildFile
         }
         catch (Exception exception)
         {
-            Debug.LogError("Failed to remove AppLovin Quality Service Plugin from mainTemplate.gradle. Please remove the Quality Service plugin from the mainTemplate.gradle manually.");
+            MaxSdkLogger.UserError("Failed to remove AppLovin Quality Service Plugin from mainTemplate.gradle. Please remove the Quality Service plugin from the mainTemplate.gradle manually.");
             Console.WriteLine(exception);
         }
     }
@@ -176,7 +176,7 @@ public abstract class AppLovinProcessGradleBuildFile
         if (webRequest.isError)
 #endif
         {
-            Debug.LogError("Failed to retrieve API Key for SDK Key: " + sdkKey + "with error: " + unityWebRequest.error);
+            MaxSdkLogger.UserError("Failed to retrieve API Key for SDK Key: " + sdkKey + "with error: " + unityWebRequest.error);
             return new AppLovinQualityServiceData();
         }
 
@@ -186,7 +186,7 @@ public abstract class AppLovinProcessGradleBuildFile
         }
         catch (Exception exception)
         {
-            Debug.LogError("Failed to parse API Key." + exception);
+            MaxSdkLogger.UserError("Failed to parse API Key." + exception);
             return new AppLovinQualityServiceData();
         }
     }
@@ -385,7 +385,7 @@ public abstract class AppLovinProcessGradleBuildFile
 
             if ((addBuildScriptLines && (!qualityServiceRepositoryAdded || !qualityServiceDependencyClassPathAdded)) || (addPlugin && !qualityServicePluginAdded))
             {
-                Debug.LogError("Failed to add AppLovin Quality Service plugin. Quality Service Plugin Added?: " + qualityServicePluginAdded + ", Quality Service Repo added?: " + qualityServiceRepositoryAdded + ", Quality Service dependency added?: " + qualityServiceDependencyClassPathAdded);
+                MaxSdkLogger.UserError("Failed to add AppLovin Quality Service plugin. Quality Service Plugin Added?: " + qualityServicePluginAdded + ", Quality Service Repo added?: " + qualityServiceRepositoryAdded + ", Quality Service dependency added?: " + qualityServiceDependencyClassPathAdded);
                 return null;
             }
         }

@@ -38,7 +38,7 @@ public class AppLovinDownloadHandler : DownloadHandlerScript
         }
         catch (Exception exception)
         {
-            Debug.LogError(string.Format("Failed to create file at {0}\n{1}", path, exception.Message));
+            MaxSdkLogger.UserError(string.Format("Failed to create file at {0}\n{1}", path, exception.Message));
         }
     }
 
@@ -58,7 +58,7 @@ public class AppLovinDownloadHandler : DownloadHandlerScript
         {
             fileStream.Close();
             fileStream = null;
-            Debug.LogError(string.Format("Failed to download file{0}", exception.Message));
+            MaxSdkLogger.UserError(string.Format("Failed to download file{0}", exception.Message));
         }
 
         return true;

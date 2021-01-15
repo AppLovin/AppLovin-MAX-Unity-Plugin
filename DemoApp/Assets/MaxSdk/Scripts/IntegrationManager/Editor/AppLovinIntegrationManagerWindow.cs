@@ -10,6 +10,7 @@ using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using VersionComparisonResult = MaxSdkUtils.VersionComparisonResult;
 
 public class AppLovinIntegrationManagerWindow : EditorWindow
 {
@@ -19,12 +20,13 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
     private const string documentationAdaptersLink = "https://dash.applovin.com/documentation/mediation/unity/mediation-adapters";
     private const string documentationNote = "Please ensure that integration instructions (e.g. permissions, ATS settings, etc) specific to each network are implemented as well. Click the link below for more info:";
     private static readonly string uninstallIconPath = Path.Combine("Assets", "MaxSdk/Resources/Images/uninstall_icon.png");
+    private static readonly string alertIconPath = Path.Combine("Assets", "MaxSdk/Resources/Images/alert_icon.png");
 
     private const string qualityServiceRequiresGradleBuildErrorMsg = "AppLovin Quality Service integration via AppLovin Integration Manager requires Custom Gradle Template enabled or Unity 2018.2 or higher.\n" +
                                                                      "If you would like to continue using your existing setup, please add Quality Service Plugin to your build.gradle manually.";
 
     private Vector2 scrollPosition;
-    private static readonly Vector2 windowMinSize = new Vector2(720, 750);
+    private static readonly Vector2 windowMinSize = new Vector2(750, 750);
     private const float actionFieldWidth = 60f;
     private const float networkFieldMinWidth = 100f;
     private const float versionFieldMinWidth = 190f;
@@ -50,6 +52,7 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
 
     private AppLovinEditorCoroutine loadDataCoroutine;
     private Texture2D uninstallIcon;
+    private Texture2D alertIcon;
 
     public static void ShowManager()
     {
@@ -98,10 +101,15 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
             padding = new RectOffset(1, 1, 1, 1)
         };
 
+        // Load uninstall icon texture.
         var uninstallIconData = File.ReadAllBytes(uninstallIconPath);
-        // Load the texture
         uninstallIcon = new Texture2D(0, 0, TextureFormat.RGBA32, false); // 1. Initial size doesn't matter here, will be automatically resized once the image asset is loaded. 2. Set mipChain to false, else the texture has a weird blurry effect.
         uninstallIcon.LoadImage(uninstallIconData);
+
+        // Load alert icon texture.
+        var alertIconData = File.ReadAllBytes(alertIconPath);
+        alertIcon = new Texture2D(0, 0, TextureFormat.RGBA32, false);
+        alertIcon.LoadImage(alertIconData);
     }
 
     private void OnEnable()
@@ -155,9 +163,14 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
             GUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("AppLovin MAX Plugin Details", titleLabelStyle, GUILayout.Width(220f)); // Seems like LabelField has an arbitrarily fixed width set by default. Need to set it to the preferred width (arrived at by trail & error) for the text to not be cut off (https://docs.unity3d.com/ScriptReference/EditorGUIUtility-labelWidth.html)
             GUILayout.FlexibleSpace();
+            
             var autoUpdateEnabled = GUILayout.Toggle(EditorPrefs.GetBool(AppLovinAutoUpdater.KeyAutoUpdateEnabled, true), "  Enable Auto Update");
             EditorPrefs.SetBool(AppLovinAutoUpdater.KeyAutoUpdateEnabled, autoUpdateEnabled);
-            GUILayout.Space(5);
+            GUILayout.Space(10);
+            
+            var verboseLoggingEnabled = GUILayout.Toggle(EditorPrefs.GetBool(MaxSdkLogger.KeyVerboseLoggingEnabled, false), "  Enable Verbose Logging");
+            EditorPrefs.SetBool(MaxSdkLogger.KeyVerboseLoggingEnabled, verboseLoggingEnabled);
+            GUILayout.Space(10);
             GUILayout.EndHorizontal();
             DrawPluginDetails();
 
@@ -222,7 +235,8 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
     private void DrawPluginDetails()
     {
         var appLovinMax = pluginData.AppLovinMax;
-        var upgradeButtonEnabled = !appLovinMax.LatestVersions.Equals(appLovinMax.CurrentVersions);
+        // Check if a newer version is available to enable the upgrade button.
+        var upgradeButtonEnabled = appLovinMax.CurrentToLatestVersionComparisonResult == VersionComparisonResult.Lesser;
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(10);
@@ -233,6 +247,7 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
             DrawPluginDetailRow("Unity 3D", appLovinMax.CurrentVersions.Unity, appLovinMax.LatestVersions.Unity);
             DrawPluginDetailRow("Android", appLovinMax.CurrentVersions.Android, appLovinMax.LatestVersions.Android);
             DrawPluginDetailRow("iOS", appLovinMax.CurrentVersions.Ios, appLovinMax.LatestVersions.Ios);
+            
             // BeginHorizontal combined with FlexibleSpace makes sure that the button is centered horizontally.
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -327,7 +342,6 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
         string action;
         var currentVersion = network.CurrentVersions.Unity;
         var latestVersion = network.LatestVersions.Unity;
-        var comparison = network.CurrentToLatestVersionComparison;
         bool isActionEnabled;
         bool isInstalled;
         if (string.IsNullOrEmpty(currentVersion))
@@ -341,18 +355,18 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
         {
             isInstalled = true;
 
+            var comparison = network.CurrentToLatestVersionComparisonResult;
             // A newer version is available
-            if (comparison < 0)
+            if (comparison == VersionComparisonResult.Lesser)
             {
                 action = "Upgrade";
                 isActionEnabled = true;
             }
             // Current installed version is newer than latest version from DB (beta version)
-            else if (comparison > 0)
+            else if (comparison == VersionComparisonResult.Greater)
             {
                 action = "Installed";
                 isActionEnabled = false;
-                currentVersion += " (beta)";
             }
             // Already on the latest version
             else
@@ -372,6 +386,11 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
             EditorGUILayout.LabelField(new GUIContent(latestVersion), versionWidthOption);
             GUILayout.Space(3);
             GUILayout.FlexibleSpace();
+
+            if (network.RequiresUpdate)
+            {
+                GUILayout.Label(new GUIContent {image = alertIcon, tooltip = "Adapter not compatible, please update to the latest version."}, uninstallButtonStyle);
+            }
 
             GUI.enabled = isActionEnabled;
             if (GUILayout.Button(new GUIContent(action), fieldWidth))
@@ -407,14 +426,14 @@ public class AppLovinIntegrationManagerWindow : EditorWindow
         if (network.Name.Equals("ADMOB_NETWORK") && isInstalled)
         {
             // Custom integration requires Google AdMob adapter version newer than android_19.0.1.0_ios_7.57.0.0.
-            if (MaxSdkUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, "android_19.0.1.0_ios_7.57.0.0") > 0)
+            if (MaxSdkUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, "android_19.0.1.0_ios_7.57.0.0") == VersionComparisonResult.Greater)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(20);
                 using (new EditorGUILayout.VerticalScope("box"))
                 {
                     GUILayout.Space(2);
-                    if (MaxSdkUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, "android_19.2.0.0_ios_7.61.0.0") > 0)
+                    if (MaxSdkUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, "android_19.2.0.0_ios_7.61.0.0") == VersionComparisonResult.Greater)
                     {
                         AppLovinSettings.Instance.AdMobAndroidAppId = DrawTextField("App ID (Android)", AppLovinSettings.Instance.AdMobAndroidAppId, networkWidthOption);
                         AppLovinSettings.Instance.AdMobIosAppId = DrawTextField("App ID (iOS)", AppLovinSettings.Instance.AdMobIosAppId, networkWidthOption);

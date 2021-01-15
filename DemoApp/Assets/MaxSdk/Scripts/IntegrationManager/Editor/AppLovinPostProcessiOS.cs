@@ -33,7 +33,7 @@ public class AppLovinPostProcessiOS
         var sdkKey = AppLovinSettings.Instance.SdkKey;
         if (string.IsNullOrEmpty(sdkKey))
         {
-            Debug.LogError("Failed to install AppLovin Quality Service plugin. SDK Key is empty. Please enter the AppLovin SDK Key in the Integration Manager.");
+            MaxSdkLogger.UserError("Failed to install AppLovin Quality Service plugin. SDK Key is empty. Please enter the AppLovin SDK Key in the Integration Manager.");
             return;
         }
 
@@ -79,7 +79,7 @@ public class AppLovinPostProcessiOS
         if (webRequest.isError)
 #endif
         {
-            Debug.LogError("AppLovin Quality Service installation failed. Failed to download script with error: " + unityWebRequest.error);
+            MaxSdkLogger.UserError("AppLovin Quality Service installation failed. Failed to download script with error: " + unityWebRequest.error);
             return;
         }
 
@@ -87,7 +87,7 @@ public class AppLovinPostProcessiOS
         var rubyVersion = AppLovinCommandLine.Run("ruby", "--version", buildPath);
         if (rubyVersion.ExitCode != 0)
         {
-            Debug.LogError("AppLovin Quality Service installation requires Ruby. Please install Ruby, export it to your system PATH and re-export the project.");
+            MaxSdkLogger.UserError("AppLovin Quality Service installation requires Ruby. Please install Ruby, export it to your system PATH and re-export the project.");
             return;
         }
 
@@ -95,9 +95,9 @@ public class AppLovinPostProcessiOS
         var result = AppLovinCommandLine.Run("ruby", OutputFileName, buildPath);
 
         // Check if we have an error.
-        if (result.ExitCode != 0) Debug.LogError("Failed to set up AppLovin Quality Service");
+        if (result.ExitCode != 0) MaxSdkLogger.UserError("Failed to set up AppLovin Quality Service");
 
-        Debug.Log(result.Message);
+        MaxSdkLogger.UserDebug(result.Message);
     }
 }
 

@@ -15,6 +15,11 @@ public class MaxSdkAndroid : MaxSdkBase
         get { return MaxVariableServiceAndroid.Instance; }
     }
 
+    public static MaxUserServiceAndroid UserService
+    {
+        get { return MaxUserServiceAndroid.Instance; }
+    }
+
     static MaxSdkAndroid()
     {
         InitCallbacks();
@@ -57,7 +62,7 @@ public class MaxSdkAndroid : MaxSdkBase
 
     #endregion
 
-    #region User Identifier
+    #region User Info
 
     /// <summary>
     /// Set an identifier for the current user. This identifier will be tied to SDK events and our optional S2S postbacks.
@@ -72,6 +77,14 @@ public class MaxSdkAndroid : MaxSdkBase
         MaxUnityPluginClass.CallStatic("setUserId", userId);
     }
 
+    /// <summary>
+    /// User segments allow us to serve ads using custom-defined rules based on which segment the user is in. For now, we only support a custom string 32 alphanumeric characters or less as the user segment.
+    /// </summary>
+    public static MaxUserSegment UserSegment
+    {
+        get { return SharedUserSegment; }
+    }
+    
     #endregion
 
     #region Mediation Debugger
@@ -114,8 +127,8 @@ public class MaxSdkAndroid : MaxSdkBase
     {
         if (!IsInitialized())
         {
-            Debug.LogWarning(
-                "[AppLovin MAX] MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
+            MaxSdkLogger.UserWarning(
+                "MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
         }
 
         return (ConsentDialogState) MaxUnityPluginClass.CallStatic<int>("getConsentDialogState");
@@ -190,6 +203,21 @@ public class MaxSdkAndroid : MaxSdkBase
     }
 
     /// <summary>
+    /// Create a new banner with a custom position.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the banner to create</param>
+    /// <param name="x">The X coordinate (horizontal position) of the banner relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the banner relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetBannerLayout">
+    /// The banner is placed within the safe area of the screen. You can use this to get the absolute position of the banner on screen.
+    /// </seealso>
+    public static void CreateBanner(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "create banner");
+        MaxUnityPluginClass.CallStatic("createBanner", adUnitIdentifier, x, y);
+    }
+
+    /// <summary>
     /// Set the banner placement for an ad unit identifier to tie the future ad events to.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the banner to set the placement for</param>
@@ -211,6 +239,32 @@ public class MaxSdkAndroid : MaxSdkBase
         MaxUnityPluginClass.CallStatic("updateBannerPosition", adUnitIdentifier, bannerPosition.ToSnakeCaseString());
     }
 
+    /// <summary>
+    /// Updates the position of the banner to the new coordinates provided.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the banner for which to update the position</param>
+    /// <param name="x">The X coordinate (horizontal position) of the banner relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the banner relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetBannerLayout">
+    /// The banner is placed within the safe area of the screen. You can use this to get the absolute position of the banner on screen.
+    /// </seealso>
+    public static void UpdateBannerPosition(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "update banner position");
+        MaxUnityPluginClass.CallStatic("updateBannerPosition", adUnitIdentifier, x, y);
+    }
+
+    /// <summary>
+    /// Overrides the width of the banner in dp.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the banner for which to override the width for</param>
+    /// <param name="width">The desired width of the banner in dp</param>
+    public static void SetBannerWidth(string adUnitIdentifier, float width)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "set banner width");
+        MaxUnityPluginClass.CallStatic("setBannerWidth", adUnitIdentifier, width);
+    }
+    
     /// <summary>
     /// Show banner at a position determined by the 'CreateBanner' call.
     /// </summary>
@@ -266,6 +320,19 @@ public class MaxSdkAndroid : MaxSdkBase
         MaxUnityPluginClass.CallStatic("setBannerExtraParameter", adUnitIdentifier, key, value);
     }
 
+    /// <summary>
+    /// The banner position on the screen. When setting the banner position via <see cref="CreateBanner(string, float, float)"/> or <see cref="UpdateBannerPosition(string, float, float)"/>,
+    /// the banner is placed within the safe area of the screen. This returns the absolute position of the banner on screen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the banner for which to get the position on screen.</param>
+    /// <returns>A <see cref="Rect"/> representing the banner position on screen.</returns>
+    public static Rect GetBannerLayout(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "get banner layout");
+        var positionRect = MaxUnityPluginClass.CallStatic<string>("getBannerLayout", adUnitIdentifier);
+        return GetRectFromString(positionRect);
+    }
+
     #endregion
 
     #region MRECs
@@ -279,6 +346,21 @@ public class MaxSdkAndroid : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
         MaxUnityPluginClass.CallStatic("createMRec", adUnitIdentifier, mrecPosition.ToSnakeCaseString());
+    }
+
+    /// <summary>
+    /// Create a new MREC with a custom position.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to create</param>
+    /// <param name="x">The X coordinate (horizontal position) of the MREC relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the MREC relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetMRecLayout">
+    /// The MREC is placed within the safe area of the screen. You can use this to get the absolute position Rect of the MREC on screen.
+    /// </seealso>
+    public static void CreateMRec(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
+        MaxUnityPluginClass.CallStatic("createMRec", adUnitIdentifier, x, y);
     }
 
     /// <summary>
@@ -301,6 +383,21 @@ public class MaxSdkAndroid : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "update MREC position");
         MaxUnityPluginClass.CallStatic("updateMRecPosition", adUnitIdentifier, mrecPosition.ToSnakeCaseString());
+    }
+
+    /// <summary>
+    /// Updates the position of the MREC to the new coordinates provided.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the MREC for which to update the position</param>
+    /// <param name="x">The X coordinate (horizontal position) of the MREC relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the MREC relative to the top left corner of the screen.</param>
+    /// <seealso cref="GetMRecLayout">
+    /// The MREC is placed within the safe area of the screen. You can use this to get the absolute position Rect of the MREC on screen.
+    /// </seealso>
+    public static void UpdateMRecPosition(string adUnitIdentifier, float x, float y)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "update MREC position");
+        MaxUnityPluginClass.CallStatic("updateMRecPosition", adUnitIdentifier, x, y);
     }
 
     /// <summary>
@@ -331,6 +428,19 @@ public class MaxSdkAndroid : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "hide MREC");
         MaxUnityPluginClass.CallStatic("hideMRec", adUnitIdentifier);
+    }
+
+    /// <summary>
+    /// The MREC position on the screen. When setting the banner position via <see cref="CreateMRec(string, float, float)"/> or <see cref="UpdateMRecPosition(string, float, float)"/>,
+    /// the banner is placed within the safe area of the screen. This returns the absolute position of the MREC on screen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC for which to get the position on screen.</param>
+    /// <returns>A <see cref="Rect"/> representing the banner position on screen.</returns>
+    public static Rect GetMRecLayout(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "get MREC layout");
+        var positionRect = MaxUnityPluginClass.CallStatic<string>("getMRecLayout", adUnitIdentifier);
+        return GetRectFromString(positionRect);
     }
 
     #endregion
@@ -382,7 +492,7 @@ public class MaxSdkAndroid : MaxSdkBase
         }
         else
         {
-            Debug.LogWarning("[AppLovin MAX] Not showing MAX Ads interstitial: ad not ready");
+            MaxSdkLogger.UserWarning("Not showing MAX Ads interstitial: ad not ready");
         }
     }
 
@@ -447,7 +557,7 @@ public class MaxSdkAndroid : MaxSdkBase
         }
         else
         {
-            Debug.LogWarning("[AppLovin MAX] Not showing MAX Ads rewarded ad: ad not ready");
+            MaxSdkLogger.UserWarning("Not showing MAX Ads rewarded ad: ad not ready");
         }
     }
 
@@ -512,7 +622,7 @@ public class MaxSdkAndroid : MaxSdkBase
         }
         else
         {
-            Debug.LogWarning("[AppLovin MAX] Not showing MAX Ads rewarded interstitial ad: ad not ready");
+            MaxSdkLogger.UserWarning("Not showing MAX Ads rewarded interstitial ad: ad not ready");
         }
     }
 
@@ -578,6 +688,15 @@ public class MaxSdkAndroid : MaxSdkBase
     }
 
     /// <summary>
+    /// Whether or not verbose logging is enabled.
+    /// </summary>
+    /// <returns><c>true</c> if verbose logging is enabled.</returns>
+    public static bool IsVerboseLoggingEnabled()
+    {
+        return MaxUnityPluginClass.CallStatic<bool>("isVerboseLoggingEnabled");
+    }
+
+    /// <summary>
     /// If enabled, a button will appear over fullscreen ads in development builds. This button will display information about the current ad when pressed.
     /// </summary>
     /// <param name="enabled"><c>true</c> if the ad info button should be enabled.</param>
@@ -597,6 +716,24 @@ public class MaxSdkAndroid : MaxSdkBase
         object[] arguments = { advertisingIdentifiers };
         MaxUnityPluginClass.CallStatic("setTestDeviceAdvertisingIds", arguments);
     }
+    
+    /// <summary>
+    /// Whether or not the native AppLovin SDKs listen to exceptions. Defaults to <c>true</c>.
+    /// </summary>
+    /// <param name="enabled"><c>true</c> if the native AppLovin SDKs should not listen to exceptions.</param>
+    public static void SetExceptionHandlerEnabled(bool enabled)
+    {
+        MaxUnityPluginClass.CallStatic("setExceptionHandlerEnabled", enabled);
+    }
 
+    #endregion
+    
+    #region Private
+    
+    internal static void SetUserSegmentField(string name, string value)
+    {
+        MaxUnityPluginClass.CallStatic("setUserSegmentField", name, value);
+    }
+    
     #endregion
 }

@@ -11,108 +11,539 @@ public class MaxSdkCallbacks : MonoBehaviour
     public static MaxSdkCallbacks Instance { get; private set; }
 
     // Fired when the SDK has finished initializing
-    public static event Action<MaxSdkBase.SdkConfiguration> OnSdkInitializedEvent;
+    private static Action<MaxSdkBase.SdkConfiguration> _onSdkInitializedEvent;
+    public static event Action<MaxSdkBase.SdkConfiguration> OnSdkInitializedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnSdkInitializedEvent");
+            _onSdkInitializedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnSdkInitializedEvent");
+            _onSdkInitializedEvent -= value;
+        }
+    }
 
 
     // Fire when the MaxVariableService has finished loading the latest set of variables.
-    public static event Action OnVariablesUpdatedEvent;
+    private static Action _onVariablesUpdatedEvent;
+    public static event Action OnVariablesUpdatedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnVariablesUpdatedEvent");
+            _onVariablesUpdatedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnVariablesUpdatedEvent");
+            _onVariablesUpdatedEvent -= value;
+        }
+    }
+
+    // Fire when the Consent Dialog has been dismissed.
+    private static Action _onSdkConsentDialogDismissedEvent;
+    public static event Action OnSdkConsentDialogDismissedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnSdkConsentDialogDismissedEvent");
+            _onSdkConsentDialogDismissedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnSdkConsentDialogDismissedEvent");
+            _onSdkConsentDialogDismissedEvent -= value;
+        }
+    }
 
 
     // Fired when a banner is loaded
-    public static event Action<string> OnBannerAdLoadedEvent;
+    private static Action<string> _onBannerAdLoadedEvent;
+    public static event Action<string> OnBannerAdLoadedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnBannerAdLoadedEvent");
+            _onBannerAdLoadedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnBannerAdLoadedEvent");
+            _onBannerAdLoadedEvent -= value;
+        }
+    }
 
     // Fired when a banner has failed to load
-    public static event Action<string, int> OnBannerAdLoadFailedEvent;
+    private static Action<string, int> _onBannerAdLoadFailedEvent;
+    public static event Action<string, int> OnBannerAdLoadFailedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnBannerAdLoadFailedEvent");
+            _onBannerAdLoadFailedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnBannerAdLoadFailedEvent");
+            _onBannerAdLoadFailedEvent -= value;
+        }
+    }
 
     // Fired when a banner ad is clicked
-    public static event Action<string> OnBannerAdClickedEvent;
+    private static Action<string> _onBannerAdClickedEvent;
+    public static event Action<string> OnBannerAdClickedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnBannerAdClickedEvent");
+            _onBannerAdClickedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnBannerAdClickedEvent");
+            _onBannerAdClickedEvent -= value;
+        }
+    }
 
     // Fired when a banner ad expands to encompass a greater portion of the screen
-    public static event Action<string> OnBannerAdExpandedEvent;
+    private static Action<string> _onBannerAdExpandedEvent;
+    public static event Action<string> OnBannerAdExpandedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnBannerAdExpandedEvent");
+            _onBannerAdExpandedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnBannerAdExpandedEvent");
+            _onBannerAdExpandedEvent -= value;
+        }
+    }
 
     // Fired when a banner ad collapses back to its initial size
-    public static event Action<string> OnBannerAdCollapsedEvent;
+    private static Action<string> _onBannerAdCollapsedEvent;
+    public static event Action<string> OnBannerAdCollapsedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnBannerAdCollapsedEvent");
+            _onBannerAdCollapsedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnBannerAdCollapsedEvent");
+            _onBannerAdCollapsedEvent -= value;
+        }
+    }
 
 
     // Fired when a MREC is loaded
-    public static event Action<string> OnMRecAdLoadedEvent;
+    private static Action<string> _onMRecAdLoadedEvent;
+    public static event Action<string> OnMRecAdLoadedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnMRecAdLoadedEvent");
+            _onMRecAdLoadedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnMRecAdLoadedEvent");
+            _onMRecAdLoadedEvent -= value;
+        }
+    }
 
     // Fired when a MREC has failed to load
-    public static event Action<string, int> OnMRecAdLoadFailedEvent;
+    private static Action<string, int> _onMRecAdLoadFailedEvent;
+    public static event Action<string, int> OnMRecAdLoadFailedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnMRecAdLoadFailedEvent");
+            _onMRecAdLoadFailedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnMRecAdLoadFailedEvent");
+            _onMRecAdLoadFailedEvent -= value;
+        }
+    }
 
     // Fired when a MREC ad is clicked
-    public static event Action<string> OnMRecAdClickedEvent;
+    private static Action<string> _onMRecAdClickedEvent;
+    public static event Action<string> OnMRecAdClickedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnMRecAdClickedEvent");
+            _onMRecAdClickedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnMRecAdClickedEvent");
+            _onMRecAdClickedEvent -= value;
+        }
+    }
 
     // Fired when a MREC ad expands to encompass a greater portion of the screen
-    public static event Action<string> OnMRecAdExpandedEvent;
+    private static Action<string> _onMRecAdExpandedEvent;
+    public static event Action<string> OnMRecAdExpandedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnMRecAdExpandedEvent");
+            _onMRecAdExpandedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnMRecAdExpandedEvent");
+            _onMRecAdExpandedEvent -= value;
+        }
+    }
 
     // Fired when a MREC ad collapses back to its initial size
-    public static event Action<string> OnMRecAdCollapsedEvent;
+    private static Action<string> _onMRecAdCollapsedEvent;
+    public static event Action<string> OnMRecAdCollapsedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnMRecAdCollapsedEvent");
+            _onMRecAdCollapsedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnMRecAdCollapsedEvent");
+            _onMRecAdCollapsedEvent -= value;
+        }
+    }
 
 
     // Fired when an interstitial ad is loaded and ready to be shown
-    public static event Action<string> OnInterstitialLoadedEvent;
+    private static Action<string> _onInterstitialLoadedEvent;
+    public static event Action<string> OnInterstitialLoadedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnInterstitialLoadedEvent");
+            _onInterstitialLoadedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnInterstitialLoadedEvent");
+            _onInterstitialLoadedEvent -= value;
+        }
+    }
 
     // Fired when an interstitial ad fails to load
-    public static event Action<string, int> OnInterstitialLoadFailedEvent;
+    private static Action<string, int> _onInterstitialLoadFailedEvent;
+    public static event Action<string, int> OnInterstitialLoadFailedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnInterstitialLoadFailedEvent");
+            _onInterstitialLoadFailedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnInterstitialLoadFailedEvent");
+            _onInterstitialLoadFailedEvent -= value;
+        }
+    }
 
     // Fired when an interstitial ad is dismissed
-    public static event Action<string> OnInterstitialHiddenEvent;
+    private static Action<string> _onInterstitialHiddenEvent;
+    public static event Action<string> OnInterstitialHiddenEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnInterstitialHiddenEvent");
+            _onInterstitialHiddenEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnInterstitialHiddenEvent");
+            _onInterstitialHiddenEvent -= value;
+        }
+    }
 
     // Fired when an interstitial ad is displayed (may not be received by Unity until the interstitial closes)
-    public static event Action<string> OnInterstitialDisplayedEvent;
+    private static Action<string> _onInterstitialDisplayedEvent;
+    public static event Action<string> OnInterstitialDisplayedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnInterstitialDisplayedEvent");
+            _onInterstitialDisplayedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnInterstitialDisplayedEvent");
+            _onInterstitialDisplayedEvent -= value;
+        }
+    }
 
     // Fired when a interstitial video fails to display
-    public static event Action<string, int> OnInterstitialAdFailedToDisplayEvent;
+    private static Action<string, int> _onInterstitialAdFailedToDisplayEvent;
+    public static event Action<string, int> OnInterstitialAdFailedToDisplayEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnInterstitialAdFailedToDisplayEvent");
+            _onInterstitialAdFailedToDisplayEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnInterstitialAdFailedToDisplayEvent");
+            _onInterstitialAdFailedToDisplayEvent -= value;
+        }
+    }
 
     // Fired when an interstitial ad is clicked (may not be received by Unity until the interstitial closes)
-    public static event Action<string> OnInterstitialClickedEvent;
+    private static Action<string> _onInterstitialClickedEvent;
+    public static event Action<string> OnInterstitialClickedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnInterstitialClickedEvent");
+            _onInterstitialClickedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnInterstitialClickedEvent");
+            _onInterstitialClickedEvent -= value;
+        }
+    }
 
 
     // Fired when a rewarded ad finishes loading and is ready to be displayed
-    public static event Action<string> OnRewardedAdLoadedEvent;
+    private static Action<string> _onRewardedAdLoadedEvent;
+    public static event Action<string> OnRewardedAdLoadedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdLoadedEvent");
+            _onRewardedAdLoadedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdLoadedEvent");
+            _onRewardedAdLoadedEvent -= value;
+        }
+    }
 
     // Fired when a rewarded ad fails to load. Includes the error message.
-    public static event Action<string, int> OnRewardedAdLoadFailedEvent;
+    private static Action<string, int> _onRewardedAdLoadFailedEvent;
+    public static event Action<string, int> OnRewardedAdLoadFailedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdLoadFailedEvent");
+            _onRewardedAdLoadFailedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdLoadFailedEvent");
+            _onRewardedAdLoadFailedEvent -= value;
+        }
+    }
 
     // Fired when an rewarded ad is displayed (may not be received by Unity until the rewarded ad closes)
-    public static event Action<string> OnRewardedAdDisplayedEvent;
+    private static Action<string> _onRewardedAdDisplayedEvent;
+    public static event Action<string> OnRewardedAdDisplayedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdDisplayedEvent");
+            _onRewardedAdDisplayedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdDisplayedEvent");
+            _onRewardedAdDisplayedEvent -= value;
+        }
+    }
 
     // Fired when an rewarded ad is hidden
-    public static event Action<string> OnRewardedAdHiddenEvent;
+    private static Action<string> _onRewardedAdHiddenEvent;
+    public static event Action<string> OnRewardedAdHiddenEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdHiddenEvent");
+            _onRewardedAdHiddenEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdHiddenEvent");
+            _onRewardedAdHiddenEvent -= value;
+        }
+    }
 
     // Fired when an rewarded video is clicked (may not be received by Unity until the rewarded ad closes)
-    public static event Action<string> OnRewardedAdClickedEvent;
+    private static Action<string> _onRewardedAdClickedEvent;
+    public static event Action<string> OnRewardedAdClickedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdClickedEvent");
+            _onRewardedAdClickedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdClickedEvent");
+            _onRewardedAdClickedEvent -= value;
+        }
+    }
 
     // Fired when a rewarded video fails to play. Includes the error message.
-    public static event Action<string, int> OnRewardedAdFailedToDisplayEvent;
+    private static Action<string, int> _onRewardedAdFailedToDisplayEvent;
+    public static event Action<string, int> OnRewardedAdFailedToDisplayEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdFailedToDisplayEvent");
+            _onRewardedAdFailedToDisplayEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdFailedToDisplayEvent");
+            _onRewardedAdFailedToDisplayEvent -= value;
+        }
+    }
 
     // Fired when a rewarded video completes. Includes information about the reward
-    public static event Action<string, MaxSdkBase.Reward> OnRewardedAdReceivedRewardEvent;
+    private static Action<string, MaxSdkBase.Reward> _onRewardedAdReceivedRewardEvent;
+    public static event Action<string, MaxSdkBase.Reward> OnRewardedAdReceivedRewardEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedAdReceivedRewardEvent");
+            _onRewardedAdReceivedRewardEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedAdReceivedRewardEvent");
+            _onRewardedAdReceivedRewardEvent -= value;
+        }
+    }
     
 
     // Fired when a rewarded interstitial ad finishes loading and is ready to be displayed
-    public static event Action<string> OnRewardedInterstitialAdLoadedEvent;
+    private static Action<string> _onRewardedInterstitialAdLoadedEvent;
+    public static event Action<string> OnRewardedInterstitialAdLoadedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdLoadedEvent");
+            _onRewardedInterstitialAdLoadedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdLoadedEvent");
+            _onRewardedInterstitialAdLoadedEvent -= value;
+        }
+    }
 
     // Fired when a rewarded interstitial ad fails to load. Includes the error message.
-    public static event Action<string, int> OnRewardedInterstitialAdLoadFailedEvent;
+    private static Action<string, int> _onRewardedInterstitialAdLoadFailedEvent;
+    public static event Action<string, int> OnRewardedInterstitialAdLoadFailedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdLoadFailedEvent");
+            _onRewardedInterstitialAdLoadFailedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdLoadFailedEvent");
+            _onRewardedInterstitialAdLoadFailedEvent -= value;
+        }
+    }
 
     // Fired when a rewarded interstitial ad is displayed (may not be received by Unity until the rewarded ad closes)
-    public static event Action<string> OnRewardedInterstitialAdDisplayedEvent;
+    private static Action<string> _onRewardedInterstitialAdDisplayedEvent;
+    public static event Action<string> OnRewardedInterstitialAdDisplayedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdDisplayedEvent");
+            _onRewardedInterstitialAdDisplayedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdDisplayedEvent");
+            _onRewardedInterstitialAdDisplayedEvent -= value;
+        }
+    }
 
     // Fired when a rewarded interstitial ad is hidden
-    public static event Action<string> OnRewardedInterstitialAdHiddenEvent;
+    private static Action<string> _onRewardedInterstitialAdHiddenEvent;
+    public static event Action<string> OnRewardedInterstitialAdHiddenEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdHiddenEvent");
+            _onRewardedInterstitialAdHiddenEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdHiddenEvent");
+            _onRewardedInterstitialAdHiddenEvent -= value;
+        }
+    }
 
     // Fired when a rewarded interstitial ad is clicked (may not be received by Unity until the rewarded ad closes)
-    public static event Action<string> OnRewardedInterstitialAdClickedEvent;
+    private static Action<string> _onRewardedInterstitialAdClickedEvent;
+    public static event Action<string> OnRewardedInterstitialAdClickedEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdClickedEvent");
+            _onRewardedInterstitialAdClickedEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdClickedEvent");
+            _onRewardedInterstitialAdClickedEvent -= value;
+        }
+    }
 
     // Fired when a rewarded interstitial ad fails to play. Includes the error message.
-    public static event Action<string, int> OnRewardedInterstitialAdFailedToDisplayEvent;
+    private static Action<string, int> _onRewardedInterstitialAdFailedToDisplayEvent;
+    public static event Action<string, int> OnRewardedInterstitialAdFailedToDisplayEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdFailedToDisplayEvent");
+            _onRewardedInterstitialAdFailedToDisplayEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdFailedToDisplayEvent");
+            _onRewardedInterstitialAdFailedToDisplayEvent -= value;
+        }
+    }
 
     // Fired when a rewarded interstitial ad completes. Includes information about the reward
-    public static event Action<string, MaxSdkBase.Reward> OnRewardedInterstitialAdReceivedRewardEvent;
-    
-    
+    private static Action<string, MaxSdkBase.Reward> _onRewardedInterstitialAdReceivedRewardEvent;
+    public static event Action<string, MaxSdkBase.Reward> OnRewardedInterstitialAdReceivedRewardEvent
+    {
+        add
+        {
+            LogSubscribedToEvent("OnRewardedInterstitialAdReceivedRewardEvent");
+            _onRewardedInterstitialAdReceivedRewardEvent += value;
+        }
+        remove
+        {
+            LogUnsubscribedToEvent("OnRewardedInterstitialAdReceivedRewardEvent");
+            _onRewardedInterstitialAdReceivedRewardEvent -= value;
+        }
+    }
+
     void Awake()
     {
         if (Instance == null)
@@ -144,12 +575,15 @@ public class MaxSdkCallbacks : MonoBehaviour
             {
                 sdkConfiguration.ConsentDialogState = MaxSdkBase.ConsentDialogState.Unknown;
             }
-
-            InvokeEvent(OnSdkInitializedEvent, sdkConfiguration);
+            InvokeEvent(_onSdkInitializedEvent, sdkConfiguration);
         }
         else if (eventName == "OnVariablesUpdatedEvent")
         {
-            InvokeEvent(OnVariablesUpdatedEvent);
+            InvokeEvent(_onVariablesUpdatedEvent);
+        }
+        else if ( eventName == "OnSdkConsentDialogDismissedEvent" )
+        {
+            InvokeEvent(_onSdkConsentDialogDismissedEvent);
         }
         // Ad Events
         else
@@ -157,103 +591,103 @@ public class MaxSdkCallbacks : MonoBehaviour
             var adUnitIdentifier = eventProps["adUnitId"];
             if (eventName == "OnBannerAdLoadedEvent")
             {
-                InvokeEvent(OnBannerAdLoadedEvent, adUnitIdentifier);
+                InvokeEvent(_onBannerAdLoadedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnBannerAdLoadFailedEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnBannerAdLoadFailedEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onBannerAdLoadFailedEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnBannerAdClickedEvent")
             {
-                InvokeEvent(OnBannerAdClickedEvent, adUnitIdentifier);
+                InvokeEvent(_onBannerAdClickedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnBannerAdExpandedEvent")
             {
-                InvokeEvent(OnBannerAdExpandedEvent, adUnitIdentifier);
+                InvokeEvent(_onBannerAdExpandedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnBannerAdCollapsedEvent")
             {
-                InvokeEvent(OnBannerAdCollapsedEvent, adUnitIdentifier);
+                InvokeEvent(_onBannerAdCollapsedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnMRecAdLoadedEvent")
             {
-                InvokeEvent(OnMRecAdLoadedEvent, adUnitIdentifier);
+                InvokeEvent(_onMRecAdLoadedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnMRecAdLoadFailedEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnMRecAdLoadFailedEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onMRecAdLoadFailedEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnMRecAdClickedEvent")
             {
-                InvokeEvent(OnMRecAdClickedEvent, adUnitIdentifier);
+                InvokeEvent(_onMRecAdClickedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnMRecAdExpandedEvent")
             {
-                InvokeEvent(OnMRecAdExpandedEvent, adUnitIdentifier);
+                InvokeEvent(_onMRecAdExpandedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnMRecAdCollapsedEvent")
             {
-                InvokeEvent(OnMRecAdCollapsedEvent, adUnitIdentifier);
+                InvokeEvent(_onMRecAdCollapsedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnInterstitialLoadedEvent")
             {
-                InvokeEvent(OnInterstitialLoadedEvent, adUnitIdentifier);
+                InvokeEvent(_onInterstitialLoadedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnInterstitialLoadFailedEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnInterstitialLoadFailedEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onInterstitialLoadFailedEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnInterstitialHiddenEvent")
             {
-                InvokeEvent(OnInterstitialHiddenEvent, adUnitIdentifier);
+                InvokeEvent(_onInterstitialHiddenEvent, adUnitIdentifier);
             }
             else if (eventName == "OnInterstitialDisplayedEvent")
             {
-                InvokeEvent(OnInterstitialDisplayedEvent, adUnitIdentifier);
+                InvokeEvent(_onInterstitialDisplayedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnInterstitialAdFailedToDisplayEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnInterstitialAdFailedToDisplayEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onInterstitialAdFailedToDisplayEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnInterstitialClickedEvent")
             {
-                InvokeEvent(OnInterstitialClickedEvent, adUnitIdentifier);
+                InvokeEvent(_onInterstitialClickedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedAdLoadedEvent")
             {
-                InvokeEvent(OnRewardedAdLoadedEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedAdLoadedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedAdLoadFailedEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnRewardedAdLoadFailedEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onRewardedAdLoadFailedEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnRewardedAdDisplayedEvent")
             {
-                InvokeEvent(OnRewardedAdDisplayedEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedAdDisplayedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedAdHiddenEvent")
             {
-                InvokeEvent(OnRewardedAdHiddenEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedAdHiddenEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedAdClickedEvent")
             {
-                InvokeEvent(OnRewardedAdClickedEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedAdClickedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedAdFailedToDisplayEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnRewardedAdFailedToDisplayEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onRewardedAdFailedToDisplayEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnRewardedAdReceivedRewardEvent")
             {
@@ -261,35 +695,35 @@ public class MaxSdkCallbacks : MonoBehaviour
 
                 int.TryParse(eventProps["rewardAmount"], out reward.Amount);
 
-                InvokeEvent(OnRewardedAdReceivedRewardEvent, adUnitIdentifier, reward);
+                InvokeEvent(_onRewardedAdReceivedRewardEvent, adUnitIdentifier, reward);
             }
             else if (eventName == "OnRewardedInterstitialAdLoadedEvent")
             {
-                InvokeEvent(OnRewardedInterstitialAdLoadedEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedInterstitialAdLoadedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedInterstitialAdLoadFailedEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnRewardedInterstitialAdLoadFailedEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onRewardedInterstitialAdLoadFailedEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnRewardedInterstitialAdDisplayedEvent")
             {
-                InvokeEvent(OnRewardedInterstitialAdDisplayedEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedInterstitialAdDisplayedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedInterstitialAdHiddenEvent")
             {
-                InvokeEvent(OnRewardedInterstitialAdHiddenEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedInterstitialAdHiddenEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedInterstitialAdClickedEvent")
             {
-                InvokeEvent(OnRewardedInterstitialAdClickedEvent, adUnitIdentifier);
+                InvokeEvent(_onRewardedInterstitialAdClickedEvent, adUnitIdentifier);
             }
             else if (eventName == "OnRewardedInterstitialAdFailedToDisplayEvent")
             {
                 var errorCode = 0;
                 int.TryParse(eventProps["errorCode"], out errorCode);
-                InvokeEvent(OnRewardedInterstitialAdFailedToDisplayEvent, adUnitIdentifier, errorCode);
+                InvokeEvent(_onRewardedInterstitialAdFailedToDisplayEvent, adUnitIdentifier, errorCode);
             }
             else if (eventName == "OnRewardedInterstitialAdReceivedRewardEvent")
             {
@@ -297,11 +731,11 @@ public class MaxSdkCallbacks : MonoBehaviour
 
                 int.TryParse(eventProps["rewardAmount"], out reward.Amount);
 
-                InvokeEvent(OnRewardedInterstitialAdReceivedRewardEvent, adUnitIdentifier, reward);
+                InvokeEvent(_onRewardedInterstitialAdReceivedRewardEvent, adUnitIdentifier, reward);
             }
             else
             {
-                Debug.LogWarning("[AppLovin MAX] Unknown MAX Ads event fired: " + eventName);
+                MaxSdkLogger.UserWarning("Unknown MAX Ads event fired: " + eventName);
             }
         }
     }
@@ -312,7 +746,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         var sdkConfiguration = new MaxSdkBase.SdkConfiguration();
         sdkConfiguration.ConsentDialogState = MaxSdkBase.ConsentDialogState.Unknown;
         
-        OnSdkInitializedEvent(sdkConfiguration);
+        _onSdkInitializedEvent(sdkConfiguration);
     }
 #endif
 
@@ -320,7 +754,7 @@ public class MaxSdkCallbacks : MonoBehaviour
     {
         if (!CanInvokeEvent(evt)) return;
 
-        Debug.Log("[AppLovin MAX] Invoking event: " + evt);
+        MaxSdkLogger.UserDebug("Invoking event: " + evt);
         evt();
     }
 
@@ -328,7 +762,7 @@ public class MaxSdkCallbacks : MonoBehaviour
     {
         if (!CanInvokeEvent(evt)) return;
 
-        Debug.Log("[AppLovin MAX] Invoking event: " + evt + ". Param: " + param);
+        MaxSdkLogger.UserDebug("Invoking event: " + evt + ". Param: " + param);
         evt(param);
     }
 
@@ -336,7 +770,7 @@ public class MaxSdkCallbacks : MonoBehaviour
     {
         if (!CanInvokeEvent(evt)) return;
 
-        Debug.Log("[AppLovin MAX] Invoking event: " + evt + ". Params: " + param1 + ", " + param2);
+        MaxSdkLogger.UserDebug("Invoking event: " + evt + ". Params: " + param1 + ", " + param2);
         evt(param1, param2);
     }
 
@@ -347,9 +781,19 @@ public class MaxSdkCallbacks : MonoBehaviour
         // Check that publisher is not over-subscribing
         if (evt.GetInvocationList().Length > 5)
         {
-            Debug.LogWarning("[AppLovin MAX] Ads Event (" + evt + ") has over 5 subscribers. Please make sure you are properly un-subscribing to actions!!!");
+            MaxSdkLogger.UserWarning("Ads Event (" + evt + ") has over 5 subscribers. Please make sure you are properly un-subscribing to actions!!!");
         }
 
         return true;
+    }
+
+    private static void LogSubscribedToEvent(string eventName)
+    {
+        MaxSdkLogger.D("Listener has been added to callback: " + eventName);
+    }
+
+    private static void LogUnsubscribedToEvent(string eventName)
+    {
+        MaxSdkLogger.D("Listener has been removed from callback: " + eventName);
     }
 }
