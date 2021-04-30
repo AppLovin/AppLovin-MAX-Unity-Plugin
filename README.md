@@ -20,6 +20,8 @@ To get started with the demo apps, follow the instructions below:
 6. Update the MAX ad unit IDs for the ad formats you would like to test. Each ad format will correspond to a unique MAX ad unit ID you created in the AppLovin dashboard for the bundle id used before.
 7. Under `File > Build Settings`, click on the mobile platform of choice and click `Switch Platform` then `Build` to create a project to test the Demo App.
 
+<kbd><img src="https://user-images.githubusercontent.com/20387467/116736029-3262d280-a9a4-11eb-8b43-9889f49b9a3e.PNG" width="350" height="700" /></kbd>
+
 ## Error Codes
 | Code          | Description   |
 | ------------- |:-------------:|
