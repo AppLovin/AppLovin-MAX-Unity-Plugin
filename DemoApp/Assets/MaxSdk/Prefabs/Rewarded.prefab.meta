@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: a28c1544d6f094d5eafc8da2343c9119
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Prefabs/Rewarded.prefab
 PrefabImporter:
   externalObjects: {}
   userData: 

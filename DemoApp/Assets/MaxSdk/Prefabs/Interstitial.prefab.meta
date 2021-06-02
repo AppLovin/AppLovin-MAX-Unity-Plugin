@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 3fc0c2627ce8a4490b8e319326f8a535
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Prefabs/Interstitial.prefab
 PrefabImporter:
   externalObjects: {}
   userData: 

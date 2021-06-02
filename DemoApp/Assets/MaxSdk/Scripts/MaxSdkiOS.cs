@@ -50,9 +50,9 @@ public class MaxSdkiOS : MaxSdkBase
     /// OPTIONAL: Set the MAX ad unit ids to be used for this instance of the SDK. 3rd-party SDKs will be initialized with the credentials configured for these ad unit ids.
     /// This should only be used if you have different sets of ad unit ids / credentials for the same package name.</param>
     /// </summary>
-    public static void InitializeSdk(String[] adUnitIds = null)
+    public static void InitializeSdk(string[] adUnitIds = null)
     {
-        String serializedAdUnitIds = (adUnitIds != null) ? String.Join(",", adUnitIds) : "";
+        var serializedAdUnitIds = (adUnitIds != null) ? string.Join(",", adUnitIds) : "";
         _MaxInitializeSdk(serializedAdUnitIds, GenerateMetaData());
     }
 
@@ -98,7 +98,21 @@ public class MaxSdkiOS : MaxSdkBase
 
     #endregion
 
-    #region Mediation Debugger
+    #region MAX
+
+    [DllImport("__Internal")]
+    private static extern string _MaxGetAvailableMediatedNetworks();
+
+    /// <summary>
+    /// Returns the list of available mediation networks.
+    /// 
+    /// Please call this method after the SDK has initialized.
+    /// </summary>
+    public static List<MaxSdkBase.MediatedNetworkInfo> GetAvailableMediatedNetworks()
+    {
+        var serializedNetworks = _MaxGetAvailableMediatedNetworks();
+        return MaxSdkUtils.PropsStringsToList<MaxSdkBase.MediatedNetworkInfo>(serializedNetworks);
+    }
 
     [DllImport("__Internal")]
     private static extern void _MaxShowMediationDebugger();
@@ -115,45 +129,42 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
-    private static extern string _MaxGetAdInfo(string adUnitIdentifier);
+    private static extern string _MaxGetAdValue(string adUnitIdentifier, string key);
 
     /// <summary>
-    /// Returns information about the last loaded ad for the given ad unit identifier. Returns null if no ad is loaded.
+    /// Returns the arbitrary ad value for a given ad unit identifier with key. Returns null if no ad is loaded.
     /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of an ad</param>
-    /// <returns>Information about the ad, or null if no ad is loaded.</returns>
-    public static MaxSdkBase.AdInfo GetAdInfo(string adUnitIdentifier)
+    /// <param name="adUnitIdentifier"></param>
+    /// <param name="key">Ad value key</param>
+    /// <returns>Arbitrary ad value for a given key, or null if no ad is loaded.</returns>
+    public static string GetAdValue(string adUnitIdentifier, string key)
     {
-        string adInfoString = _MaxGetAdInfo(adUnitIdentifier);
+        var value = _MaxGetAdValue(adUnitIdentifier, key);
 
-        if (string.IsNullOrEmpty(adInfoString)) return null;
+        if (string.IsNullOrEmpty(value)) return null;
 
-        return new MaxSdkBase.AdInfo(adInfoString);
+        return value;
     }
 
     #endregion
 
     #region Privacy
 
-    [DllImport("__Internal")]
-    private static extern int _MaxConsentDialogState();
-
     /// <summary>
-    /// Get the consent dialog state for this user. If no such determination could be made, <see cref="MaxSdkBase.ConsentDialogState.Unknown"/> will be returned.
+    /// Get the SDK configuration for this user.
     ///
-    /// Note: this method should be called only after SDK has been initialized
+    /// Note: This method should be called only after SDK has been initialized.
     /// </summary>
-    public static ConsentDialogState GetConsentDialogState()
+    [DllImport("__Internal")]
+    private static extern string _MaxGetSdkConfiguration();
+
+    public static SdkConfiguration GetSdkConfiguration()
     {
-        if (!IsInitialized())
-        {
-            MaxSdkLogger.UserWarning(
-                "MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
-        }
-
-        return (ConsentDialogState) _MaxConsentDialogState();
+        var sdkConfigurationStr = _MaxGetSdkConfiguration();
+        var sdkConfigurationDict = MaxSdkUtils.PropsStringToDict(sdkConfigurationStr);
+        return SdkConfiguration.Create(sdkConfigurationDict);
     }
-
+    
     [DllImport("__Internal")]
     private static extern void _MaxSetHasUserConsent(bool hasUserConsent);
 
@@ -376,7 +387,7 @@ public class MaxSdkiOS : MaxSdkBase
     private static extern void _MaxSetBannerExtraParameter(string adUnitIdentifier, string key, string value);
 
     /// <summary>
-    /// Set an extra parameter for the ad.
+    /// Set an extra parameter for the banner ad.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the banner to set the extra parameter for.</param>
     /// <param name="key">The key for the extra parameter.</param>
@@ -525,6 +536,21 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
+    private static extern void _MaxSetMRecExtraParameter(string adUnitIdentifier, string key, string value);
+
+    /// <summary>
+    /// Set an extra parameter for the MREC ad.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to set the extra parameter for.</param>
+    /// <param name="key">The key for the extra parameter.</param>
+    /// <param name="value">The value for the extra parameter.</param>
+    public static void SetMRecExtraParameter(string adUnitIdentifier, string key, string value)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "set MREC extra parameter");
+        _MaxSetMRecExtraParameter(adUnitIdentifier, key, value);
+    }
+
+    [DllImport("__Internal")]
     private static extern string _MaxGetMRecLayout(string adUnitIdentifier);
 
     /// <summary>
@@ -537,6 +563,121 @@ public class MaxSdkiOS : MaxSdkBase
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "get MREC layout");
         var positionRect = _MaxGetMRecLayout(adUnitIdentifier);
+        return GetRectFromString(positionRect);
+    }
+
+    #endregion
+
+    #region Cross Promo Ads
+
+    [DllImport("__Internal")]
+    private static extern void _MaxCreateCrossPromoAd(string adUnitIdentifier, float x, float y, float width, float height, float rotation);
+
+    /// <summary>
+    /// Create a new cross promo ad with a custom position.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the cross promo ad to create</param>
+    /// <param name="x">The X coordinate (horizontal position) of the cross promo ad relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the cross promo ad relative to the top left corner of the screen.</param>
+    /// <param name="width">The width of the cross promo ad.</param>
+    /// <param name="height">The height of the cross promo ad.</param>
+    /// <param name="rotation">The rotation of the cross promo ad in degrees.</param>
+    /// <seealso cref="GetCrossPromoAdLayout">
+    /// The cross promo is placed within the safe area of the screen. You can use this to get the absolute position Rect of the cross promo ad on screen.
+    /// </seealso>
+    public static void CreateCrossPromoAd(string adUnitIdentifier, float x, float y, float width, float height, float rotation)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "create cross promo ad");
+        _MaxCreateCrossPromoAd(adUnitIdentifier, x, y, width, height, rotation);
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxSetCrossPromoAdPlacement(string adUnitIdentifier, string placement);
+
+    /// <summary>
+    /// Set the cross promo ad placement for an ad unit identifier to tie the future ad events to.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the cross promo ad to set the placement for</param>
+    /// <param name="placement">Placement to set</param>
+    public static void SetCrossPromoAdPlacement(string adUnitIdentifier, string placement)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "set cross promo ad placement");
+        _MaxSetCrossPromoAdPlacement(adUnitIdentifier, placement);
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxUpdateCrossPromoAdPosition(string adUnitIdentifier, float x, float y, float width, float height, float rotation);
+
+    /// <summary>
+    /// Updates the position of the cross promo ad to the new coordinates provided.
+    /// </summary>
+    /// <param name="adUnitIdentifier">The ad unit identifier of the cross promo ad for which to update the position</param>
+    /// <param name="x">The X coordinate (horizontal position) of the cross promo ad relative to the top left corner of the screen.</param>
+    /// <param name="y">The Y coordinate (vertical position) of the cross promo ad relative to the top left corner of the screen.</param>
+    /// <param name="width">The width of the cross promo ad.</param>
+    /// <param name="height">The height of the cross promo ad.</param>
+    /// <param name="rotation">The rotation of the cross promo ad in degrees.</param>
+    /// <seealso cref="GetCrossPromoAdLayout">
+    /// The cross promo ad is placed within the safe area of the screen. You can use this to get the absolute position Rect of the cross promo ad on screen.
+    /// </seealso>
+    public static void UpdateCrossPromoAdPosition(string adUnitIdentifier, float x, float y, float width, float height, float rotation)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "update cross promo ad position");
+        _MaxUpdateCrossPromoAdPosition(adUnitIdentifier, x, y, width, height, rotation);
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxShowCrossPromoAd(string adUnitIdentifier);
+
+    /// <summary>
+    /// Show cross promo ad at a position determined by the 'CreateCrossPromoAd' call.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the cross promo ad to show</param>
+    public static void ShowCrossPromoAd(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "show cross promo ad");
+        _MaxShowCrossPromoAd(adUnitIdentifier);
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxDestroyCrossPromoAd(string adUnitIdentifier);
+
+    /// <summary>
+    /// Remove cross promo ad from the ad view and destroy it.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the cross promo ad to destroy</param>
+    public static void DestroyCrossPromoAd(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "destroy cross promo ad");
+        _MaxDestroyCrossPromoAd(adUnitIdentifier);
+    }
+
+    [DllImport("__Internal")]
+    private static extern void _MaxHideCrossPromoAd(string adUnitIdentifier);
+
+    /// <summary>
+    /// Hide cross promo ad.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the cross promo ad to hide</param>
+    public static void HideCrossPromoAd(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "hide cross promo ad");
+        _MaxHideCrossPromoAd(adUnitIdentifier);
+    }
+
+    [DllImport("__Internal")]
+    private static extern string _MaxGetCrossPromoAdLayout(string adUnitIdentifier);
+
+    /// <summary>
+    /// The cross promo ad position on the screen. When setting the cross promo ad position via <see cref="CreateCrossPromoAd(string, float, float, float, float, float)"/> or <see cref="UpdateCrossPromoAdPosition(string, float, float, float, float, float)"/>,
+    /// the cross promo ad is placed within the safe area of the screen. This returns the absolute position of the cross promo ad on screen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the cross promo ad for which to get the position on screen.</param>
+    /// <returns>A <see cref="Rect"/> representing the banner position on screen.</returns>
+    public static Rect GetCrossPromoAdLayout(string adUnitIdentifier)
+    {
+        ValidateAdUnitIdentifier(adUnitIdentifier, "get cross promo ad layout");
+        var positionRect = _MaxGetCrossPromoAdLayout(adUnitIdentifier);
         return GetRectFromString(positionRect);
     }
 
@@ -847,15 +988,15 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
-    private static extern bool _MaxSetAdInfoButtonEnabled(bool enabled);
+    private static extern bool _MaxSetCreativeDebuggerEnabled(bool enabled);
 
     /// <summary>
-    /// If enabled, a button will appear over fullscreen ads in development builds. This button will display information about the current ad when pressed.
+    /// Whether the creative debugger will be displayed on fullscreen ads after flipping the device screen down twice. Defaults to true.
     /// </summary>
-    /// <param name="enabled"><c>true</c> if the ad info button should be enabled.</param>
-    public static void SetAdInfoButtonEnabled(bool enabled)
+    /// <param name="enabled"><c>true</c> if the creative debugger should be enabled.</param>
+    public static void SetCreativeDebuggerEnabled(bool enabled)
     {
-        _MaxSetAdInfoButtonEnabled(enabled);
+        _MaxSetCreativeDebuggerEnabled(enabled);
     }
 
     [DllImport("__Internal")]
@@ -893,6 +1034,39 @@ public class MaxSdkiOS : MaxSdkBase
     internal static void SetUserSegmentField(string name, string value)
     {
         _MaxSetUserSegmentField(name, value);
+    }
+
+    #endregion
+
+    #region Obsolete
+
+    [DllImport("__Internal")]
+    private static extern int _MaxConsentDialogState();
+
+    [Obsolete("This method has been deprecated. Please use `GetSdkConfiguration().ConsentDialogState`")]
+    public static ConsentDialogState GetConsentDialogState()
+    {
+        if (!IsInitialized())
+        {
+            MaxSdkLogger.UserWarning(
+                "MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
+        }
+
+        return (ConsentDialogState) _MaxConsentDialogState();
+    }
+
+    [DllImport("__Internal")]
+    private static extern string _MaxGetAdInfo(string adUnitIdentifier);
+
+    [Obsolete("This method has been deprecated. The AdInfo object is returned with ad callbacks.")]
+    public static AdInfo GetAdInfo(string adUnitIdentifier)
+    {
+        var adInfoString = _MaxGetAdInfo(adUnitIdentifier);
+
+        if (string.IsNullOrEmpty(adInfoString)) return null;
+
+        var adInfoDictionary = MaxSdkUtils.PropsStringToDict(adInfoString);
+        return new AdInfo(adInfoDictionary);
     }
 
     #endregion

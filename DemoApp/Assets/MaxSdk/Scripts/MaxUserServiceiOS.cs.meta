@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 6233dd3f0b4664e7dbdca14cc8904176
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/MaxUserServiceiOS.cs
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

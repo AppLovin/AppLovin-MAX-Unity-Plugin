@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 1db980bd612824d2097f78fd779e6051
+labels:
+- al_max
+- al_max_export_path-MaxSdk/AppLovin/Plugins/Android/applovin-max-unity-plugin.aar
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2

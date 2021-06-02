@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: a4cfc1a18fa3a469b96d885db522f42e
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/MaxSdk.Scripts.asmdef
 AssemblyDefinitionImporter:
   externalObjects: {}
   userData: 

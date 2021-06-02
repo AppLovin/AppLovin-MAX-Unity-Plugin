@@ -29,12 +29,21 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)createMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier atPosition:(NSString *)mrecPosition;
 - (void)createMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset;
 - (void)setMRecPlacement:(nullable NSString *)placement forAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)setMRecExtraParameterForAdUnitIdentifier:(NSString *)adUnitIdentifier key:(NSString *)key value:(nullable NSString *)value;
 - (void)showMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)destroyMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)hideMRecWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)updateMRecPosition:(NSString *)mrecPosition forAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (void)updateMRecPosition:(CGFloat)xOffset y:(CGFloat)yOffset forAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (NSString *)mrecLayoutForAdUnitIdentifier:(NSString *)adUnitIdentifier;
+
+- (void)createCrossPromoAdWithAdUnitIdentifier:(NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset width:(CGFloat)width height:(CGFloat)height rotation:(CGFloat)rotation;
+- (void)setCrossPromoAdPlacement:(nullable NSString *)placement forAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)showCrossPromoAdWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)destroyCrossPromoAdWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)hideCrossPromoAdWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
+- (void)updateCrossPromoAdPositionForAdUnitIdentifier:(NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset width:(CGFloat)width height:(CGFloat)height rotation:(CGFloat)rotation;
+- (NSString *)crossPromoAdLayoutForAdUnitIdentifier:(NSString *)adUnitIdentifier;
 
 - (void)loadInterstitialWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
 - (BOOL)isInterstitialReadyWithAdUnitIdentifier:(NSString *)adUnitIdentifier;
@@ -57,8 +66,14 @@ NS_ASSUME_NONNULL_BEGIN
 // Ad Info
 - (NSString *)adInfoForAdUnitIdentifier:(NSString *)adUnitIdentifier;
 
+// Ad Value
+- (NSString *)adValueForAdUnitIdentifier:(NSString *)adUnitIdentifier withKey:(NSString *)key;
+
 // User Service
 - (void)didDismissUserConsentDialog;
+
+// Utils
++ (NSString *)propsStrFromDictionary:(NSDictionary<NSString *, NSString *> *)dict;
 
 /**
  * Creates an instance of @c MAUnityAdManager if needed and returns the singleton instance.

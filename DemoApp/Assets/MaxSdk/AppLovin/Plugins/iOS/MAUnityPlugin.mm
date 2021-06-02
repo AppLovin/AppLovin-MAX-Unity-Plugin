@@ -17,6 +17,7 @@ UIView* UnityGetGLView();
 extern "C"
 {
     static NSString *const TAG = @"MAUnityPlugin";
+    static NSString *const ARRAY_ITEM_SEPARATOR = @",\n";
     
     static ALSdk *_sdk;
     static MAUnityAdManager *_adManager;
@@ -29,7 +30,7 @@ extern "C"
     static NSString *_userSegmentNameToSet;
     static NSArray<NSString *> *_testDeviceIdentifiersToSet;
     static NSNumber *_verboseLoggingToSet;
-    static NSNumber *_adInfoButtonEnabledToSet;
+    static NSNumber *_creativeDebuggerEnabledToSet;
     static NSNumber *_exceptionHandlerEnabledToSet;
     
     // Helper method to create C string copy
@@ -95,10 +96,10 @@ extern "C"
             _verboseLoggingToSet = nil;
         }
 
-        if ( _adInfoButtonEnabledToSet )
+        if ( _creativeDebuggerEnabledToSet )
         {
-            _sdk.settings.adInfoButtonEnabled = _adInfoButtonEnabledToSet.boolValue;
-            _adInfoButtonEnabledToSet = nil;
+            _sdk.settings.creativeDebuggerEnabled = _creativeDebuggerEnabledToSet.boolValue;
+            _creativeDebuggerEnabledToSet = nil;
         }
 
         if ( _exceptionHandlerEnabledToSet )
@@ -111,6 +112,30 @@ extern "C"
     bool _MaxIsInitialized()
     {
         return _isPluginInitialized && _isSdkInitialized;
+    }
+
+    const char * _MaxGetAvailableMediatedNetworks()
+    {
+        if ( !_sdk )
+        {
+            NSLog(@"[%@] Failed to get available mediated networks - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG);
+            return cStringCopy(@"");
+        }
+        
+        NSArray<MAMediatedNetworkInfo *> *availableMediatedNetworks = [_sdk availableMediatedNetworks];
+        
+        // Create array of serialized network strings
+        NSMutableArray<NSString *> *serializedNetworks = [NSMutableArray arrayWithCapacity: availableMediatedNetworks.count];
+        for ( MAMediatedNetworkInfo *mediatedNetwork in availableMediatedNetworks )
+        {
+            NSString *result = [MAUnityAdManager propsStrFromDictionary: @{@"name" : mediatedNetwork.name,
+                                                                           @"adapterClassName" : mediatedNetwork.adapterClassName,
+                                                                           @"adapterVersion" : mediatedNetwork.adapterVersion,
+                                                                           @"sdkVersion" : mediatedNetwork.sdkVersion}];
+            [serializedNetworks addObject: result];
+        }
+        
+        return cStringCopy([serializedNetworks componentsJoinedByString: ARRAY_ITEM_SEPARATOR]);
     }
     
     void _MaxShowMediationDebugger()
@@ -169,6 +194,22 @@ extern "C"
         {
             _userSegmentNameToSet = value;
         }
+    }
+
+    const char * _MaxGetSdkConfiguration()
+    {
+        if ( !_sdk )
+        {
+            NSLog(@"[%@] Failed to get SDK configuration - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG);
+            return cStringCopy(@"");
+        }
+        
+        NSString *consentDialogStateStr = @(_sdk.configuration.consentDialogState).stringValue;
+        NSString *appTrackingStatus = @(_sdk.configuration.appTrackingTransparencyStatus).stringValue; // Deliberately name it `appTrackingStatus` to be a bit more generic (in case Android introduces a similar concept)
+
+        return cStringCopy([MAUnityAdManager propsStrFromDictionary: @{@"consentDialogState" : consentDialogStateStr,
+                                                                       @"countryCode" : _sdk.configuration.countryCode,
+                                                                       @"appTrackingStatus" : appTrackingStatus}]);
     }
     
     void _MaxSetHasUserConsent(bool hasUserConsent)
@@ -326,12 +367,64 @@ extern "C"
         
         [_adManager hideMRecWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
-    
+
+    void _MaxSetMRecExtraParameter(const char *adUnitIdentifier, const char *key, const char *value)
+    {
+        [_adManager setMRecExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
+                                                         key: NSSTRING(key)
+                                                       value: NSSTRING(value)];
+    }
+
     const char * _MaxGetMRecLayout(const char *adUnitIdentifier)
     {
         if (!isPluginInitialized()) return cStringCopy(@"");
         
         return cStringCopy([_adManager mrecLayoutForAdUnitIdentifier: NSSTRING(adUnitIdentifier)]);
+    }
+
+    void _MaxCreateCrossPromoAd(const char *adUnitIdentifier, const float x, const float y, const float width, const float height, const float rotation)
+    {
+        if (!isPluginInitialized()) return;
+        
+        [_adManager createCrossPromoAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) x: x y: y width: width height: height rotation: rotation];
+    }
+
+    void _MaxSetCrossPromoAdPlacement(const char *adUnitIdentifier, const char *placement)
+    {
+        [_adManager setCrossPromoAdPlacement: NSSTRING(placement) forAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
+    }
+
+    void _MaxUpdateCrossPromoAdPosition(const char *adUnitIdentifier, const float x, const float y, const float width, const float height, const float rotation)
+    {
+        [_adManager updateCrossPromoAdPositionForAdUnitIdentifier: NSSTRING(adUnitIdentifier) x: x y: y width: width height: height rotation: rotation];
+    }
+
+    void _MaxShowCrossPromoAd(const char *adUnitIdentifier)
+    {
+        if (!isPluginInitialized()) return;
+        
+        [_adManager showCrossPromoAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
+    }
+
+    void _MaxDestroyCrossPromoAd(const char *adUnitIdentifier)
+    {
+        if (!isPluginInitialized()) return;
+        
+        [_adManager destroyCrossPromoAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
+    }
+
+    void _MaxHideCrossPromoAd(const char *adUnitIdentifier)
+    {
+        if (!isPluginInitialized()) return;
+        
+        [_adManager hideCrossPromoAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
+    }
+
+    const char * _MaxGetCrossPromoAdLayout(const char *adUnitIdentifier)
+    {
+        if (!isPluginInitialized()) return cStringCopy(@"");
+        
+        return cStringCopy([_adManager crossPromoAdLayoutForAdUnitIdentifier: NSSTRING(adUnitIdentifier)]);
     }
     
     void _MaxLoadInterstitial(const char *adUnitIdentifier)
@@ -473,6 +566,11 @@ extern "C"
     {
         return cStringCopy([_adManager adInfoForAdUnitIdentifier: NSSTRING(adUnitIdentifier)]);
     }
+    
+    const char * _MaxGetAdValue(const char *adUnitIdentifier, const char *key)
+    {
+        return cStringCopy([_adManager adValueForAdUnitIdentifier: NSSTRING(adUnitIdentifier) withKey: NSSTRING(key)]);
+    }
 
     void _MaxSetVerboseLogging(bool enabled)
     {
@@ -483,7 +581,7 @@ extern "C"
         }
         else
         {
-            _verboseLoggingToSet = [NSNumber numberWithBool: enabled];
+            _verboseLoggingToSet = @(enabled);
         }
     }
     
@@ -520,16 +618,16 @@ extern "C"
         }
     }
 
-    void _MaxSetAdInfoButtonEnabled(bool enabled)
+    void _MaxSetCreativeDebuggerEnabled(bool enabled)
     {
         if ( _sdk )
         {
-            _sdk.settings.adInfoButtonEnabled = enabled;
-            _adInfoButtonEnabledToSet = nil;
+            _sdk.settings.creativeDebuggerEnabled = enabled;
+            _creativeDebuggerEnabledToSet = nil;
         }
         else
         {
-            _adInfoButtonEnabledToSet = [NSNumber numberWithBool: enabled];
+            _creativeDebuggerEnabledToSet = @(enabled);
         }
     }
     
@@ -542,7 +640,7 @@ extern "C"
         }
         else
         {
-            _exceptionHandlerEnabledToSet = [NSNumber numberWithBool: enabled];
+            _exceptionHandlerEnabledToSet = @(enabled);
         }
     }
 

@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 732b7510bc9c94aafb3fd3b8c0dc5d2d
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/IntegrationManager/Editor/AppLovinProcessGradleBuildFile.cs
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 54c062c0526b148efa2ea2e9489b3aa0
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Prefabs/BannerBottom.prefab
 PrefabImporter:
   externalObjects: {}
   userData: 

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 public class MaxSdk :
-#if UNITY_EDITOR 
+#if UNITY_EDITOR
     // Check for Unity Editor first since the editor also responds to the currently selected platform.
     MaxSdkUnityEditor
 #elif UNITY_ANDROID
@@ -18,7 +18,7 @@ public class MaxSdk :
     MaxSdkUnityEditor
 #endif
 {
-    private const string _version = "3.1.18";
+    private const string _version = "4.3.0";
 
     /// <summary>
     /// Returns the current plugin version.
