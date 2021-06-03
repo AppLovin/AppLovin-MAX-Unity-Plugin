@@ -356,6 +356,12 @@ public class HomeScreen : MonoBehaviour
 
     private void InitializeBannerAds()
     {
+        // Attach Callbacks
+        MaxSdkCallbacks.Banner.OnAdLoadedEvent += OnBannerAdLoadedEvent;
+        MaxSdkCallbacks.Banner.OnAdLoadFailedEvent += OnBannerAdFailedEvent;
+        MaxSdkCallbacks.Banner.OnAdClickedEvent += OnBannerAdClickedEvent;
+        MaxSdkCallbacks.Banner.OnAdRevenuePaidEvent += OnBannerAdRevenuePaidEvent;
+
         // Banners are automatically sized to 320x50 on phones and 728x90 on tablets.
         // You may use the utility method `MaxSdkUtils.isTablet()` to help with view sizing adjustments.
         MaxSdk.CreateBanner(BannerAdUnitId, MaxSdkBase.BannerPosition.TopCenter);
@@ -380,12 +386,51 @@ public class HomeScreen : MonoBehaviour
         isBannerShowing = !isBannerShowing;
     }
 
+    private void OnBannerAdLoadedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+    {
+        // Banner ad is ready to be shown.
+        // If you have already called MaxSdk.ShowBanner(BannerAdUnitId) it will automatically be shown on the next ad refresh.
+        Debug.Log("Banner ad loaded");
+    }
+
+    private void OnBannerAdFailedEvent(string adUnitId, MaxSdkBase.ErrorInfo errorInfo)
+    {
+        // Banner ad failed to load. MAX will automatically try loading a new ad internally.
+        Debug.Log("Banner ad failed to load with error code: " + errorInfo.Code);
+    }
+
+    private void OnBannerAdClickedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+    {
+        Debug.Log("Banner ad clicked");
+    }
+
+    private void OnBannerAdRevenuePaidEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+    {
+        // Banner ad revenue paid. Use this callback to track user revenue.
+        Debug.Log("Banner ad revenue paid");
+
+        // Ad revenue
+        double revenue = adInfo.Revenue;
+        
+        // Miscellaneous data
+        string countryCode = MaxSdk.GetSdkConfiguration().CountryCode; // "US" for the United States, etc - Note: Do not confuse this with currency code which is "USD" in most cases!
+        string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
+        string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
+        string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
+    }
+
     #endregion
 
     #region MREC Ad Methods
 
     private void InitializeMRecAds()
     {
+        // Attach Callbacks
+        MaxSdkCallbacks.MRec.OnAdLoadedEvent += OnMRecAdLoadedEvent;
+        MaxSdkCallbacks.MRec.OnAdLoadFailedEvent += OnMRecAdFailedEvent;
+        MaxSdkCallbacks.MRec.OnAdClickedEvent += OnMRecAdClickedEvent;
+        MaxSdkCallbacks.MRec.OnAdRevenuePaidEvent += OnMRecAdRevenuePaidEvent;
+
         // MRECs are automatically sized to 300x250.
         MaxSdk.CreateMRec(MRecAdUnitId, MaxSdkBase.AdViewPosition.BottomCenter);
     }
@@ -404,6 +449,39 @@ public class HomeScreen : MonoBehaviour
         }
 
         isMRecShowing = !isMRecShowing;
+    }
+
+    private void OnMRecAdLoadedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+    {
+        // MRec ad is ready to be shown.
+        // If you have already called MaxSdk.ShowMRec(MRecAdUnitId) it will automatically be shown on the next MRec refresh.
+        Debug.Log("MRec ad loaded");
+    }
+
+    private void OnMRecAdFailedEvent(string adUnitId, MaxSdkBase.ErrorInfo errorInfo)
+    {
+        // MRec ad failed to load. MAX will automatically try loading a new ad internally.
+        Debug.Log("MRec ad failed to load with error code: " + errorInfo.Code);
+    }
+
+    private void OnMRecAdClickedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+    {
+        Debug.Log("MRec ad clicked");
+    }
+
+    private void OnMRecAdRevenuePaidEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+    {
+        // MRec ad revenue paid. Use this callback to track user revenue.
+        Debug.Log("MRec ad revenue paid");
+
+        // Ad revenue
+        double revenue = adInfo.Revenue;
+        
+        // Miscellaneous data
+        string countryCode = MaxSdk.GetSdkConfiguration().CountryCode; // "US" for the United States, etc - Note: Do not confuse this with currency code which is "USD" in most cases!
+        string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
+        string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
+        string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
     }
 
     #endregion
