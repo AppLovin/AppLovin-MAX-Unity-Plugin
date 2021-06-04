@@ -9,51 +9,54 @@
 using System.Collections;
 using UnityEditor;
 
-/// <summary>
-/// A coroutine that can update based on editor application update.
-/// </summary>
-public class AppLovinEditorCoroutine
+namespace AppLovinMax.Scripts.IntegrationManager.Editor
 {
-    private readonly IEnumerator enumerator;
-
-    private AppLovinEditorCoroutine(IEnumerator enumerator)
-    {
-        this.enumerator = enumerator;
-    }
-
     /// <summary>
-    /// Creates and starts a coroutine.
+    /// A coroutine that can update based on editor application update.
     /// </summary>
-    /// <param name="enumerator">The coroutine to be started</param>
-    /// <returns>The coroutine that has been started.</returns>
-    public static AppLovinEditorCoroutine StartCoroutine(IEnumerator enumerator)
+    public class AppLovinEditorCoroutine
     {
-        var coroutine = new AppLovinEditorCoroutine(enumerator);
-        coroutine.Start();
-        return coroutine;
-    }
+        private readonly IEnumerator enumerator;
 
-    private void Start()
-    {
-        EditorApplication.update += OnEditorUpdate;
-    }
-
-    /// <summary>
-    /// Stops the coroutine.
-    /// </summary>
-    public void Stop()
-    {
-        if (EditorApplication.update == null) return;
-
-        EditorApplication.update -= OnEditorUpdate;
-    }
-
-    private void OnEditorUpdate()
-    {
-        // Coroutine has ended, stop updating.
-        if (!enumerator.MoveNext())
+        private AppLovinEditorCoroutine(IEnumerator enumerator)
         {
-            Stop();
+            this.enumerator = enumerator;
+        }
+
+        /// <summary>
+        /// Creates and starts a coroutine.
+        /// </summary>
+        /// <param name="enumerator">The coroutine to be started</param>
+        /// <returns>The coroutine that has been started.</returns>
+        public static AppLovinEditorCoroutine StartCoroutine(IEnumerator enumerator)
+        {
+            var coroutine = new AppLovinEditorCoroutine(enumerator);
+            coroutine.Start();
+            return coroutine;
+        }
+
+        private void Start()
+        {
+            EditorApplication.update += OnEditorUpdate;
+        }
+
+        /// <summary>
+        /// Stops the coroutine.
+        /// </summary>
+        public void Stop()
+        {
+            if (EditorApplication.update == null) return;
+
+            EditorApplication.update -= OnEditorUpdate;
+        }
+
+        private void OnEditorUpdate()
+        {
+            // Coroutine has ended, stop updating.
+            if (!enumerator.MoveNext())
+            {
+                Stop();
+            }
         }
     }
 }

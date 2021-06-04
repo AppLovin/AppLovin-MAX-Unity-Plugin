@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: ff2b160afdfd4a74b731954323772a90
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/MaxSdkLogger.cs
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

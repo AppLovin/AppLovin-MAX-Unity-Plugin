@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 7e373ed7168b243e6b706e991ab5a643
+labels:
+- al_max
+- al_max_export_path-MaxSdk/AppLovin/Plugins/iOS/MAUnityPlugin.mm
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2

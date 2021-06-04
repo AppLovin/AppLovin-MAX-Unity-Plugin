@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class MaxSdkUtils
 {
     private static readonly char _DictKeyValueSeparator = (char) 28;
     private static readonly char _DictKeyValuePairSeparator = (char) 29;
+    private static readonly string _ArrayItemSeparator = ",\n";
 
     /// <summary>
     /// An Enum to be used when comparing two versions.
@@ -60,8 +65,8 @@ public class MaxSdkUtils
     /// The native iOS and Android plugins forward dictionaries as a string such as:
     ///
     /// "key_1=value1
-    ///  key_2=value2,
-    ///  key=3-value3"
+    ///  key_2=value2
+    ///  key_3=value3"
     ///  
     /// </summary>
     public static IDictionary<string, string> PropsStringToDict(string str)
@@ -91,7 +96,7 @@ public class MaxSdkUtils
     /// <summary>
     /// The native iOS and Android plugins forward dictionaries as a string such as:
     ///
-    /// "key_1=value1,key_2=value2,key=3-value3"
+    /// "key_1=value1,key_2=value2,key_3=value3"
     ///  
     /// </summary>
     public static String DictToPropsString(IDictionary<string, string> dict)
@@ -113,6 +118,34 @@ public class MaxSdkUtils
         }
 
         return serialized.ToString();
+    }
+
+    /// <summary>
+    /// The native iOS and Android plugins forward arrays of dictionaries as a string such as:
+    ///
+    /// key_1=value1
+    /// key_2=value2
+    /// ,
+    /// key_1=value1
+    /// key_2=value2
+    ///  
+    /// </summary>
+    public static List<T> PropsStringsToList<T>(string str)
+    {
+        var result = new List<T>();
+
+        if (string.IsNullOrEmpty(str)) return result;
+
+        var infoStrings = str.Split(new[] { _ArrayItemSeparator }, StringSplitOptions.None);
+        foreach (var infoString in infoStrings)
+        {
+            // Dynamically construct generic type with string argument.
+            // The type T must have a constructor that creates a new object from an info string, i.e., new T(infoString)
+            var instance = (T)Activator.CreateInstance(typeof(T), infoString);
+            result.Add(instance);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -320,4 +353,19 @@ public class MaxSdkUtils
 
         return VersionComparisonResult.Equal;
     }
+
+#if UNITY_EDITOR
+    /// <summary>
+    /// Gets the path of the asset in the project for a given MAX plugin export path.
+    /// </summary>
+    /// <param name="exportPath">The actual exported path of the asset.</param>
+    /// <returns>The exported path of the MAX plugin asset or the default export path if the asset is not found.</returns>
+    public static string GetAssetPathForExportPath(string exportPath)
+    {
+        var defaultPath = Path.Combine("Assets", exportPath);
+        var assetGuids = AssetDatabase.FindAssets("l:al_max_export_path-" + exportPath);
+
+        return assetGuids.Length < 1 ? defaultPath : AssetDatabase.GUIDToAssetPath(assetGuids[0]);
+    }
+#endif
 }

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dependencies>
     <androidPackages>
-        <androidPackage spec="com.applovin:applovin-sdk:9.14.12" />
+        <androidPackage spec="com.applovin:applovin-sdk:10.3.0" />
         <androidPackage spec="com.google.android.gms:play-services-ads-identifier:16.0.0" />
-        <androidPackage spec="com.google.android.exoplayer:exoplayer:2.12.1" />
+        <androidPackage spec="com.google.android.exoplayer:exoplayer:2.13.3" />
     </androidPackages>
     <iosPods>
-        <iosPod name="AppLovinSDK" version="6.14.11" />
+        <iosPod name="AppLovinSDK" version="10.3.0" />
     </iosPods>
 </dependencies>

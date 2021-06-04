@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 8a6ad2e147c3a4553bda59a84413f07b
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Version.md
 TextScriptImporter:
   externalObjects: {}
   userData: 

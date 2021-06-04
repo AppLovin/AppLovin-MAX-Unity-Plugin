@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 10335fad6bfef47b8819a411aa591dc8
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/MaxSdkAndroid.cs
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

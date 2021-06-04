@@ -1,5 +1,8 @@
 fileFormatVersion: 2
 guid: 16d44e29e68204f36975abec0feb1d35
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/MaxUserServiceUnityEditor.cs
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

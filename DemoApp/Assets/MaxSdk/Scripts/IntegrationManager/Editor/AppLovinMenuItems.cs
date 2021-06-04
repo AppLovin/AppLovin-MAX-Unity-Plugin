@@ -9,49 +9,52 @@
 using UnityEditor;
 using UnityEngine;
 
-public class AppLovinMenuItems
+namespace AppLovinMax.Scripts.IntegrationManager.Editor
 {
-    /**
-     * The special characters at the end represent a shortcut for this action.
-     * 
-     * % - ctrl on Windows, cmd on macOS
-     * # - shift
-     * & - alt
-     * 
-     * So, (shift + cmd/ctrl + i) will launch the integration manager
-     */
-    [MenuItem("AppLovin/Integration Manager %#i")]
-    private static void IntegrationManager()
+    public class AppLovinMenuItems
     {
-        ShowIntegrationManager();
-    }
+        /**
+         * The special characters at the end represent a shortcut for this action.
+         * 
+         * % - ctrl on Windows, cmd on macOS
+         * # - shift
+         * & - alt
+         * 
+         * So, (shift + cmd/ctrl + i) will launch the integration manager
+         */
+        [MenuItem("AppLovin/Integration Manager %#i")]
+        private static void IntegrationManager()
+        {
+            ShowIntegrationManager();
+        }
 
-    [MenuItem("AppLovin/Documentation")]
-    private static void Documentation()
-    {
-        Application.OpenURL("https://dash.applovin.com/documentation/mediation/unity/getting-started");
-    }
+        [MenuItem("AppLovin/Documentation")]
+        private static void Documentation()
+        {
+            Application.OpenURL("https://dash.applovin.com/documentation/mediation/unity/getting-started");
+        }
 
-    [MenuItem("AppLovin/Contact Us")]
-    private static void ContactUs()
-    {
-        Application.OpenURL("https://www.applovin.com/contact/");
-    }
+        [MenuItem("AppLovin/Contact Us")]
+        private static void ContactUs()
+        {
+            Application.OpenURL("https://www.applovin.com/contact/");
+        }
 
-    [MenuItem("AppLovin/About")]
-    private static void About()
-    {
-        Application.OpenURL("https://www.applovin.com/about/");
-    }
+        [MenuItem("AppLovin/About")]
+        private static void About()
+        {
+            Application.OpenURL("https://www.applovin.com/about/");
+        }
 
-    [MenuItem("Assets/AppLovin Integration Manager")]
-    private static void AssetsIntegrationManager()
-    {
-        ShowIntegrationManager();
-    }
+        [MenuItem("Assets/AppLovin Integration Manager")]
+        private static void AssetsIntegrationManager()
+        {
+            ShowIntegrationManager();
+        }
 
-    private static void ShowIntegrationManager()
-    {
-        AppLovinIntegrationManagerWindow.ShowManager();
+        private static void ShowIntegrationManager()
+        {
+            AppLovinIntegrationManagerWindow.ShowManager();
+        }
     }
 }
