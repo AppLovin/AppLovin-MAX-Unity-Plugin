@@ -37,7 +37,8 @@ public class MaxSdkUnityEditor : MaxSdkBase
         get { return MaxUserServiceUnityEditor.Instance; }
     }
 
-    static MaxSdkUnityEditor()
+    [InitializeOnLoadMethod]
+    private static void MaxSdkEditorInitialization()
     {
         InitCallbacks();
     }
