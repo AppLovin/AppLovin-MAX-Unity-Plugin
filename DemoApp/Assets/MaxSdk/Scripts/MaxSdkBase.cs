@@ -238,6 +238,7 @@ public abstract class MaxSdkBase
     {
         public string AdUnitIdentifier { get; private set; }
         public string NetworkName { get; private set; }
+        public string NetworkPlacement { get; private set; }
         public string Placement { get; private set; }
         public string CreativeIdentifier { get; private set; }
         public double Revenue { get; private set; }
@@ -246,6 +247,7 @@ public abstract class MaxSdkBase
         {
             string adUnitIdentifier;
             string networkName;
+            string networkPlacement;
             string creativeIdentifier;
             string placement;
             string revenue;
@@ -253,6 +255,7 @@ public abstract class MaxSdkBase
             // NOTE: Unity Editor creates empty string
             AdUnitIdentifier = adInfoDictionary.TryGetValue("adUnitId", out adUnitIdentifier) ? adUnitIdentifier : "";
             NetworkName = adInfoDictionary.TryGetValue("networkName", out networkName) ? networkName : "";
+            NetworkPlacement = adInfoDictionary.TryGetValue("networkPlacement", out networkPlacement) ? networkPlacement : "";
             CreativeIdentifier = adInfoDictionary.TryGetValue("creativeId", out creativeIdentifier) ? creativeIdentifier : "";
             Placement = adInfoDictionary.TryGetValue("placement", out placement) ? placement : "";
 
@@ -279,6 +282,7 @@ public abstract class MaxSdkBase
         {
             return "[AdInfo adUnitIdentifier: " + AdUnitIdentifier +
                    ", networkName: " + NetworkName +
+                   ", networkPlacement: " + NetworkPlacement +
                    ", creativeIdentifier: " + CreativeIdentifier +
                    ", placement: " + Placement +
                    ", revenue: " + Revenue + "]";

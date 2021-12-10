@@ -36,6 +36,9 @@ namespace AppLovinMax.Scripts.Editor
         private const string UnityMainTargetName = "Unity-iPhone";
 #endif
         private const string TargetUnityIphonePodfileLine = "target 'Unity-iPhone' do";
+        private const string LegacyResourcesDirectoryName = "Resources";
+        private const string AppLovinMaxResourcesDirectoryName = "AppLovinMAXResources";
+        private const string AppLovinAdvertisingAttributionEndpoint = "https://postbacks-app.com";
 
         private static readonly List<string> AtsRequiringNetworks = new List<string>
         {
@@ -56,6 +59,8 @@ namespace AppLovinMax.Scripts.Editor
             {
                 var dynamicLibraryPathsToEmbed = new List<string>(2);
                 dynamicLibraryPathsToEmbed.Add(Path.Combine("Pods/", "HyprMX/HyprMX.xcframework"));
+                dynamicLibraryPathsToEmbed.Add(Path.Combine("Pods/", "smaato-ios-sdk/vendor/OMSDK_Smaato.xcframework"));
+                dynamicLibraryPathsToEmbed.Add(Path.Combine("Pods/", "FBSDKCoreKit_Basics/XCFrameworks/FBSDKCoreKit_Basics.xcframework"));
                 if (ShouldEmbedSnapSdk())
                 {
                     dynamicLibraryPathsToEmbed.Add(Path.Combine("Pods/", "SAKSDK/SAKSDK.framework"));
@@ -122,14 +127,14 @@ namespace AppLovinMax.Scripts.Editor
             if (dynamicLibraryPathsPresentInProject.Count <= 0) return;
 
 #if UNITY_2019_3_OR_NEWER
-            var containsUnityIphoneTargetInPodfile = ContainsUnityIphoneTargetInPodfile(buildPath);
-            // Embed framework if it is .xcframework or is .framework and the podfile does not contain target `Unity-iPhone`.
-            foreach (var dynamicLibraryPath in dynamicLibraryPathsPresentInProject)
+            // Embed framework only if the podfile does not contain target `Unity-iPhone`.
+            if (!ContainsUnityIphoneTargetInPodfile(buildPath))
             {
-                if (dynamicLibraryPath.EndsWith(".framework") && containsUnityIphoneTargetInPodfile) continue;
-
-                var fileGuid = project.AddFile(dynamicLibraryPath, dynamicLibraryPath);
-                project.AddFileToEmbedFrameworks(targetGuid, fileGuid);
+                foreach (var dynamicLibraryPath in dynamicLibraryPathsPresentInProject)
+                {
+                    var fileGuid = project.AddFile(dynamicLibraryPath, dynamicLibraryPath);
+                    project.AddFileToEmbedFrameworks(targetGuid, fileGuid);
+                }
             }
 #else
             string runpathSearchPaths;
@@ -156,7 +161,8 @@ namespace AppLovinMax.Scripts.Editor
 
         private static void LocalizeUserTrackingDescriptionIfNeeded(string localizedUserTrackingDescription, string localeCode, string buildPath, PBXProject project, string targetGuid)
         {
-            const string resourcesDirectoryName = "Resources";
+            // Use the legacy resources directory name if the build is being appended (the "Resources" directory already exists if it is an incremental build).
+            var resourcesDirectoryName = Directory.Exists(Path.Combine(buildPath, LegacyResourcesDirectoryName)) ? LegacyResourcesDirectoryName : AppLovinMaxResourcesDirectoryName;
             var resourcesDirectoryPath = Path.Combine(buildPath, resourcesDirectoryName);
             var localeSpecificDirectoryName = localeCode + ".lproj";
             var localeSpecificDirectoryPath = Path.Combine(resourcesDirectoryPath, localeSpecificDirectoryName);
@@ -294,14 +300,36 @@ namespace AppLovinMax.Scripts.Editor
             var plist = new PlistDocument();
             plist.ReadFromFile(plistPath);
 
+            SetAttributionReportEndpointIfNeeded(plist);
+
 #if UNITY_2018_2_OR_NEWER
             EnableVerboseLoggingIfNeeded(plist);
 #endif
-            EnableConsentFlowIfNeeded(plist, path);
+            EnableConsentFlowIfNeeded(plist);
             AddSkAdNetworksInfoIfNeeded(plist);
             UpdateAppTransportSecuritySettingsIfNeeded(plist);
+            AddSnapAppStoreAppIdIfNeeded(plist);
 
             plist.WriteToFile(plistPath);
+        }
+
+        private static void SetAttributionReportEndpointIfNeeded(PlistDocument plist)
+        {
+            if (AppLovinSettings.Instance.SetAttributionReportEndpoint)
+            {
+                plist.root.SetString("NSAdvertisingAttributionReportEndpoint", AppLovinAdvertisingAttributionEndpoint);
+            }
+            else
+            {
+                PlistElement attributionReportEndPoint;
+                plist.root.values.TryGetValue("NSAdvertisingAttributionReportEndpoint", out attributionReportEndPoint);
+
+                // Check if we had previously set the attribution endpoint and un-set it.
+                if (attributionReportEndPoint != null && AppLovinAdvertisingAttributionEndpoint.Equals(attributionReportEndPoint.AsString()))
+                {
+                    plist.root.values.Remove("NSAdvertisingAttributionReportEndpoint");
+                }
+            }
         }
 
 #if UNITY_2018_2_OR_NEWER
@@ -322,7 +350,7 @@ namespace AppLovinMax.Scripts.Editor
         }
 #endif
 
-        private static void EnableConsentFlowIfNeeded(PlistDocument plist, string buildPath)
+        private static void EnableConsentFlowIfNeeded(PlistDocument plist)
         {
             // Check if consent flow is enabled. No need to update info.plist if consent flow is disabled.
             var consentFlowEnabled = AppLovinSettings.Instance.ConsentFlowEnabled;
@@ -486,6 +514,25 @@ namespace AppLovinMax.Scripts.Editor
                 MaxSdkLogger.UserDebug("Removing NSAllowsArbitraryLoadsInWebContent");
                 atsRootDict.Remove("NSAllowsArbitraryLoadsInWebContent");
             }
+        }
+
+        private static void AddSnapAppStoreAppIdIfNeeded(PlistDocument plist)
+        {
+            var snapDependencyPath = Path.Combine(PluginMediationDirectory, "Snap/Editor/Dependencies.xml");
+            if (!File.Exists(snapDependencyPath)) return;
+
+            // App Store App ID is only needed for iOS versions 2.0.0.0 or newer.
+            var currentVersion = AppLovinIntegrationManager.GetCurrentVersions(snapDependencyPath);
+            var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, AppLovinSettings.SnapAppStoreAppIdMinVersion);
+            if (iosVersionComparison == MaxSdkUtils.VersionComparisonResult.Lesser) return;
+
+            if (AppLovinSettings.Instance.SnapAppStoreAppId <= 0)
+            {
+                MaxSdkLogger.UserError("Snap App Store App ID is not set. Please enter a valid App ID within the AppLovin Integration Manager window.");
+                return;
+            }
+
+            plist.root.SetInteger("SCAppStoreAppID", AppLovinSettings.Instance.SnapAppStoreAppId);
         }
 
         private static bool ShouldEmbedSnapSdk()

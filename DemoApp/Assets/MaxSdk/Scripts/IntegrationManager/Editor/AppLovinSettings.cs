@@ -25,6 +25,7 @@ public class AppLovinSettings : ScriptableObject
 
     public const string DefaultUserTrackingDescriptionEnV0 = "Pressing \\\"Allow\\\" uses device info for more relevant ad content";
     public const string DefaultUserTrackingDescriptionEnV1 = "This only uses device info for less annoying, more relevant ads";
+    public const string DefaultUserTrackingDescriptionEnV2 = "This only uses device info for more interesting and relevant ads";
 
     public const string DefaultUserTrackingDescriptionDe = "\\\"Erlauben\\\" drücken benutzt Gerätinformationen für relevantere Werbeinhalte";
     public const string DefaultUserTrackingDescriptionEs = "Presionando \\\"Permitir\\\", se usa la información del dispositivo para obtener contenido publicitario más relevante";
@@ -33,6 +34,8 @@ public class AppLovinSettings : ScriptableObject
     public const string DefaultUserTrackingDescriptionKo = "\\\"허용\\\"을 누르면 더 관련성 높은 광고 콘텐츠를 제공하기 위해 기기 정보가 사용됩니다";
     public const string DefaultUserTrackingDescriptionZhHans = "点击\\\"允许\\\"以使用设备信息获得更加相关的广告内容";
     public const string DefaultUserTrackingDescriptionZhHant = "點擊\\\"允許\\\"以使用設備信息獲得更加相關的廣告內容";
+
+    public const string SnapAppStoreAppIdMinVersion = "2.0.0.0";
 
     /// <summary>
     /// A placeholder constant to be replaced with the actual default localization or an empty string based on whether or not localization is enabled when when the getter is called.
@@ -43,6 +46,8 @@ public class AppLovinSettings : ScriptableObject
 
     [SerializeField] private bool qualityServiceEnabled = true;
     [SerializeField] private string sdkKey;
+
+    [SerializeField] private bool setAttributionReportEndpoint;
 
     [SerializeField] private bool consentFlowEnabled;
     [SerializeField] private string consentFlowPrivacyPolicyUrl = string.Empty;
@@ -59,6 +64,8 @@ public class AppLovinSettings : ScriptableObject
 
     [SerializeField] private string adMobAndroidAppId = string.Empty;
     [SerializeField] private string adMobIosAppId = string.Empty;
+
+    [SerializeField] private int snapAppStoreAppId;
 
     /// <summary>
     /// An instance of AppLovin Setting.
@@ -124,6 +131,15 @@ public class AppLovinSettings : ScriptableObject
     }
 
     /// <summary>
+    /// Whether or not to set `NSAdvertisingAttributionReportEndpoint` in Info.plist.
+    /// </summary>
+    public bool SetAttributionReportEndpoint
+    {
+        get { return Instance.setAttributionReportEndpoint; }
+        set { Instance.setAttributionReportEndpoint = value; }
+    }
+
+    /// <summary>
     /// Whether or not AppLovin Consent Flow is enabled.
     /// </summary>
     public bool ConsentFlowEnabled
@@ -131,9 +147,10 @@ public class AppLovinSettings : ScriptableObject
         get
         {
             // Update the default EN description if an old version of the description is still being used.
-            if (DefaultUserTrackingDescriptionEnV0.Equals(Instance.UserTrackingUsageDescriptionEn))
+            if (DefaultUserTrackingDescriptionEnV0.Equals(Instance.UserTrackingUsageDescriptionEn)
+                || DefaultUserTrackingDescriptionEnV1.Equals(Instance.UserTrackingUsageDescriptionEn))
             {
-                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV1;
+                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV2;
             }
 
             return Instance.consentFlowEnabled;
@@ -148,7 +165,7 @@ public class AppLovinSettings : ScriptableObject
                 // If the value didn't change, we don't need to update anything.
                 if (previousValue) return;
 
-                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV1;
+                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV2;
                 Instance.UserTrackingUsageLocalizationEnabled = true;
             }
             else
@@ -204,7 +221,7 @@ public class AppLovinSettings : ScriptableObject
             if (value)
             {
                 // If the value didn't change or the english localization text is not the default one, we don't need to update anything.
-                if (previousValue || !DefaultUserTrackingDescriptionEnV1.Equals(Instance.UserTrackingUsageDescriptionEn)) return;
+                if (previousValue || !DefaultUserTrackingDescriptionEnV2.Equals(Instance.UserTrackingUsageDescriptionEn)) return;
 
                 Instance.UserTrackingUsageDescriptionDe = DefaultUserTrackingDescriptionDe;
                 Instance.UserTrackingUsageDescriptionEs = DefaultUserTrackingDescriptionEs;
@@ -317,12 +334,21 @@ public class AppLovinSettings : ScriptableObject
     }
 
     /// <summary>
-    /// AdMob iOS App ID
+    /// AdMob iOS App ID.
     /// </summary>
     public string AdMobIosAppId
     {
         get { return Instance.adMobIosAppId; }
         set { Instance.adMobIosAppId = value; }
+    }
+
+    /// <summary>
+    /// Snap App Store App ID.
+    /// </summary>
+    public int SnapAppStoreAppId
+    {
+        get { return Instance.snapAppStoreAppId; }
+        set { Instance.snapAppStoreAppId = value; }
     }
 
     /// <summary>

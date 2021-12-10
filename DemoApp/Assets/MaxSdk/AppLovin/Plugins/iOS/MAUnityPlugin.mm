@@ -8,7 +8,11 @@
 
 #import "MAUnityAdManager.h"
 
-#define NSSTRING(_X) ( (_X != NULL) ? [NSString stringWithCString: _X encoding: NSStringEncodingConversionAllowLossy] : nil)
+#define NSSTRING(_X) ( (_X != NULL) ? [NSString stringWithCString: _X encoding: NSStringEncodingConversionAllowLossy].al_stringByTrimmingWhitespace : nil)
+
+@interface NSString (ALUtils)
+@property (nonatomic, copy, readonly) NSString *al_stringByTrimmingWhitespace;
+@end
 
 UIView* UnityGetGLView();
 
@@ -559,7 +563,7 @@ extern "C"
     
     float _MaxScreenDensity()
     {
-        return [UIScreen.mainScreen scale];
+        return [UIScreen.mainScreen nativeScale];
     }
     
     const char * _MaxGetAdInfo(const char *adUnitIdentifier)

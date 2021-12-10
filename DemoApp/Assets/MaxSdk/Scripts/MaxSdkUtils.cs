@@ -198,9 +198,11 @@ public class MaxSdkUtils
     /// </summary>
     public static float GetScreenDensity()
     {
-#if UNITY_IOS
+#if UNITY_EDITOR
+        return 1;
+#elif UNITY_IOS
         return _MaxScreenDensity();
-#elif UNITY_ANDROID && !UNITY_EDITOR
+#elif UNITY_ANDROID
         return MaxUnityPluginClass.CallStatic<float>("getScreenDensity");
 #else
         return -1;

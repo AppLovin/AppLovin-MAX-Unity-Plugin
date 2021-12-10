@@ -121,6 +121,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         public static readonly string GradleTemplatePath = Path.Combine("Assets/Plugins/Android", "mainTemplate.gradle");
         public static readonly string DefaultPluginExportPath = Path.Combine("Assets", "MaxSdk");
+        private const string DefaultMaxSdkAssetExportPath = "MaxSdk/Scripts/MaxSdk.cs";
         private static readonly string MaxSdkAssetExportPath = Path.Combine("MaxSdk", "Scripts/MaxSdk.cs");
 
         /// <summary>
@@ -159,7 +160,22 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// </summary>
         public static string PluginParentDirectory
         {
-            get { return MaxSdkUtils.GetAssetPathForExportPath(MaxSdkAssetExportPath).Replace(MaxSdkAssetExportPath, ""); }
+            get
+            {
+                // Search for the asset with the default exported path first, In most cases, we should be able to find the asset.
+                // In some cases where we don't, use the platform specific export path to search for the asset (in case of migrating a project from Windows to Mac or vice versa).
+                var maxSdkScriptAssetPath = MaxSdkUtils.GetAssetPathForExportPath(DefaultMaxSdkAssetExportPath);
+                if (File.Exists(maxSdkScriptAssetPath))
+                {
+                    // maxSdkScriptAssetPath will always have AltDirectorySeparatorChar (/) as the path separator. Convert to platform specific path.
+                    return maxSdkScriptAssetPath.Replace(DefaultMaxSdkAssetExportPath, "")
+                        .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+                }
+
+                // We should never reach this line but leaving this in out of paranoia.
+                return MaxSdkUtils.GetAssetPathForExportPath(MaxSdkAssetExportPath).Replace(MaxSdkAssetExportPath, "")
+                    .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            }
         }
 
         /// <summary>
@@ -773,7 +789,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static string GetPluginFileName(Network network)
         {
-            return network.Name.ToLower() + "_" + network.LatestVersions.Unity + ".unitypackage";
+            return network.Name.ToLowerInvariant() + "_" + network.LatestVersions.Unity + ".unitypackage";
         }
 
         #endregion
