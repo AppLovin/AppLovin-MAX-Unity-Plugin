@@ -54,18 +54,6 @@ public class HomeScreen : MonoBehaviour
         MaxSdk.InitializeSdk();
     }
 
-    private void TrackAdRevenue(MaxSdkBase.AdInfo adInfo)
-    {
-        AdjustAdRevenue adjustAdRevenue = new AdjustAdRevenue(AdjustConfig.AdjustAdRevenueSourceAppLovinMAX);
-
-        adjustAdRevenue.setRevenue(adInfo.Revenue, "USD");
-        adjustAdRevenue.setAdRevenueNetwork(adInfo.NetworkName);
-        adjustAdRevenue.setAdRevenueUnit(adInfo.AdUnitIdentifier);
-        adjustAdRevenue.setAdRevenuePlacement(adInfo.Placement);
-
-        Adjust.trackAdRevenue(adjustAdRevenue);
-    }
-
     #region Interstitial Ad Methods
 
     private void InitializeInterstitialAds()
@@ -508,4 +496,16 @@ public class HomeScreen : MonoBehaviour
     }
 
     #endregion
+    
+    private void TrackAdRevenue(MaxSdkBase.AdInfo adInfo)
+    {
+        AdjustAdRevenue adjustAdRevenue = new AdjustAdRevenue(AdjustConfig.AdjustAdRevenueSourceAppLovinMAX);
+
+        adjustAdRevenue.setRevenue(adInfo.Revenue, "USD");
+        adjustAdRevenue.setAdRevenueNetwork(adInfo.NetworkName);
+        adjustAdRevenue.setAdRevenueUnit(adInfo.AdUnitIdentifier);
+        adjustAdRevenue.setAdRevenuePlacement(adInfo.Placement);
+
+        Adjust.trackAdRevenue(adjustAdRevenue);
+    }
 }
