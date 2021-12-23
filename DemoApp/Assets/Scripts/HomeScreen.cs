@@ -372,16 +372,14 @@ public class HomeScreen : MonoBehaviour
         string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
         string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
         
-        // initialise with AppLovin MAX source
         AdjustAdRevenue adjustAdRevenue = new AdjustAdRevenue(AdjustConfig.AdjustAdRevenueSourceAppLovinMAX);
-        // set revenue and currency
         adjustAdRevenue.setRevenue(revenue, "USD");
-        // optional parameters
         adjustAdRevenue.setAdRevenueNetwork(networkName);
         adjustAdRevenue.setAdRevenueUnit(adUnitIdentifier);
         adjustAdRevenue.setAdRevenuePlacement(placement);
-        // track ad revenue
+        
         Adjust.trackAdRevenue(adjustAdRevenue);
+
     }
 
     #endregion
