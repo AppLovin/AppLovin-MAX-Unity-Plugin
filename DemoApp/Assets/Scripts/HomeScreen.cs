@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
+using com.adjust.sdk;
 
 public class HomeScreen : MonoBehaviour
 {
@@ -136,6 +137,8 @@ public class HomeScreen : MonoBehaviour
         string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
         string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
         string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
+        
+        TrackAdRevenue(adInfo);
     }
 
     #endregion
@@ -242,6 +245,8 @@ public class HomeScreen : MonoBehaviour
         string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
         string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
         string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
+        
+        TrackAdRevenue(adInfo);
     }
 
     #endregion
@@ -348,6 +353,8 @@ public class HomeScreen : MonoBehaviour
         string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
         string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
         string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
+        
+        TrackAdRevenue(adInfo);
     }
 
     #endregion
@@ -417,6 +424,8 @@ public class HomeScreen : MonoBehaviour
         string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
         string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
         string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
+        
+        TrackAdRevenue(adInfo);
     }
 
     #endregion
@@ -482,7 +491,21 @@ public class HomeScreen : MonoBehaviour
         string networkName = adInfo.NetworkName; // Display name of the network that showed the ad (e.g. "AdColony")
         string adUnitIdentifier = adInfo.AdUnitIdentifier; // The MAX Ad Unit ID
         string placement = adInfo.Placement; // The placement this ad's postbacks are tied to
+        
+        TrackAdRevenue(adInfo);
     }
 
     #endregion
+    
+    private void TrackAdRevenue(MaxSdkBase.AdInfo adInfo)
+    {
+        AdjustAdRevenue adjustAdRevenue = new AdjustAdRevenue(AdjustConfig.AdjustAdRevenueSourceAppLovinMAX);
+
+        adjustAdRevenue.setRevenue(adInfo.Revenue, "USD");
+        adjustAdRevenue.setAdRevenueNetwork(adInfo.NetworkName);
+        adjustAdRevenue.setAdRevenueUnit(adInfo.AdUnitIdentifier);
+        adjustAdRevenue.setAdRevenuePlacement(adInfo.Placement);
+
+        Adjust.trackAdRevenue(adjustAdRevenue);
+    }
 }
