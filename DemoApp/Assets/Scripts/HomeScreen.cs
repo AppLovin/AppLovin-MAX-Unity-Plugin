@@ -48,6 +48,10 @@ public class HomeScreen : MonoBehaviour
             InitializeRewardedInterstitialAds();
             InitializeBannerAds();
             InitializeMRecAds();
+            
+            // Initialize Adjust SDK
+            AdjustConfig adjustConfig = new AdjustConfig("YourAppToken", AdjustEnvironment.Sandbox);
+            Adjust.start(adjustConfig);
         };
 
         MaxSdk.SetSdkKey(MaxSdkKey);
