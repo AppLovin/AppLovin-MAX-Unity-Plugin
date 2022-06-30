@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        *Before reporting, search our [existing issues](https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and [changelog](https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin/releases) to see if the issue has already been addressed.*
+        *Before reporting, search our [existing issues](https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin/issues?q=is%3Aissue) and [changelog](https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin/releases) to see if the issue has already been addressed.*
   - type: input
     attributes:
       label: "MAX Plugin Version"
@@ -47,7 +47,8 @@ body:
     attributes:
       label: "Additional Info"
       description: |
-        If applicable, include any relevant info for further context, such as images, videos, or logs after [enabling verbose logging](https://dash.applovin.com/documentation/mediation/unity/getting-started/advanced-settings#enable-verbose-logging).
-        Tip: You can attach files by clicking this area to highlight it and then dragging files in.
+        - If applicable, include any info to provide further context, such as images, videos, or logs after [enabling verbose logging](https://dash.applovin.com/documentation/mediation/unity/getting-started/advanced-settings#enable-verbose-logging).
+        - If you don't want to post media publicly, please submit your file(s) in a [support request](https://support.applovin.com/hc/en-us/requests/new) with subject 'Issue #<ISSUE_NUMBER>: <ISSUE_LINK>' after filing this issue with a note that you will do so here.
+      placeholder: "Tip: Attach files by clicking this area and dragging files in"
     validations:
       required: false
