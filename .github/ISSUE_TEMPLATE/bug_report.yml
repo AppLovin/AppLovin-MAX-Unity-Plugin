@@ -48,7 +48,7 @@ body:
       label: "Additional Info"
       description: |
         - If applicable, include any info to provide further context, such as images, videos, or logs after [enabling verbose logging](https://dash.applovin.com/documentation/mediation/unity/getting-started/advanced-settings#enable-verbose-logging).
-        - If you don't want to post media publicly, please submit your file(s) in a [support request](https://support.applovin.com/hc/en-us/requests/new) with subject 'Issue #<ISSUE_NUMBER>: <ISSUE_LINK>' after filing this issue with a note that you will do so here.
+        - If you don't want to post media publicly, please submit your file(s) in a [support request](https://support.applovin.com/hc/en-us/requests/new) with subject 'Issue #<ISSUE_NUMBER>: <ISSUE_LINK>' after filing this issue with a note saying you will do so here.
       placeholder: "Tip: Attach files by clicking this area and dragging files in"
     validations:
       required: false
