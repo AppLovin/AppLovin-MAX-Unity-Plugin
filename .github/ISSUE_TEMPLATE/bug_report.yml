@@ -1,0 +1,53 @@
+name: Bug Report
+description: Report a problem
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        *Before reporting, search our [existing issues](https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and [changelog](https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin/releases) to see if the issue has already been addressed.*
+  - type: input
+    attributes:
+      label: "MAX Plugin Version"
+      placeholder: "e.g., 5.4.4"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Unity Version"
+      placeholder: "e.g., 2020.3.36f1"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Device/Platform Info"
+      description: "Is the problem affecting any specific devices or platforms?"
+      placeholder: "e.g., Android 8.1, iOS 15, Google Pixel 5a, etc."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Current Behavior"
+      description: "A concise description of what you're experiencing."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Expected Behavior"
+      description: "A concise description of what you expected to happen."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "How to Reproduce"
+      description: "Step-by-step instructions, code snippets, or other details to reproduce the issue."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Additional Info"
+      description: |
+        If applicable, include any relevant info for further context, such as images, videos, or logs after [enabling verbose logging](https://dash.applovin.com/documentation/mediation/unity/getting-started/advanced-settings#enable-verbose-logging).
+        Tip: You can attach files by clicking this area to highlight it and then dragging files in.
+    validations:
+      required: false
