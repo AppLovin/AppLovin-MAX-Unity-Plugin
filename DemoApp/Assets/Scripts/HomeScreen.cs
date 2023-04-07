@@ -6,19 +6,19 @@ using com.adjust.sdk;
 public class HomeScreen : MonoBehaviour
 {
     private const string MaxSdkKey = "ENTER_MAX_SDK_KEY_HERE";
-    
+
 #if UNITY_IOS
-    private const string InterstitialAdUnitId = "ENTER_INTERSTITIAL_AD_UNIT_ID_HERE";
-    private const string RewardedAdUnitId = "ENTER_REWARD_AD_UNIT_ID_HERE";
-    private const string RewardedInterstitialAdUnitId = "ENTER_REWARD_INTER_AD_UNIT_ID_HERE";
-    private const string BannerAdUnitId = "ENTER_BANNER_AD_UNIT_ID_HERE";
-    private const string MRecAdUnitId = "ENTER_MREC_AD_UNIT_ID_HERE";
+    private const string InterstitialAdUnitId = "ENTER_IOS_INTERSTITIAL_AD_UNIT_ID_HERE";
+    private const string RewardedAdUnitId = "ENTER_IOS_REWARD_AD_UNIT_ID_HERE";
+    private const string RewardedInterstitialAdUnitId = "ENTER_IOS_REWARD_INTER_AD_UNIT_ID_HERE";
+    private const string BannerAdUnitId = "ENTER_IOS_BANNER_AD_UNIT_ID_HERE";
+    private const string MRecAdUnitId = "ENTER_IOS_MREC_AD_UNIT_ID_HERE";
 #else // UNITY_ANDROID
-    private const string InterstitialAdUnitId = "ENTER_INTERSTITIAL_AD_UNIT_ID_HERE";
-    private const string RewardedAdUnitId = "ENTER_REWARD_AD_UNIT_ID_HERE";
-    private const string RewardedInterstitialAdUnitId = "ENTER_REWARD_INTER_AD_UNIT_ID_HERE";
-    private const string BannerAdUnitId = "ENTER_BANNER_AD_UNIT_ID_HERE";
-    private const string MRecAdUnitId = "ENTER_MREC_AD_UNIT_ID_HERE";
+    private const string InterstitialAdUnitId = "ENTER_ANDROID_INTERSTITIAL_AD_UNIT_ID_HERE";
+    private const string RewardedAdUnitId = "ENTER_ANDROID_REWARD_AD_UNIT_ID_HERE";
+    private const string RewardedInterstitialAdUnitId = "ENTER_ANDROID_REWARD_INTER_AD_UNIT_ID_HERE";
+    private const string BannerAdUnitId = "ENTER_ANDROID_BANNER_AD_UNIT_ID_HERE";
+    private const string MRecAdUnitId = "ENTER_ANDROID_MREC_AD_UNIT_ID_HERE";
 #endif
 
     public Button showInterstitialButton;
