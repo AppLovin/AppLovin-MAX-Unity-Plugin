@@ -5,7 +5,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"4.3.12"
+#define VERSION @"5.10.1"
 
 #define KEY_WINDOW [UIApplication sharedApplication].keyWindow
 #define DEVICE_SPECIFIC_ADVIEW_AD_FORMAT ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? MAAdFormat.leader : MAAdFormat.banner
