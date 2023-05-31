@@ -9,24 +9,15 @@ public class MaxVariableServiceiOS
     {
         get { return _instance; }
     }
-    
+
     [DllImport("__Internal")]
     private static extern void _MaxLoadVariables();
 
     [DllImport("__Internal")]
     private static extern bool _MaxGetBool(string name, bool defaultValue);
-    
+
     [DllImport("__Internal")]
     private static extern string _MaxGetString(string name, string defaultValue);
-    
-    /// <summary>
-    /// Explicitly retrieve the latest variables from the server.
-    /// Please make sure to implement the callback <see cref="MaxSdkCallbacks.OnVariablesUpdatedEvent"/>.
-    /// </summary>
-    public void LoadVariables()
-    {
-        _MaxLoadVariables();
-    }
 
     /// <summary>
     /// Returns the variable value associated with the given key, or false if no mapping of the desired type exists for the given key.
@@ -44,6 +35,12 @@ public class MaxVariableServiceiOS
     public string GetString(string key, string defaultValue = "")
     {
         return _MaxGetString(key, defaultValue);
+    }
+
+    [System.Obsolete("This API has been deprecated. Please use our SDK's initialization callback to retrieve variables instead.")]
+    public void LoadVariables()
+    {
+        _MaxLoadVariables();
     }
 }
 

@@ -19,6 +19,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     public class AppLovinAutoUpdater
     {
         public const string KeyAutoUpdateEnabled = "com.applovin.auto_update_enabled";
+#if !UNITY_2018_2_OR_NEWER
+        private const string KeyOldUnityVersionWarningShown = "com.applovin.old_unity_version_warning_shown";
+#endif
         private const string KeyLastUpdateCheckTime = "com.applovin.last_update_check_time_v2"; // Updated to v2 to force adapter version checks in plugin version 3.1.10.
         private static readonly DateTime EpochTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private static readonly int SecondsInADay = (int) TimeSpan.FromDays(1).TotalSeconds;
@@ -60,6 +63,10 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             // Update last checked time.
             EditorPrefs.SetInt(KeyLastUpdateCheckTime, now);
+
+#if !UNITY_2018_2_OR_NEWER
+            ShowNotSupportingOldUnityVersionsIfNeeded();
+#endif
 
             // Load the plugin data
             AppLovinEditorCoroutine.StartCoroutine(AppLovinIntegrationManager.Instance.LoadPluginData(data =>
@@ -148,6 +155,27 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             AppLovinIntegrationManager.ShowBuildFailureDialog(message);
         }
+
+#if !UNITY_2018_2_OR_NEWER
+        private static void ShowNotSupportingOldUnityVersionsIfNeeded()
+        {
+            // Check if publisher has seen the warning before
+            if (EditorPrefs.GetBool(KeyOldUnityVersionWarningShown, false)) return;
+
+            // Show a dialog if they haven't seen the warning yet.
+            var option = EditorUtility.DisplayDialog(
+                "WARNING: Old Unity Version Detected",
+                "AppLovin MAX Unity plugin will soon require Unity 2018.2 or newer to function. Please upgrade to a newer Unity version.",
+                "Ok",
+                "Don't Ask Again"
+            );
+
+            if (!option) // 'false' means `Don't Ask Again` was clicked.
+            {
+                EditorPrefs.SetBool(KeyOldUnityVersionWarningShown, true);
+            }
+        }
+#endif
 
         private static bool GoogleNetworkAdaptersCompatible(string googleVersion, string googleAdManagerVersion, string breakingVersion)
         {

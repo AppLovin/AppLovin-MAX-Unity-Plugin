@@ -18,7 +18,7 @@ public class MaxSdk :
     MaxSdkUnityEditor
 #endif
 {
-    private const string _version = "4.3.12";
+    private const string _version = "5.10.1";
 
     /// <summary>
     /// Returns the current plugin version.

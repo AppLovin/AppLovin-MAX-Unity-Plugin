@@ -7,6 +7,7 @@
 //
 
 using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 
 namespace AppLovinMax.Scripts.IntegrationManager.Editor
@@ -16,7 +17,15 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     /// </summary>
     public class AppLovinEditorCoroutine
     {
-        private readonly IEnumerator enumerator;
+        /// <summary>
+        /// Keeps track of the coroutine currently running.
+        /// </summary>
+        private IEnumerator enumerator;
+
+        /// <summary>
+        /// Keeps track of coroutines that have yielded to the current enumerator.
+        /// </summary>
+        private readonly List<IEnumerator> history = new List<IEnumerator>();
 
         private AppLovinEditorCoroutine(IEnumerator enumerator)
         {
@@ -52,10 +61,30 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private void OnEditorUpdate()
         {
-            // Coroutine has ended, stop updating.
-            if (!enumerator.MoveNext())
+            if (enumerator.MoveNext())
             {
-                Stop();
+                // If there is a coroutine to yield for inside the coroutine, add the initial one to history and continue the second one
+                if (enumerator.Current is IEnumerator)
+                {
+                    history.Add(enumerator);
+                    enumerator = (IEnumerator) enumerator.Current;
+                }
+            }
+            else
+            {
+                // Current coroutine has ended, check if we have more coroutines in history to be run.
+                if (history.Count == 0)
+                {
+                    // No more coroutines to run, stop updating.
+                    Stop();
+                }
+                // Step out and finish the code in the coroutine that yielded to it
+                else
+                {
+                    var index = history.Count - 1;
+                    enumerator = history[index];
+                    history.RemoveAt(index);
+                }
             }
         }
     }
