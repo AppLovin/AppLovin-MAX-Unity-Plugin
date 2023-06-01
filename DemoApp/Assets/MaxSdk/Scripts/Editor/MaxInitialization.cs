@@ -17,39 +17,44 @@ namespace AppLovinMax.Scripts.Editor
     [InitializeOnLoad]
     public class MaxInitialize
     {
-        private const string AndroidChangelog = "ANDROID_CHANGELOG.md";
-        private const string IosChangelog = "IOS_CHANGELOG.md";
-
-        private static readonly List<string> Networks = new List<string>
-        {
-            "AdColony",
-            "Amazon",
-            "ByteDance",
-            "Chartboost",
-            "Facebook",
-            "Fyber",
-            "Google",
-            "InMobi",
-            "IronSource",
-            "Maio",
-            "Mintegral",
-            "MyTarget",
-            "MoPub",
-            "Nend",
-            "Ogury",
-            "Smaato",
-            "Tapjoy",
-            "TencentGDT",
-            "UnityAds",
-            "VerizonAds",
-            "Vungle",
-            "Yandex"
-        };
-
         private static readonly List<string> ObsoleteNetworks = new List<string>
         {
+            "Snap",
             "VoodooAds"
         };
+
+#if UNITY_2018_2_OR_NEWER
+        private static readonly List<string> ObsoleteFileExportPathsToDelete = new List<string>
+        {
+            // The `EventSystemChecker` has been renamed to `MaxEventSystemChecker`.
+            "MaxSdk/Scripts/EventSystemChecker.cs",
+            "MaxSdk/Scripts/EventSystemChecker.cs.meta",
+
+            // Google AdMob adapter pre/post process scripts. The logic has been migrated to the main plugin.
+            "MaxSdk/Mediation/Google/Editor/MaxGoogleInitialize.cs",
+            "MaxSdk/Mediation/Google/Editor/MaxGoogleInitialize.cs.meta",
+            "MaxSdk/Mediation/Google/Editor/MaxMediationGoogleUtils.cs",
+            "MaxSdk/Mediation/Google/Editor/MaxMediationGoogleUtils.cs.meta",
+            "MaxSdk/Mediation/Google/Editor/PostProcessor.cs",
+            "MaxSdk/Mediation/Google/Editor/PostProcessor.cs.meta",
+            "MaxSdk/Mediation/Google/Editor/PreProcessor.cs",
+            "MaxSdk/Mediation/Google/Editor/PreProcessor.cs.meta",
+            "MaxSdk/Mediation/Google/Editor/MaxSdk.Mediation.Google.Editor.asmdef",
+            "MaxSdk/Mediation/Google/MaxSdk.Mediation.Google.Editor.asmdef.meta",
+            "Plugins/Android/MaxMediationGoogle.androidlib",
+            "Plugins/Android/MaxMediationGoogle.androidlib.meta",
+
+            // Google Ad Manager adapter pre/post process scripts. The logic has been migrated to the main plugin
+            "MaxSdk/Mediation/GoogleAdManager/Editor/MaxGoogleAdManagerInitialize.cs",
+            "MaxSdk/Mediation/GoogleAdManager/Editor/MaxGoogleAdManagerInitialize.cs.meta",
+            "MaxSdk/Mediation/GoogleAdManager/Editor/PostProcessor.cs",
+            "MaxSdk/Mediation/GoogleAdManager/Editor/PostProcessor.cs.meta",
+            "MaxSdk/Mediation/GoogleAdManager/Editor/MaxSdk.Mediation.GoogleAdManager.Editor.asmdef",
+            "MaxSdk/Mediation/GoogleAdManager/Editor/MaxSdk.Mediation.GoogleAdManager.Editor.asmdef.meta",
+            "Plugins/Android/MaxMediationGoogleAdManager.androidlib",
+            "Plugins/Android/MaxMediationGoogleAdManager.androidlib.meta"
+        };
+#endif
 
         static MaxInitialize()
         {
@@ -78,29 +83,18 @@ namespace AppLovinMax.Scripts.Editor
 
             AppLovinIntegrationManager.AddLabelsToAssetsIfNeeded(pluginParentDir, isPluginOutsideAssetsDir);
 
-            // Check if we have legacy adapter CHANGELOGs.
-            foreach (var network in Networks)
+#if UNITY_2018_2_OR_NEWER
+            foreach (var obsoleteFileExportPathToDelete in ObsoleteFileExportPathsToDelete)
             {
-                var mediationAdapterDir = Path.Combine(pluginParentDir, "MaxSdk/Mediation/" + network);
-
-                // If new directory exists
-                if (CheckExistence(mediationAdapterDir))
+                var pathToDelete = MaxSdkUtils.GetAssetPathForExportPath(obsoleteFileExportPathToDelete);
+                if (CheckExistence(pathToDelete))
                 {
-                    var androidChangelogFile = Path.Combine(mediationAdapterDir, AndroidChangelog);
-                    if (CheckExistence(androidChangelogFile))
-                    {
-                        FileUtil.DeleteFileOrDirectory(androidChangelogFile);
-                        changesMade = true;
-                    }
-
-                    var iosChangelogFile = Path.Combine(mediationAdapterDir, IosChangelog);
-                    if (CheckExistence(iosChangelogFile))
-                    {
-                        FileUtil.DeleteFileOrDirectory(iosChangelogFile);
-                        changesMade = true;
-                    }
+                    MaxSdkLogger.UserDebug("Deleting obsolete file '" + pathToDelete + "' that are no longer needed.");
+                    FileUtil.DeleteFileOrDirectory(pathToDelete);
+                    changesMade = true;
                 }
             }
+#endif
 
             // Check if any obsolete networks are installed
             foreach (var obsoleteNetwork in ObsoleteNetworks)
