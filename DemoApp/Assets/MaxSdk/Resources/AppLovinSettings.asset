@@ -14,9 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   qualityServiceEnabled: 1
   sdkKey: 
-  setAttributionReportEndpoint: 0
   consentFlowEnabled: 0
-  consentFlowPlatform: 0
   consentFlowPrivacyPolicyUrl: 
   consentFlowTermsOfServiceUrl: 
   userTrackingUsageDescriptionEn: 
@@ -30,4 +28,3 @@ MonoBehaviour:
   userTrackingUsageDescriptionZhHant: 
   adMobAndroidAppId: 
   adMobIosAppId: 
-  showInternalSettingsInIntegrationManager: 0

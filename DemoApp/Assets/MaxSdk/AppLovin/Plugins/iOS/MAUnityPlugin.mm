@@ -12,7 +12,6 @@
 
 @interface NSString (ALUtils)
 @property (nonatomic, copy, readonly) NSString *al_stringByTrimmingWhitespace;
-@property (assign, readonly, getter=al_isValidString) BOOL al_validString;
 @end
 
 UIView* UnityGetGLView();
@@ -22,6 +21,7 @@ UIView* UnityGetGLView();
 extern "C"
 {
     static NSString *const TAG = @"MAUnityPlugin";
+    static NSString *const ARRAY_ITEM_SEPARATOR = @",\n";
     
     static ALSdk *_sdk;
     static MAUnityAdManager *_adManager;
@@ -36,21 +36,9 @@ extern "C"
     static NSNumber *_verboseLoggingToSet;
     static NSNumber *_creativeDebuggerEnabledToSet;
     static NSNumber *_exceptionHandlerEnabledToSet;
-    static NSNumber *_locationCollectionEnabledToSet;
-    static NSNumber *_targetingYearOfBirth;
-    static NSString *_targetingGender;
-    static NSNumber *_targetingMaximumAdContentRating;
-    static NSString *_targetingEmail;
-    static NSString *_targetingPhoneNumber;
-    static NSArray<NSString *> *_targetingKeywords;
-    static NSArray<NSString *> *_targetingInterests;
-    static NSMutableDictionary<NSString *, NSString *> *_extraParametersToSet = [NSMutableDictionary dictionary];
-    static NSObject *_extraParametersToSetLock = [[NSObject alloc] init];
     
     // Helper method to create C string copy
     static const char * cStringCopy(NSString *string);
-    // Helper method to log errors
-    void logUninitializedAccessError(char *callingMethod);
     
     bool isPluginInitialized()
     {
@@ -64,71 +52,6 @@ extern "C"
         _adManager = [MAUnityAdManager shared];
         _isPluginInitialized = true;
     }
-
-    NSArray<NSString *> * toStringArray(char **arrayPointer, int size)
-    {
-        NSMutableArray<NSString *> *array = [NSMutableArray arrayWithCapacity: size];
-        for ( int i = 0; i < size; i++ )
-        {
-            [array addObject: NSSTRING(arrayPointer[i])];
-        }
-        
-        return array;
-    }
-
-    ALGender getAppLovinGender(NSString *genderString)
-    {
-        if ( [@"F" al_isEqualToStringIgnoringCase: genderString] )
-        {
-            return ALGenderFemale;
-        }
-        else if ( [@"M" al_isEqualToStringIgnoringCase: genderString] )
-        {
-            return ALGenderMale;
-        }
-        else if ( [@"O" al_isEqualToStringIgnoringCase: genderString] )
-        {
-            return ALGenderOther;
-        }
-        
-        return ALGenderUnknown;
-    }
-
-    ALAdContentRating getAppLovinAdContentRating(int maximumAdContentRating)
-    {
-        if ( maximumAdContentRating == 1 )
-        {
-            return ALAdContentRatingAllAudiences;
-        }
-        else if ( maximumAdContentRating == 2 )
-        {
-            return ALAdContentRatingEveryoneOverTwelve;
-        }
-        else if ( maximumAdContentRating == 3 )
-        {
-            return ALAdContentRatingMatureAudiences;
-        }
-        
-        return ALAdContentRatingNone;
-    }
-    
-    void setPendingExtraParametersIfNeeded(ALSdkSettings *settings)
-    {
-        NSDictionary *extraParameters;
-        @synchronized ( _extraParametersToSetLock )
-        {
-            if ( _extraParametersToSet.count <= 0 ) return;
-            
-            extraParameters = [NSDictionary dictionaryWithDictionary: _extraParametersToSet];
-            [_extraParametersToSet removeAllObjects];
-        }
-        
-        for ( NSString *key in extraParameters.allKeys )
-        {
-            [settings setExtraParameterForKey: key value: extraParameters[key]];
-        }
-    }
-    
     
     void _MaxSetSdkKey(const char *sdkKey)
     {
@@ -142,13 +65,12 @@ extern "C"
         [infoDict setValue: sdkKeyStr forKey: @"AppLovinSdkKey"];
     }
     
-    void _MaxInitializeSdk(const char *serializedAdUnitIdentifiers, const char *serializedMetaData, ALUnityBackgroundCallback backgroundCallback)
+    void _MaxInitializeSdk(const char *serializedAdUnitIdentifiers, const char *serializedMetaData)
     {
         maybeInitializePlugin();
         
         _sdk = [_adManager initializeSdkWithAdUnitIdentifiers: NSSTRING(serializedAdUnitIdentifiers)
                                                      metaData: NSSTRING(serializedMetaData)
-                                           backgroundCallback: backgroundCallback
                                          andCompletionHandler:^(ALSdkConfiguration *configuration) {
             _sdkConfiguration = configuration;
             _isSdkInitialized = true;
@@ -174,7 +96,7 @@ extern "C"
         
         if ( _verboseLoggingToSet )
         {
-            _sdk.settings.verboseLoggingEnabled = _verboseLoggingToSet.boolValue;
+            _sdk.settings.isVerboseLogging = _verboseLoggingToSet.boolValue;
             _verboseLoggingToSet = nil;
         }
 
@@ -189,56 +111,6 @@ extern "C"
             _sdk.settings.exceptionHandlerEnabled = _exceptionHandlerEnabledToSet.boolValue;
             _exceptionHandlerEnabledToSet = nil;
         }
-        
-        if ( _locationCollectionEnabledToSet )
-        {
-            _sdk.settings.locationCollectionEnabled = _locationCollectionEnabledToSet.boolValue;
-            _locationCollectionEnabledToSet = nil;
-        }
-        
-        if ( _targetingYearOfBirth )
-        {
-            _sdk.targetingData.yearOfBirth = _targetingYearOfBirth.intValue <= 0 ? nil : _targetingYearOfBirth;
-            _targetingYearOfBirth = nil;
-        }
-        
-        if ( _targetingGender )
-        {
-            _sdk.targetingData.gender = getAppLovinGender(_targetingGender);
-            _targetingGender = nil;
-        }
-        
-        if ( _targetingMaximumAdContentRating )
-        {
-            _sdk.targetingData.maximumAdContentRating = getAppLovinAdContentRating(_targetingMaximumAdContentRating.intValue);
-            _targetingMaximumAdContentRating = nil;
-        }
-        
-        if ( _targetingEmail )
-        {
-            _sdk.targetingData.email = _targetingEmail;
-            _targetingEmail = nil;
-        }
-        
-        if ( _targetingPhoneNumber )
-        {
-            _sdk.targetingData.phoneNumber = _targetingPhoneNumber;
-            _targetingPhoneNumber = nil;
-        }
-        
-        if ( _targetingKeywords )
-        {
-            _sdk.targetingData.keywords = _targetingKeywords;
-            _targetingKeywords = nil;
-        }
-        
-        if ( _targetingInterests )
-        {
-            _sdk.targetingData.interests = _targetingInterests;
-            _targetingInterests = nil;
-        }
-        
-        setPendingExtraParametersIfNeeded( _sdk.settings );
     }
     
     bool _MaxIsInitialized()
@@ -257,18 +129,17 @@ extern "C"
         NSArray<MAMediatedNetworkInfo *> *availableMediatedNetworks = [_sdk availableMediatedNetworks];
         
         // Create array of serialized network strings
-        NSMutableArray<NSDictionary<NSString *, NSString *> *> *serializedNetworks = [NSMutableArray arrayWithCapacity: availableMediatedNetworks.count];
+        NSMutableArray<NSString *> *serializedNetworks = [NSMutableArray arrayWithCapacity: availableMediatedNetworks.count];
         for ( MAMediatedNetworkInfo *mediatedNetwork in availableMediatedNetworks )
         {
-            NSDictionary<NSString *, NSString *> *mediatedNetworkDictionary = @{@"name" : mediatedNetwork.name,
-                                                                               @"adapterClassName" : mediatedNetwork.adapterClassName,
-                                                                               @"adapterVersion" : mediatedNetwork.adapterVersion,
-                                                                               @"sdkVersion" : mediatedNetwork.sdkVersion};
-            [serializedNetworks addObject: mediatedNetworkDictionary];
+            NSString *result = [MAUnityAdManager propsStrFromDictionary: @{@"name" : mediatedNetwork.name,
+                                                                           @"adapterClassName" : mediatedNetwork.adapterClassName,
+                                                                           @"adapterVersion" : mediatedNetwork.adapterVersion,
+                                                                           @"sdkVersion" : mediatedNetwork.sdkVersion}];
+            [serializedNetworks addObject: result];
         }
         
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject: serializedNetworks options: 0 error: nil];
-        return cStringCopy([[NSString alloc] initWithData: jsonData encoding: NSUTF8StringEncoding]);
+        return cStringCopy([serializedNetworks componentsJoinedByString: ARRAY_ITEM_SEPARATOR]);
     }
     
     void _MaxShowMediationDebugger()
@@ -282,20 +153,17 @@ extern "C"
         [_sdk showMediationDebugger];
     }
 
-    void _MaxShowCreativeDebugger()
+    void _MaxShowConsentDialog()
     {
         if ( !_sdk )
         {
-            NSLog(@"[%@] Failed to show creative debugger - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG);
+            NSLog(@"[%@] Failed to show consent dialog - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG);
             return;
         }
-        
-        [_sdk showCreativeDebugger];
-    }
-    
-    void _MaxShowConsentDialog()
-    {
-        NSLog(@"[%@] Failed to show consent dialog - Unavailable on iOS, please use the consent flow: https://dash.applovin.com/documentation/mediation/unity/getting-started/consent-flow", TAG);
+
+        [_sdk.userService showConsentDialogWithCompletionHandler:^{
+            [_adManager didDismissUserConsentDialog];
+        }];
     }
     
     int _MaxConsentDialogState()
@@ -332,119 +200,20 @@ extern "C"
         }
     }
 
-    void _MaxSetTargetingDataYearOfBirth(const int yearOfBirth)
-    {
-        if ( !_sdk )
-        {
-            _targetingYearOfBirth = @(yearOfBirth);
-            return;
-        }
-        
-        _sdk.targetingData.yearOfBirth = yearOfBirth <= 0 ? nil : @(yearOfBirth);
-    }
-
-    void _MaxSetTargetingDataGender(char *gender)
-    {
-        if ( !_sdk )
-        {
-            _targetingGender = NSSTRING(gender);
-            return;
-        }
-        
-        NSString *genderString = NSSTRING(gender);
-        _sdk.targetingData.gender = getAppLovinGender(genderString);
-    }
-
-    void _MaxSetTargetingDataMaximumAdContentRating(const int maximumAdContentRating)
-    {
-        if ( !_sdk )
-        {
-            _targetingMaximumAdContentRating = @(maximumAdContentRating);
-            return;
-        }
-        
-        _sdk.targetingData.maximumAdContentRating = getAppLovinAdContentRating(maximumAdContentRating);
-    }
-
-    void _MaxSetTargetingDataEmail(char *email)
-    {
-        if ( !_sdk )
-        {
-            _targetingEmail = NSSTRING(email);
-            return;
-        }
-        
-        _sdk.targetingData.email = NSSTRING(email);
-    }
-
-    void _MaxSetTargetingDataPhoneNumber(char *phoneNumber)
-    {
-        if ( !_sdk )
-        {
-            _targetingPhoneNumber = NSSTRING(phoneNumber);
-            return;
-        }
-        
-        _sdk.targetingData.phoneNumber = NSSTRING(phoneNumber);
-    }
-
-    void _MaxSetTargetingDataKeywords(char **keywords, int size)
-    {
-        NSArray<NSString *> *keywordsArray = keywords ? toStringArray(keywords, size) : nil;
-        if ( !_sdk )
-        {
-            _targetingKeywords = keywordsArray;
-            return;
-        }
-        
-        _sdk.targetingData.keywords = keywordsArray;
-    }
-
-    void _MaxSetTargetingDataInterests(char **interests, int size)
-    {
-        NSArray<NSString *> *interestsArray = interests ? toStringArray(interests, size) : nil;
-        if ( !_sdk )
-        {
-            _targetingInterests = interestsArray;
-            return;
-        }
-        
-        _sdk.targetingData.interests = interestsArray;
-    }
-
-    void _MaxClearAllTargetingData()
-    {
-        if ( !_sdk )
-        {
-            _targetingYearOfBirth = nil;
-            _targetingGender = nil;
-            _targetingMaximumAdContentRating = nil;
-            _targetingEmail = nil;
-            _targetingPhoneNumber = nil;
-            _targetingKeywords = nil;
-            _targetingInterests = nil;
-            return;
-        }
-        
-        [_sdk.targetingData clearAll];
-    }
-
     const char * _MaxGetSdkConfiguration()
     {
         if ( !_sdk )
         {
-            logUninitializedAccessError("_MaxGetSdkConfiguration");
+            NSLog(@"[%@] Failed to get SDK configuration - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG);
             return cStringCopy(@"");
         }
         
         NSString *consentDialogStateStr = @(_sdk.configuration.consentDialogState).stringValue;
         NSString *appTrackingStatus = @(_sdk.configuration.appTrackingTransparencyStatus).stringValue; // Deliberately name it `appTrackingStatus` to be a bit more generic (in case Android introduces a similar concept)
 
-        return cStringCopy([MAUnityAdManager serializeParameters: @{@"consentDialogState" : consentDialogStateStr,
-                                                                    @"countryCode" : _sdk.configuration.countryCode,
-                                                                    @"appTrackingStatus" : appTrackingStatus,
-                                                                    @"isSuccessfullyInitialized" : @([_sdk isInitialized]),
-                                                                    @"isTestModeEnabled" : @([_sdk.configuration isTestModeEnabled])}]);
+        return cStringCopy([MAUnityAdManager propsStrFromDictionary: @{@"consentDialogState" : consentDialogStateStr,
+                                                                       @"countryCode" : _sdk.configuration.countryCode,
+                                                                       @"appTrackingStatus" : appTrackingStatus}]);
     }
     
     void _MaxSetHasUserConsent(bool hasUserConsent)
@@ -457,11 +226,6 @@ extern "C"
         return [ALPrivacySettings hasUserConsent];
     }
     
-    bool _MaxIsUserConsentSet()
-    {
-        return [ALPrivacySettings isUserConsentSet];
-    }
-
     void _MaxSetIsAgeRestrictedUser(bool isAgeRestrictedUser)
     {
         [ALPrivacySettings setIsAgeRestrictedUser: isAgeRestrictedUser];
@@ -470,11 +234,6 @@ extern "C"
     bool _MaxIsAgeRestrictedUser()
     {
         return [ALPrivacySettings isAgeRestrictedUser];
-    }
-
-    bool _MaxIsAgeRestrictedUserSet()
-    {
-        return [ALPrivacySettings isAgeRestrictedUserSet];
     }
     
     void _MaxSetDoNotSell(bool doNotSell)
@@ -485,11 +244,6 @@ extern "C"
     bool _MaxIsDoNotSell()
     {
         return [ALPrivacySettings isDoNotSell];
-    }
-
-    bool _MaxIsDoNotSellSet()
-    {
-        return [ALPrivacySettings isDoNotSellSet];
     }
     
     void _MaxCreateBanner(const char *adUnitIdentifier, const char *bannerPosition)
@@ -506,13 +260,6 @@ extern "C"
         [_adManager createBannerWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) x: x y: y];
     }
     
-   void _MaxLoadBanner(const char *adUnitIdentifier)
-   {
-       if (!isPluginInitialized()) return;
-
-       [_adManager loadBannerWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-   }
-    
     void _MaxSetBannerBackgroundColor(const char *adUnitIdentifier, const char *hexColorCode)
     {
         if (!isPluginInitialized()) return;
@@ -525,37 +272,11 @@ extern "C"
         [_adManager setBannerPlacement: NSSTRING(placement) forAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
     
-    void _MaxStartBannerAutoRefresh(const char *adUnitIdentifier)
-    {
-        if (!isPluginInitialized()) return;
-        
-        [_adManager startBannerAutoRefreshForAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-    }
-    
-    void _MaxStopBannerAutoRefresh(const char *adUnitIdentifier)
-    {
-        if (!isPluginInitialized()) return;
-        
-        [_adManager stopBannerAutoRefreshForAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-    }
-    
     void _MaxSetBannerExtraParameter(const char *adUnitIdentifier, const char *key, const char *value)
     {
         [_adManager setBannerExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
                                                            key: NSSTRING(key)
                                                          value: NSSTRING(value)];
-    }
-    
-    void _MaxSetBannerLocalExtraParameter(const char *adUnitIdentifier, const char *key, MAUnityRef value)
-    {
-        [_adManager setBannerLocalExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                                key: NSSTRING(key)
-                                                              value: (__bridge id) value];
-    }
-    
-    void _MaxSetBannerCustomData(const char *adUnitIdentifier, const char *customData)
-    {
-        [_adManager setBannerCustomData: NSSTRING(customData) forAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
 
     void _MaxSetBannerWidth(const char *adUnitIdentifier, const float width)
@@ -615,30 +336,9 @@ extern "C"
         [_adManager createMRecWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) x: x y: y];
     }
     
-   void _MaxLoadMRec(const char *adUnitIdentifier)
-   {
-       if (!isPluginInitialized()) return;
-
-       [_adManager loadMRecWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-   }
-    
     void _MaxSetMRecPlacement(const char *adUnitIdentifier, const char *placement)
     {
         [_adManager setMRecPlacement: NSSTRING(placement) forAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-    }
-    
-    void _MaxStartMRecAutoRefresh(const char *adUnitIdentifier)
-    {
-        if (!isPluginInitialized()) return;
-        
-        [_adManager startMRecAutoRefreshForAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-    }
-    
-    void _MaxStopMRecAutoRefresh(const char *adUnitIdentifier)
-    {
-        if (!isPluginInitialized()) return;
-        
-        [_adManager stopMRecAutoRefreshForAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
     
     void _MaxUpdateMRecPosition(const char *adUnitIdentifier, const char *mrecPosition)
@@ -677,18 +377,6 @@ extern "C"
         [_adManager setMRecExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
                                                          key: NSSTRING(key)
                                                        value: NSSTRING(value)];
-    }
-    
-    void _MaxSetMRecLocalExtraParameter(const char *adUnitIdentifier, const char *key, MAUnityRef value)
-    {
-        [_adManager setMRecLocalExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                              key: NSSTRING(key)
-                                                            value: (__bridge id)value];
-    }
-    
-    void _MaxSetMRecCustomData(const char *adUnitIdentifier, const char *customData)
-    {
-        [_adManager setMRecCustomData: NSSTRING(customData) forAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
 
     const char * _MaxGetMRecLayout(const char *adUnitIdentifier)
@@ -757,13 +445,6 @@ extern "C"
                                                                value: NSSTRING(value)];
     }
     
-    void _MaxSetInterstitialLocalExtraParameter(const char *adUnitIdentifier, const char *key, MAUnityRef value)
-    {
-        [_adManager setInterstitialLocalExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                                      key: NSSTRING(key)
-                                                                    value: (__bridge id)value];
-    }
-
     bool _MaxIsInterstitialReady(const char *adUnitIdentifier)
     {
         if (!isPluginInitialized()) return false;
@@ -771,46 +452,11 @@ extern "C"
         return [_adManager isInterstitialReadyWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
     
-    void _MaxShowInterstitial(const char *adUnitIdentifier, const char *placement, const char *customData)
+    void _MaxShowInterstitial(const char *adUnitIdentifier, const char *placement)
     {
         if (!isPluginInitialized()) return;
         
-        [_adManager showInterstitialWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement) customData: NSSTRING(customData)];
-    }
-    
-    void _MaxLoadAppOpenAd(const char *adUnitIdentifier)
-    {
-        if (!isPluginInitialized()) return;
-        
-        [_adManager loadAppOpenAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-    }
-    
-    void _MaxSetAppOpenAdExtraParameter(const char *adUnitIdentifier, const char *key, const char *value)
-    {
-        [_adManager setAppOpenAdExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                              key: NSSTRING(key)
-                                                            value: NSSTRING(value)];
-    }
-    
-    void _MaxSetAppOpenAdLocalExtraParameter(const char *adUnitIdentifier, const char *key, MAUnityRef value)
-    {
-        [_adManager setAppOpenAdLocalExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                                   key: NSSTRING(key)
-                                                                 value: (__bridge id)value];
-    }
-    
-    bool _MaxIsAppOpenAdReady(const char *adUnitIdentifier)
-    {
-        if (!isPluginInitialized()) return false;
-        
-        return [_adManager isAppOpenAdReadyWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
-    }
-    
-    void _MaxShowAppOpenAd(const char *adUnitIdentifier, const char *placement, const char *customData)
-    {
-        if (!isPluginInitialized()) return;
-        
-        [_adManager showAppOpenAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement) customData: NSSTRING(customData)];
+        [_adManager showInterstitialWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement)];
     }
     
     void _MaxLoadRewardedAd(const char *adUnitIdentifier)
@@ -827,13 +473,6 @@ extern "C"
                                                              value: NSSTRING(value)];
     }
     
-    void _MaxSetRewardedAdLocalExtraParameter(const char *adUnitIdentifier, const char *key, MAUnityRef value)
-    {
-        [_adManager setRewardedAdLocalExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                                    key: NSSTRING(key)
-                                                                  value: (__bridge id)value];
-    }
-
     bool _MaxIsRewardedAdReady(const char *adUnitIdentifier)
     {
         if (!isPluginInitialized()) return false;
@@ -841,11 +480,11 @@ extern "C"
         return [_adManager isRewardedAdReadyWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
     
-    void _MaxShowRewardedAd(const char *adUnitIdentifier, const char *placement, const char *customData)
+    void _MaxShowRewardedAd(const char *adUnitIdentifier, const char *placement)
     {
         if (!isPluginInitialized()) return;
         
-        [_adManager showRewardedAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement) customData: NSSTRING(customData)];
+        [_adManager showRewardedAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement)];
     }
     
     void _MaxLoadRewardedInterstitialAd(const char *adUnitIdentifier)
@@ -862,13 +501,6 @@ extern "C"
                                                                          value: NSSTRING(value)];
     }
     
-    void _MaxSetRewardedInterstitialAdLocalExtraParameter(const char *adUnitIdentifier, const char *key, MAUnityRef value)
-    {
-        [_adManager setRewardedInterstitialAdLocalExtraParameterForAdUnitIdentifier: NSSTRING(adUnitIdentifier)
-                                                                                key: NSSTRING(key)
-                                                                              value: (__bridge id)value];
-    }
-
     bool _MaxIsRewardedInterstitialAdReady(const char *adUnitIdentifier)
     {
         if (!isPluginInitialized()) return false;
@@ -876,11 +508,11 @@ extern "C"
         return [_adManager isRewardedInterstitialAdReadyWithAdUnitIdentifier: NSSTRING(adUnitIdentifier)];
     }
     
-    void _MaxShowRewardedInterstitialAd(const char *adUnitIdentifier, const char *placement, const char *customData)
+    void _MaxShowRewardedInterstitialAd(const char *adUnitIdentifier, const char *placement)
     {
         if (!isPluginInitialized()) return;
         
-        [_adManager showRewardedInterstitialAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement) customData: NSSTRING(customData)];
+        [_adManager showRewardedInterstitialAdWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) placement: NSSTRING(placement)];
     }
     
     void _MaxTrackEvent(const char *event, const char *parameters)
@@ -907,11 +539,6 @@ extern "C"
     bool _MaxIsTablet()
     {
         return [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad;
-    }
-
-    bool _MaxIsPhysicalDevice()
-    {
-        return !ALUtils.simulator;
     }
     
     static const char * cStringCopy(NSString *string)
@@ -953,7 +580,7 @@ extern "C"
     {
         if ( _sdk )
         {
-            _sdk.settings.verboseLoggingEnabled = enabled;
+            _sdk.settings.isVerboseLogging = enabled;
             _verboseLoggingToSet = nil;
         }
         else
@@ -966,7 +593,7 @@ extern "C"
     {
         if ( _sdk )
         {
-            return [_sdk.settings isVerboseLoggingEnabled];
+            return _sdk.settings.isVerboseLogging;
         }
         else if ( _verboseLoggingToSet )
         {
@@ -978,7 +605,11 @@ extern "C"
 
     void _MaxSetTestDeviceAdvertisingIdentifiers(char **advertisingIdentifiers, int size)
     {
-        NSArray<NSString *> *advertisingIdentifiersArray = toStringArray(advertisingIdentifiers, size);
+        NSMutableArray<NSString *> *advertisingIdentifiersArray = [NSMutableArray arrayWithCapacity: size];
+        for (int i = 0; i < size; i++)
+        {
+            [advertisingIdentifiersArray addObject: NSSTRING(advertisingIdentifiers[i])];
+        }
         
         if ( _sdk )
         {
@@ -1017,73 +648,9 @@ extern "C"
         }
     }
 
-    void _MaxSetLocationCollectionEnabled(bool enabled)
-    {
-        if ( _sdk )
-        {
-            _sdk.settings.locationCollectionEnabled = enabled;
-            _locationCollectionEnabledToSet = nil;
-        }
-        else
-        {
-            _locationCollectionEnabledToSet = @(enabled);
-        }
-    }
-
-    void _MaxSetExtraParameter(const char *key, const char *value)
-    {
-        NSString *stringKey = NSSTRING(key);
-        if ( ![stringKey al_isValidString] )
-        {
-            NSLog(@"[%@] Failed to set extra parameter for nil or empty key: %@", TAG, stringKey);
-            return;
-        }
-        
-        if ( _sdk )
-        {
-            ALSdkSettings *settings = _sdk.settings;
-            [settings setExtraParameterForKey: stringKey value: NSSTRING(value)];
-            setPendingExtraParametersIfNeeded( settings );
-        }
-        else
-        {
-            @synchronized ( _extraParametersToSetLock )
-            {
-                _extraParametersToSet[stringKey] = NSSTRING(value);
-            }
-        }
-    }
-
-    const char * _MaxGetCFType()
-    {
-        if ( !_sdk )
-        {
-            NSLog(@"[%@] Failed to get available mediated networks - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG);
-            return cStringCopy(@(ALCFTypeUnknown).stringValue);
-        }
-        
-        return cStringCopy(@(_sdk.cfService.cfType).stringValue);
-    }
-
-    void _MaxStartConsentFlow()
-    {
-        if (!isPluginInitialized())
-        {
-            logUninitializedAccessError("_MaxStartConsentFlow");
-            return;
-        }
-        
-        [_adManager startConsentFlow];
-    }
-
     float _MaxGetAdaptiveBannerHeight(const float width)
     {
         return [MAUnityAdManager adaptiveBannerHeightForWidth: width];
-    }
-
-    void logUninitializedAccessError(char *callingMethod)
-    {
-        NSLog(@"[%@] Failed to execute: %s - please ensure the AppLovin MAX Unity Plugin has been initialized by calling 'MaxSdk.InitializeSdk();'!", TAG, callingMethod);
     }
 
     [[deprecated("This API has been deprecated. Please use our SDK's initialization callback to retrieve variables instead.")]]

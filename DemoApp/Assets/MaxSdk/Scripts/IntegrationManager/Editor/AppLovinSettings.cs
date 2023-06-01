@@ -12,17 +12,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-
-namespace AppLovinMax.Scripts.IntegrationManager.Editor
-{
-    public enum Platform
-    {
-        All,
-        Android,
-        iOS
-    }
-}
-
 /// <summary>
 /// A <see cref="ScriptableObject"/> representing the AppLovin Settings that can be set in the Integration Manager Window.
 ///
@@ -37,7 +26,6 @@ public class AppLovinSettings : ScriptableObject
     public const string DefaultUserTrackingDescriptionEnV0 = "Pressing \\\"Allow\\\" uses device info for more relevant ad content";
     public const string DefaultUserTrackingDescriptionEnV1 = "This only uses device info for less annoying, more relevant ads";
     public const string DefaultUserTrackingDescriptionEnV2 = "This only uses device info for more interesting and relevant ads";
-    public const string DefaultUserTrackingDescriptionEnV3 = "This uses device info for more personalized ads and content";
 
     public const string DefaultUserTrackingDescriptionDe = "\\\"Erlauben\\\" drücken benutzt Gerätinformationen für relevantere Werbeinhalte";
     public const string DefaultUserTrackingDescriptionEs = "Presionando \\\"Permitir\\\", se usa la información del dispositivo para obtener contenido publicitario más relevante";
@@ -46,6 +34,8 @@ public class AppLovinSettings : ScriptableObject
     public const string DefaultUserTrackingDescriptionKo = "\\\"허용\\\"을 누르면 더 관련성 높은 광고 콘텐츠를 제공하기 위해 기기 정보가 사용됩니다";
     public const string DefaultUserTrackingDescriptionZhHans = "点击\\\"允许\\\"以使用设备信息获得更加相关的广告内容";
     public const string DefaultUserTrackingDescriptionZhHant = "點擊\\\"允許\\\"以使用設備信息獲得更加相關的廣告內容";
+
+    public const string SnapAppStoreAppIdMinVersion = "2.0.0.0";
 
     /// <summary>
     /// A placeholder constant to be replaced with the actual default localization or an empty string based on whether or not localization is enabled when when the getter is called.
@@ -60,7 +50,6 @@ public class AppLovinSettings : ScriptableObject
     [SerializeField] private bool setAttributionReportEndpoint;
 
     [SerializeField] private bool consentFlowEnabled;
-    [SerializeField] private Platform consentFlowPlatform;
     [SerializeField] private string consentFlowPrivacyPolicyUrl = string.Empty;
     [SerializeField] private string consentFlowTermsOfServiceUrl = string.Empty;
     [FormerlySerializedAs("userTrackingUsageDescription")] [SerializeField] private string userTrackingUsageDescriptionEn = string.Empty;
@@ -76,7 +65,7 @@ public class AppLovinSettings : ScriptableObject
     [SerializeField] private string adMobAndroidAppId = string.Empty;
     [SerializeField] private string adMobIosAppId = string.Empty;
 
-    [SerializeField] private bool showInternalSettingsInIntegrationManager;
+    [SerializeField] private int snapAppStoreAppId;
 
     /// <summary>
     /// An instance of AppLovin Setting.
@@ -87,21 +76,6 @@ public class AppLovinSettings : ScriptableObject
         {
             if (instance == null)
             {
-                // Check for an existing AppLovinSettings somewhere in the project
-                var guids = AssetDatabase.FindAssets("AppLovinSettings t:ScriptableObject");
-                if (guids.Length > 1)
-                {
-                    MaxSdkLogger.UserWarning("Multiple AppLovinSettings found. This may cause unexpected results.");
-                }
-
-                if (guids.Length != 0)
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-                    instance = AssetDatabase.LoadAssetAtPath<AppLovinSettings>(path);
-                    return instance;
-                }
-
-                // If there is no existing AppLovinSettings asset, create one in the default location
                 string settingsFilePath;
                 // The settings file should be under the Assets/ folder so that it can be version controlled and cannot be overriden when updating.
                 // If the plugin is outside the Assets folder, create the settings asset at the default location.
@@ -127,9 +101,11 @@ public class AppLovinSettings : ScriptableObject
                     Directory.CreateDirectory(settingsDir);
                 }
 
+                instance = AssetDatabase.LoadAssetAtPath<AppLovinSettings>(settingsFilePath);
+                if (instance != null) return instance;
+
                 instance = CreateInstance<AppLovinSettings>();
                 AssetDatabase.CreateAsset(instance, settingsFilePath);
-                MaxSdkLogger.D("Creating new AppLovinSettings asset at path: " + settingsFilePath);
             }
 
             return instance;
@@ -172,10 +148,9 @@ public class AppLovinSettings : ScriptableObject
         {
             // Update the default EN description if an old version of the description is still being used.
             if (DefaultUserTrackingDescriptionEnV0.Equals(Instance.UserTrackingUsageDescriptionEn)
-                || DefaultUserTrackingDescriptionEnV1.Equals(Instance.UserTrackingUsageDescriptionEn)
-                || DefaultUserTrackingDescriptionEnV2.Equals(Instance.UserTrackingUsageDescriptionEn))
+                || DefaultUserTrackingDescriptionEnV1.Equals(Instance.UserTrackingUsageDescriptionEn))
             {
-                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV3;
+                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV2;
             }
 
             return Instance.consentFlowEnabled;
@@ -190,24 +165,17 @@ public class AppLovinSettings : ScriptableObject
                 // If the value didn't change, we don't need to update anything.
                 if (previousValue) return;
 
-                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV3;
+                Instance.UserTrackingUsageDescriptionEn = DefaultUserTrackingDescriptionEnV2;
                 Instance.UserTrackingUsageLocalizationEnabled = true;
             }
             else
             {
-                Instance.ConsentFlowPlatform = Platform.All;
                 Instance.ConsentFlowPrivacyPolicyUrl = string.Empty;
                 Instance.ConsentFlowTermsOfServiceUrl = string.Empty;
                 Instance.UserTrackingUsageDescriptionEn = string.Empty;
                 Instance.UserTrackingUsageLocalizationEnabled = false;
             }
         }
-    }
-
-    public Platform ConsentFlowPlatform
-    {
-        get { return Instance.consentFlowEnabled ? Instance.consentFlowPlatform : Platform.All; }
-        set { Instance.consentFlowPlatform = value; }
     }
 
     /// <summary>
@@ -253,7 +221,7 @@ public class AppLovinSettings : ScriptableObject
             if (value)
             {
                 // If the value didn't change or the english localization text is not the default one, we don't need to update anything.
-                if (previousValue || !DefaultUserTrackingDescriptionEnV3.Equals(Instance.UserTrackingUsageDescriptionEn)) return;
+                if (previousValue || !DefaultUserTrackingDescriptionEnV2.Equals(Instance.UserTrackingUsageDescriptionEn)) return;
 
                 Instance.UserTrackingUsageDescriptionDe = DefaultUserTrackingDescriptionDe;
                 Instance.UserTrackingUsageDescriptionEs = DefaultUserTrackingDescriptionEs;
@@ -374,10 +342,13 @@ public class AppLovinSettings : ScriptableObject
         set { Instance.adMobIosAppId = value; }
     }
 
-    public bool ShowInternalSettingsInIntegrationManager
+    /// <summary>
+    /// Snap App Store App ID.
+    /// </summary>
+    public int SnapAppStoreAppId
     {
-        get { return Instance.showInternalSettingsInIntegrationManager; }
-        set { Instance.showInternalSettingsInIntegrationManager = value; }
+        get { return Instance.snapAppStoreAppId; }
+        set { Instance.snapAppStoreAppId = value; }
     }
 
     /// <summary>

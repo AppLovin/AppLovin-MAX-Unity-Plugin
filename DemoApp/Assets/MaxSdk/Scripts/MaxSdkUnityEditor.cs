@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using AppLovinMax.ThirdParty.MiniJson;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -21,12 +20,8 @@ public class MaxSdkUnityEditor : MaxSdkBase
 {
     private static bool _isInitialized;
     private static bool _hasSdkKey;
-    private static bool _hasUserConsent = false;
-    private static bool _isUserConsentSet = false;
+    private static bool _hasUserConsent = true;
     private static bool _isAgeRestrictedUser = false;
-    private static bool _isAgeRestrictedUserSet = false;
-    private static bool _doNotSell = false;
-    private static bool _isDoNotSellSet = false;
     private static bool _showStubAds = true;
     private static readonly HashSet<string> RequestedAdUnits = new HashSet<string>();
     private static readonly HashSet<string> ReadyAdUnits = new HashSet<string>();
@@ -42,11 +37,9 @@ public class MaxSdkUnityEditor : MaxSdkBase
         get { return MaxUserServiceUnityEditor.Instance; }
     }
 
-    [RuntimeInitializeOnLoadMethod]
-    public static void InitializeMaxSdkUnityEditorOnLoad()
+    static MaxSdkUnityEditor()
     {
-        // Unity destroys the stub banners each time the editor exits play mode, but the StubBanners stays in memory if Enter Play Mode settings is enabled.
-        StubBanners.Clear();
+        InitCallbacks();
     }
 
     /// <summary>
@@ -127,14 +120,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
         get { return SharedUserSegment; }
     }
 
-    /// <summary>
-    /// This class allows you to provide user or app data that will improve how we target ads.
-    /// </summary>
-    public static MaxTargetingData TargetingData
-    {
-        get { return SharedTargetingData; }
-    }
-
     #endregion
 
     #region MAX
@@ -169,24 +154,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
-    /// Present the mediation debugger UI.
-    ///
-    /// Please call this method after the SDK has initialized.
-    /// </summary>
-    public static void ShowCreativeDebugger()
-    {
-        if (!_isInitialized)
-        {
-            MaxSdkLogger.UserWarning("The creative debugger cannot be shown before the MAX SDK has been initialized."
-                                     + "\nCall 'MaxSdk.InitializeSdk();' and listen for 'MaxSdkCallbacks.OnSdkInitializedEvent' before showing the mediation debugger.");
-        }
-        else
-        {
-            MaxSdkLogger.UserWarning("The creative debugger cannot be shown in the Unity Editor. Please export the project to Android or iOS first.");
-        }
-    }
-
-    /// <summary>
     /// Returns the arbitrary ad value for a given ad unit identifier with key. Returns null if no ad is loaded.
     /// </summary>
     /// <param name="adUnitIdentifier"></param>
@@ -208,91 +175,69 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// </summary>
     public static SdkConfiguration GetSdkConfiguration()
     {
-        return SdkConfiguration.CreateEmpty();
+        var sdkConfiguration = new SdkConfiguration();
+        sdkConfiguration.ConsentDialogState = ConsentDialogState.Unknown;
+#if UNITY_EDITOR
+        sdkConfiguration.AppTrackingStatus = AppTrackingStatus.Authorized;
+#endif
+        sdkConfiguration.CountryCode = RegionInfo.CurrentRegion.TwoLetterISORegionName;
+
+        return sdkConfiguration;
     }
 
     /// <summary>
     /// Set whether or not user has provided consent for information sharing with AppLovin and other providers.
     /// </summary>
-    /// <param name="hasUserConsent"><c>true</c> if the user has provided consent for information sharing with AppLovin. <c>false</c> by default.</param>
+    /// <param name="hasUserConsent">'true' if the user has provided consent for information sharing with AppLovin. 'false' by default.</param>
     public static void SetHasUserConsent(bool hasUserConsent)
     {
         _hasUserConsent = hasUserConsent;
-        _isUserConsentSet = true;
     }
 
     /// <summary>
     /// Check if user has provided consent for information sharing with AppLovin and other providers.
     /// </summary>
-    /// <returns><c>true</c> if user has provided consent for information sharing. <c>false</c> if the user declined to share information or the consent value has not been set <see cref="IsUserConsentSet"/>.</returns>
+    /// <returns></returns>
     public static bool HasUserConsent()
     {
         return _hasUserConsent;
     }
 
     /// <summary>
-    /// Check if user has set consent for information sharing.
-    /// </summary>
-    /// <returns><c>true</c> if user has set a value of consent for information sharing.</returns>
-    public static bool IsUserConsentSet()
-    {
-        return _isUserConsentSet;
-    }
-
-    /// <summary>
     /// Mark user as age restricted (i.e. under 16).
     /// </summary>
-    /// <param name="isAgeRestrictedUser"><c>true</c> if the user is age restricted (i.e. under 16).</param>
+    /// <param name="isAgeRestrictedUser">'true' if the user is age restricted (i.e. under 16).</param>
     public static void SetIsAgeRestrictedUser(bool isAgeRestrictedUser)
     {
         _isAgeRestrictedUser = isAgeRestrictedUser;
-        _isAgeRestrictedUserSet = true;
     }
 
     /// <summary>
     /// Check if user is age restricted.
     /// </summary>
-    /// <returns><c>true</c> if the user is age-restricted. <c>false</c> if the user is not age-restricted or the age-restriction has not been set<see cref="IsAgeRestrictedUserSet"/>.</returns>
+    /// <returns></returns>
     public static bool IsAgeRestrictedUser()
     {
         return _isAgeRestrictedUser;
     }
 
-    /// <summary>
-    /// Check if user set its age restricted settings.
-    /// </summary>
-    /// <returns><c>true</c> if user has set its age restricted settings.</returns>
-    public static bool IsAgeRestrictedUserSet()
-    {
-        return _isAgeRestrictedUserSet;
-    }
+    private static bool _doNotSell = false;
 
     /// <summary>
     /// Set whether or not user has opted out of the sale of their personal information.
     /// </summary>
-    /// <param name="doNotSell"><c>true</c> if the user has opted out of the sale of their personal information.</param>
+    /// <param name="doNotSell">'true' if the user has opted out of the sale of their personal information.</param>
     public static void SetDoNotSell(bool doNotSell)
     {
         _doNotSell = doNotSell;
-        _isDoNotSellSet = true;
     }
 
     /// <summary>
     /// Check if the user has opted out of the sale of their personal information.
     /// </summary>
-    /// <returns><c>true</c> if the user has opted out of the sale of their personal information. <c>false</c> if the user opted in to the sell of their personal information or the value has not been set <see cref="IsDoNotSellSet"/>.</returns>
     public static bool IsDoNotSell()
     {
         return _doNotSell;
-    }
-
-    /// <summary>
-    /// Check if the user has set the option to sell their personal information.
-    /// </summary>
-    /// <returns><c>true</c> if user has chosen an option to sell their personal information.</returns>
-    public static bool IsDoNotSellSet()
-    {
-        return _isDoNotSellSet;
     }
 
     #endregion
@@ -351,23 +296,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
-    /// Load a new banner ad.
-    /// NOTE: The <see cref="CreateBanner()"/> method loads the first banner ad and initiates an automated banner refresh process.
-    /// You only need to call this method if you pause banner refresh. 
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the banner to load</param>
-    public static void LoadBanner(string adUnitIdentifier)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "load banner");
-
-        ExecuteWithDelay(1f, () =>
-        {
-            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnBannerAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
-        });
-    }
-
-    /// <summary>
     /// Set the banner placement for an ad unit identifier to tie the future ad events to.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the banner to set the placement for</param>
@@ -375,24 +303,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static void SetBannerPlacement(string adUnitIdentifier, string placement)
     {
         MaxSdkLogger.UserDebug("Setting banner placement to '" + placement + "' for ad unit id '" + adUnitIdentifier + "'");
-    }
-
-    /// <summary>
-    /// Starts or resumes auto-refreshing of the banner for the given ad unit identifier.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the banner for which to start auto-refresh</param>
-    public static void StartBannerAutoRefresh(string adUnitIdentifier)
-    {
-        MaxSdkLogger.UserDebug("Starting banner auto refresh.");
-    }
-
-    /// <summary>
-    /// Pauses auto-refreshing of the banner for the given ad unit identifier.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the banner for which to stop auto-refresh</param>
-    public static void StopBannerAutoRefresh(string adUnitIdentifier)
-    {
-        MaxSdkLogger.UserDebug("Stopping banner auto refresh.");
     }
 
     /// <summary>
@@ -513,27 +423,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
-    /// Set a local extra parameter for the banner ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the banner to set the local extra parameter for.</param>
-    /// <param name="key">The key for the local extra parameter.</param>
-    /// <param name="value">The value for the local extra parameter.</param>
-    public static void SetBannerLocalExtraParameter(string adUnitIdentifier, string key, object value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set banner local extra parameter");
-    }
-
-    /// <summary>
-    /// The custom data to tie the showing banner ad to, for ILRD and rewarded postbacks via the <c>{CUSTOM_DATA}</c> macro. Maximum size is 8KB.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Banner ad unit identifier of the banner to set the custom data for.</param>
-    /// <param name="customData">The custom data to be set.</param>
-    public static void SetBannerCustomData(string adUnitIdentifier, string customData)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set banner custom data");
-    }
-
-    /// <summary>
     /// The banner position on the screen. When setting the banner position via <see cref="CreateBanner(string, float, float)"/> or <see cref="UpdateBannerPosition(string, float, float)"/>,
     /// the banner is placed within the safe area of the screen. This returns the absolute position of the banner on screen.
     /// </summary>
@@ -576,23 +465,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
-    /// Load a new MREC ad.
-    /// NOTE: The <see cref="CreateMRec()"/> method loads the first MREC ad and initiates an automated MREC refresh process.
-    /// You only need to call this method if you pause MREC refresh. 
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to load</param>
-    public static void LoadMRec(string adUnitIdentifier)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "load MREC");
-
-        ExecuteWithDelay(1f, () =>
-        {
-            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnMRecAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
-        });
-    }
-
-    /// <summary>
     /// Set the MREC placement for an ad unit identifier to tie the future ad events to.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to set the placement for</param>
@@ -600,24 +472,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static void SetMRecPlacement(string adUnitIdentifier, string placement)
     {
         MaxSdkLogger.UserDebug("Setting MREC placement to '" + placement + "' for ad unit id '" + adUnitIdentifier + "'");
-    }
-
-    /// <summary>
-    /// Starts or resumes auto-refreshing of the MREC for the given ad unit identifier.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC for which to start auto-refresh</param>
-    public static void StartMRecAutoRefresh(string adUnitIdentifier)
-    {
-        MaxSdkLogger.UserDebug("Starting banner auto refresh.");
-    }
-
-    /// <summary>
-    /// Pauses auto-refreshing of the MREC for the given ad unit identifier.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC for which to stop auto-refresh</param>
-    public static void StopMRecAutoRefresh(string adUnitIdentifier)
-    {
-        MaxSdkLogger.UserDebug("Stopping banner auto refresh.");
     }
 
     /// <summary>
@@ -685,27 +539,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static void SetMRecExtraParameter(string adUnitIdentifier, string key, string value)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "set MREC extra parameter");
-    }
-
-    /// <summary>
-    /// Set a local extra parameter for the MREC ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to set the local extra parameter for.</param>
-    /// <param name="key">The key for the local extra parameter.</param>
-    /// <param name="value">The value for the local extra parameter.</param>
-    public static void SetMRecLocalExtraParameter(string adUnitIdentifier, string key, object value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set MREC local extra parameter");
-    }
-
-    /// <summary>
-    /// The custom data to tie the showing MREC ad to, for ILRD and rewarded postbacks via the <c>{CUSTOM_DATA}</c> macro. Maximum size is 8KB.
-    /// </summary>
-    /// <param name="adUnitIdentifier">MREC Ad unit identifier of the banner to set the custom data for.</param>
-    /// <param name="customData">The custom data to be set.</param>
-    public static void SetMRecCustomData(string adUnitIdentifier, string customData)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set MREC custom data");
     }
 
     /// <summary>
@@ -829,9 +662,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             AddReadyAdUnit(adUnitIdentifier);
-
-            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnInterstitialLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.Instance.ForwardEvent("name=OnInterstitialLoadedEvent\nadUnitId=" + adUnitIdentifier);
         });
     }
 
@@ -855,12 +686,20 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
+    /// Present loaded interstitial. Note: if the interstitial is not ready to be displayed nothing will happen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the interstitial to load</param>
+    public static void ShowInterstitial(string adUnitIdentifier)
+    {
+        ShowInterstitial(adUnitIdentifier, null);
+    }
+
+    /// <summary>
     /// Present loaded interstitial for a given placement to tie ad events to. Note: if the interstitial is not ready to be displayed nothing will happen.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the interstitial to load</param>
     /// <param name="placement">The placement to tie the showing ad's events to</param>
-    /// <param name="customData">The custom data to tie the showing ad's events to. Maximum size is 8KB.</param>
-    public static void ShowInterstitial(string adUnitIdentifier, string placement = null, string customData = null)
+    public static void ShowInterstitial(string adUnitIdentifier, string placement)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "show interstitial");
 
@@ -898,13 +737,11 @@ public class MaxSdkUnityEditor : MaxSdkBase
         interstitialText.text += ":\n" + adUnitIdentifier;
         closeButton.onClick.AddListener(() =>
         {
-            var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnInterstitialHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.Instance.ForwardEvent("name=OnInterstitialHiddenEvent\nadUnitId=" + adUnitIdentifier);
             Object.Destroy(stubInterstitial);
         });
 
-        var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnInterstitialDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.Instance.ForwardEvent("name=OnInterstitialDisplayedEvent\nadUnitId=" + adUnitIdentifier);
 #endif
     }
 
@@ -917,134 +754,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static void SetInterstitialExtraParameter(string adUnitIdentifier, string key, string value)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "set interstitial extra parameter");
-    }
-
-    /// <summary>
-    /// Set a local extra parameter for the ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the interstitial to set the local extra parameter for.</param>
-    /// <param name="key">The key for the local extra parameter.</param>
-    /// <param name="value">The value for the local extra parameter.</param>
-    public static void SetInterstitialLocalExtraParameter(string adUnitIdentifier, string key, object value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set interstitial local extra parameter");
-    }
-
-    #endregion
-
-    #region App Open Ads
-
-    /// <summary>
-    /// Start loading an app open ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the app open ad to load</param>
-    public static void LoadAppOpenAd(string adUnitIdentifier)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "load app open ad");
-        RequestAdUnit(adUnitIdentifier);
-
-        ExecuteWithDelay(1f, () =>
-        {
-            AddReadyAdUnit(adUnitIdentifier);
-
-            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnAppOpenAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
-        });
-    }
-
-    /// <summary>
-    /// Check if app open ad ad is loaded and ready to be displayed.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the app open ad to load</param>
-    /// <returns>True if the ad is ready to be displayed</returns>
-    public static bool IsAppOpenAdReady(string adUnitIdentifier)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "check app open ad loaded");
-
-        if (!IsAdUnitRequested(adUnitIdentifier))
-        {
-            MaxSdkLogger.UserWarning("App Open Ad '" + adUnitIdentifier +
-                                     "' was not requested, can not check if it is loaded");
-            return false;
-        }
-
-        return IsAdUnitReady(adUnitIdentifier);
-    }
-
-    /// <summary>
-    /// Present loaded app open ad for a given placement to tie ad events to. Note: if the app open ad is not ready to be displayed nothing will happen.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the app open ad to load</param>
-    /// <param name="placement">The placement to tie the showing ad's events to</param>
-    /// <param name="customData">The custom data to tie the showing ad's events to. Maximum size is 8KB.</param>
-    public static void ShowAppOpenAd(string adUnitIdentifier, string placement = null, string customData = null)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "show app open ad");
-
-        if (!IsAdUnitRequested(adUnitIdentifier))
-        {
-            MaxSdkLogger.UserWarning(
-                "App Open Ad '" + adUnitIdentifier + "' was not requested, can not show it");
-            return;
-        }
-
-        if (!IsAppOpenAdReady(adUnitIdentifier))
-        {
-            MaxSdkLogger.UserWarning("App Open Ad '" + adUnitIdentifier + "' is not ready, please check IsAppOpenAdReady() before showing.");
-            return;
-        }
-
-        RemoveReadyAdUnit(adUnitIdentifier);
-
-        if (_showStubAds)
-        {
-            ShowStubAppOpenAd(adUnitIdentifier);
-        }
-    }
-
-    private static void ShowStubAppOpenAd(string adUnitIdentifier)
-    {
-#if UNITY_EDITOR
-        var prefabPath = MaxSdkUtils.GetAssetPathForExportPath("MaxSdk/Prefabs/Interstitial.prefab");
-        var appOpenAdPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-        var stubAppOpenAd = Object.Instantiate(appOpenAdPrefab, Vector3.zero, Quaternion.identity);
-        var appOpenAdText = GameObject.Find("MaxInterstitialTitle").GetComponent<Text>();
-        var closeButton = GameObject.Find("MaxInterstitialCloseButton").GetComponent<Button>();
-        Object.DontDestroyOnLoad(stubAppOpenAd);
-
-        appOpenAdText.text = "MAX App Open Ad:\n" + adUnitIdentifier;
-        closeButton.onClick.AddListener(() =>
-        {
-            var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnAppOpenAdHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
-            Object.Destroy(stubAppOpenAd);
-        });
-
-        var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnAppOpenAdDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
-#endif
-    }
-
-    /// <summary>
-    /// Set an extra parameter for the ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the app open ad to set the extra parameter for.</param>
-    /// <param name="key">The key for the extra parameter.</param>
-    /// <param name="value">The value for the extra parameter.</param>
-    public static void SetAppOpenAdExtraParameter(string adUnitIdentifier, string key, string value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set app open ad extra parameter");
-    }
-
-    /// <summary>
-    /// Set a local extra parameter for the ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the app open ad to set the local extra parameter for.</param>
-    /// <param name="key">The key for the local extra parameter.</param>
-    /// <param name="value">The value for the local extra parameter.</param>
-    public static void SetAppOpenAdLocalExtraParameter(string adUnitIdentifier, string key, object value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set app open ad local extra parameter");
     }
 
     #endregion
@@ -1063,8 +772,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             AddReadyAdUnit(adUnitIdentifier);
-            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedAdLoadedEvent\nadUnitId=" + adUnitIdentifier);
         });
     }
 
@@ -1088,12 +796,20 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
+    /// Present loaded rewarded ad. Note: if the rewarded ad is not ready to be displayed nothing will happen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the rewarded ad to show</param>
+    public static void ShowRewardedAd(string adUnitIdentifier)
+    {
+        ShowRewardedAd(adUnitIdentifier, null);
+    }
+
+    /// <summary>
     /// Present loaded rewarded ad for a given placement to tie ad events to. Note: if the rewarded ad is not ready to be displayed nothing will happen.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the interstitial to load</param>
     /// <param name="placement">The placement to tie the showing ad's events to</param>
-    /// <param name="customData">The custom data to tie the showing ad's events to. Maximum size is 8KB.</param>
-    public static void ShowRewardedAd(string adUnitIdentifier, string placement = null, string customData = null)
+    public static void ShowRewardedAd(string adUnitIdentifier, string placement)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "show rewarded ad");
 
@@ -1136,15 +852,10 @@ public class MaxSdkUnityEditor : MaxSdkBase
         {
             if (grantedReward)
             {
-                var rewardEventPropsDict = CreateBaseEventPropsDictionary("OnRewardedAdReceivedRewardEvent", adUnitIdentifier);
-                rewardEventPropsDict["rewardLabel"] = "coins";
-                rewardEventPropsDict["rewardAmount"] = "5";
-                var rewardEventProps = Json.Serialize(rewardEventPropsDict);
-                MaxSdkCallbacks.Instance.ForwardEvent(rewardEventProps);
+                MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedAdReceivedRewardEvent\nadUnitId=" + adUnitIdentifier + "\nrewardLabel=coins\nrewardAmount=5");
             }
 
-            var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedAdHiddenEvent\nadUnitId=" + adUnitIdentifier);
             Object.Destroy(stubRewardedAd);
         });
         rewardButton.onClick.AddListener(() =>
@@ -1153,8 +864,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
             rewardStatus.text = "Reward granted. Will send reward callback on ad close.";
         });
 
-        var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedAdDisplayedEvent\nadUnitId=" + adUnitIdentifier);
 #endif
     }
 
@@ -1167,17 +877,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static void SetRewardedAdExtraParameter(string adUnitIdentifier, string key, string value)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "set rewarded extra parameter");
-    }
-
-    /// <summary>
-    /// Set a local extra parameter for the ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the rewarded ad to set the local extra parameter for.</param>
-    /// <param name="key">The key for the local extra parameter.</param>
-    /// <param name="value">The value for the local extra parameter.</param>
-    public static void SetRewardedAdLocalExtraParameter(string adUnitIdentifier, string key, object value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set rewarded local extra parameter");
     }
 
     #endregion
@@ -1196,8 +895,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             AddReadyAdUnit(adUnitIdentifier);
-            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedInterstitialAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedInterstitialAdLoadedEvent\nadUnitId=" + adUnitIdentifier);
         });
     }
 
@@ -1221,12 +919,20 @@ public class MaxSdkUnityEditor : MaxSdkBase
     }
 
     /// <summary>
+    /// Present loaded rewarded interstitial ad. Note: if the rewarded interstitial ad is not ready to be displayed nothing will happen.
+    /// </summary>
+    /// <param name="adUnitIdentifier">Ad unit identifier of the rewarded interstitial ad to show</param>
+    public static void ShowRewardedInterstitialAd(string adUnitIdentifier)
+    {
+        ShowRewardedInterstitialAd(adUnitIdentifier, null);
+    }
+
+    /// <summary>
     /// Present loaded rewarded interstitial ad for a given placement to tie ad events to. Note: if the rewarded interstitial ad is not ready to be displayed nothing will happen.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the rewarded interstitial to show</param>
     /// <param name="placement">The placement to tie the showing ad's events to</param>
-    /// <param name="customData">The custom data to tie the showing ad's events to. Maximum size is 8KB.</param>
-    public static void ShowRewardedInterstitialAd(string adUnitIdentifier, string placement = null, string customData = null)
+    public static void ShowRewardedInterstitialAd(string adUnitIdentifier, string placement)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "show rewarded interstitial ad");
 
@@ -1269,15 +975,10 @@ public class MaxSdkUnityEditor : MaxSdkBase
         {
             if (grantedReward)
             {
-                var rewardEventPropsDict = CreateBaseEventPropsDictionary("OnRewardedInterstitialAdReceivedRewardEvent", adUnitIdentifier);
-                rewardEventPropsDict["rewardLabel"] = "coins";
-                rewardEventPropsDict["rewardAmount"] = "5";
-                var rewardEventProps = Json.Serialize(rewardEventPropsDict);
-                MaxSdkCallbacks.Instance.ForwardEvent(rewardEventProps);
+                MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedInterstitialAdReceivedRewardEvent\nadUnitId=" + adUnitIdentifier + "\nrewardLabel=coins\nrewardAmount=5");
             }
 
-            var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedInterstitialAdHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedInterstitialAdHiddenEvent\nadUnitId=" + adUnitIdentifier);
             Object.Destroy(stubRewardedAd);
         });
         rewardButton.onClick.AddListener(() =>
@@ -1286,8 +987,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
             rewardStatus.text = "Reward granted. Will send reward callback on ad close.";
         });
 
-        var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.Instance.ForwardEvent("name=OnRewardedInterstitialAdDisplayedEvent\nadUnitId=" + adUnitIdentifier);
 #endif
     }
 
@@ -1300,17 +1000,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static void SetRewardedInterstitialAdExtraParameter(string adUnitIdentifier, string key, string value)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "set rewarded interstitial extra parameter");
-    }
-
-    /// <summary>
-    /// Set a local extra parameter for the ad.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the rewarded interstitial ad to set the local extra parameter for.</param>
-    /// <param name="key">The key for the local extra parameter.</param>
-    /// <param name="value">The value for the local extra parameter.</param>
-    public static void SetRewardedInterstitialAdLocalExtraParameter(string adUnitIdentifier, string key, object value)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "set rewarded interstitial local extra parameter");
     }
 
     #endregion
@@ -1395,19 +1084,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// <param name="enabled"><c>true</c> if the native AppLovin SDKs should not listen to exceptions.</param>
     public static void SetExceptionHandlerEnabled(bool enabled) { }
 
-    /// <summary>
-    /// Whether or not AppLovin SDK will collect the device location if available. Defaults to <c>true</c>.
-    /// </summary>
-    /// <param name="enabled"><c>true</c> if AppLovin SDK should collect the device location if available.</param>
-    public static void SetLocationCollectionEnabled(bool enabled) { }
-
-    /// <summary>
-    /// Set an extra parameter to pass to the AppLovin server.
-    /// </summary>
-    /// <param name="key">The key for the extra parameter. Must not be null.</param>
-    /// <param name="value">The value for the extra parameter. May be null.</param>
-    public static void SetExtraParameter(string key, string value) { }
-
     #endregion
 
     #region Internal
@@ -1457,15 +1133,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
             "MAX Ads SDK is not initialized by the time ad is requested. Please call Max.InitializeSdk() in your first scene");
     }
 
-    private static Dictionary<string, string> CreateBaseEventPropsDictionary(string eventName, string adUnitId)
-    {
-        return new Dictionary<string, string>()
-        {
-            {"name", eventName},
-            {"adUnitId", adUnitId}
-        };
-    }
-
     private static void ExecuteWithDelay(float seconds, Action action)
     {
         MaxSdkCallbacks.Instance.StartCoroutine(ExecuteAction(seconds, action));
@@ -1473,28 +1140,12 @@ public class MaxSdkUnityEditor : MaxSdkBase
 
     private static IEnumerator ExecuteAction(float seconds, Action action)
     {
-        yield return new WaitForSecondsRealtime(seconds);
+        yield return new WaitForSeconds(seconds);
 
         action();
     }
 
     internal static void SetUserSegmentField(string key, string value) { }
-
-    internal static void SetTargetingDataYearOfBirth(int yearOfBirth) { }
-
-    internal static void SetTargetingDataGender(string gender) { }
-
-    internal static void SetTargetingDataMaximumAdContentRating(int maximumAdContentRating) { }
-
-    internal static void SetTargetingDataEmail(string email) { }
-
-    internal static void SetTargetingDataPhoneNumber(string phoneNumber) { }
-
-    internal static void SetTargetingDataKeywords(string[] keywords) { }
-
-    internal static void SetTargetingDataInterests(string[] interests) { }
-
-    internal static void ClearAllTargetingData() { }
 
     #endregion
 
@@ -1509,7 +1160,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
     [Obsolete("This method has been deprecated. The AdInfo object is returned with ad callbacks.")]
     public static AdInfo GetAdInfo(string adUnitIdentifier)
     {
-        return new AdInfo(new Dictionary<string, object>());
+        return new AdInfo(new Dictionary<string, string>());
     }
 
     #endregion
