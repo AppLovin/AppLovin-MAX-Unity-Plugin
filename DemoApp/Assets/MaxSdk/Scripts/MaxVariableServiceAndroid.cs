@@ -11,15 +11,6 @@ public class MaxVariableServiceAndroid
     }
 
     /// <summary>
-    /// Explicitly retrieve the latest variables from the server.
-    /// Please make sure to implement the callback <see cref="MaxSdkCallbacks.OnVariablesUpdatedEvent"/>.
-    /// </summary>
-    public void LoadVariables()
-    {
-        _maxUnityPluginClass.CallStatic("loadVariables");
-    }
-
-    /// <summary>
     /// Returns the variable value associated with the given key, or false if no mapping of the desired type exists for the given key.
     /// </summary>
     /// <param name="key">The variable name to retrieve the value for.</param>
@@ -35,5 +26,11 @@ public class MaxVariableServiceAndroid
     public string GetString(string key, string defaultValue = "")
     {
         return _maxUnityPluginClass.CallStatic<string>("getString", key, defaultValue);
+    }
+
+    [System.Obsolete("This API has been deprecated. Please use our SDK's initialization callback to retrieve variables instead.")]
+    public void LoadVariables()
+    {
+        _maxUnityPluginClass.CallStatic("loadVariables");
     }
 }

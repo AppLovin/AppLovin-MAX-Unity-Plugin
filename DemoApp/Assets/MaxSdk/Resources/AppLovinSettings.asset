@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   qualityServiceEnabled: 1
   sdkKey: 
+  setAttributionReportEndpoint: 0
   consentFlowEnabled: 0
   consentFlowPrivacyPolicyUrl: 
   consentFlowTermsOfServiceUrl: 
@@ -28,3 +29,4 @@ MonoBehaviour:
   userTrackingUsageDescriptionZhHant: 
   adMobAndroidAppId: 
   adMobIosAppId: 
+  snapAppStoreAppId: 0
