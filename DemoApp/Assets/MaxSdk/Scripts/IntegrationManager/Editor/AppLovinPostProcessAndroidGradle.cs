@@ -6,7 +6,7 @@
 //  Copyright © 2019 AppLovin. All rights reserved.
 //
 
-#if UNITY_2018_2_OR_NEWER && UNITY_ANDROID
+#if UNITY_ANDROID
 
 using System.IO;
 using UnityEditor.Android;

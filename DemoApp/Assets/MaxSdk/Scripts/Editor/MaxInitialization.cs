@@ -19,11 +19,14 @@ namespace AppLovinMax.Scripts.Editor
     {
         private static readonly List<string> ObsoleteNetworks = new List<string>
         {
+            "AdColony",
+            "Criteo",
             "Snap",
+            "Tapjoy",
+            "VerizonAds",
             "VoodooAds"
         };
 
-#if UNITY_2018_2_OR_NEWER
         private static readonly List<string> ObsoleteFileExportPathsToDelete = new List<string>
         {
             // The `EventSystemChecker` has been renamed to `MaxEventSystemChecker`.
@@ -44,7 +47,7 @@ namespace AppLovinMax.Scripts.Editor
             "Plugins/Android/MaxMediationGoogle.androidlib",
             "Plugins/Android/MaxMediationGoogle.androidlib.meta",
 
-            // Google Ad Manager adapter pre/post process scripts. The logic has been migrated to the main plugin
+            // Google Ad Manager adapter pre/post process scripts. The logic has been migrated to the main plugin.
             "MaxSdk/Mediation/GoogleAdManager/Editor/MaxGoogleAdManagerInitialize.cs",
             "MaxSdk/Mediation/GoogleAdManager/Editor/MaxGoogleAdManagerInitialize.cs.meta",
             "MaxSdk/Mediation/GoogleAdManager/Editor/PostProcessor.cs",
@@ -52,9 +55,16 @@ namespace AppLovinMax.Scripts.Editor
             "MaxSdk/Mediation/GoogleAdManager/Editor/MaxSdk.Mediation.GoogleAdManager.Editor.asmdef",
             "MaxSdk/Mediation/GoogleAdManager/Editor/MaxSdk.Mediation.GoogleAdManager.Editor.asmdef.meta",
             "Plugins/Android/MaxMediationGoogleAdManager.androidlib",
-            "Plugins/Android/MaxMediationGoogleAdManager.androidlib.meta"
+            "Plugins/Android/MaxMediationGoogleAdManager.androidlib.meta",
+                
+            // The `VariableService` has been removed.
+            "MaxSdk/Scripts/MaxVariableServiceAndroid.cs",
+            "MaxSdk/Scripts/MaxVariableServiceAndroid.cs.meta",
+            "MaxSdk/Scripts/MaxVariableServiceiOS.cs",
+            "MaxSdk/Scripts/MaxVariableServiceiOS.cs.meta",
+            "MaxSdk/Scripts/MaxVariableServiceUnityEditor.cs",
+            "MaxSdk/Scripts/MaxVariableServiceUnityEditor.cs.meta"
         };
-#endif
 
         static MaxInitialize()
         {
@@ -83,7 +93,6 @@ namespace AppLovinMax.Scripts.Editor
 
             AppLovinIntegrationManager.AddLabelsToAssetsIfNeeded(pluginParentDir, isPluginOutsideAssetsDir);
 
-#if UNITY_2018_2_OR_NEWER
             foreach (var obsoleteFileExportPathToDelete in ObsoleteFileExportPathsToDelete)
             {
                 var pathToDelete = MaxSdkUtils.GetAssetPathForExportPath(obsoleteFileExportPathToDelete);
@@ -94,7 +103,6 @@ namespace AppLovinMax.Scripts.Editor
                     changesMade = true;
                 }
             }
-#endif
 
             // Check if any obsolete networks are installed
             foreach (var obsoleteNetwork in ObsoleteNetworks)

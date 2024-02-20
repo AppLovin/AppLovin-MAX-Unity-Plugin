@@ -34,11 +34,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         [SerializeField] private bool consentFlowEnabled;
         [SerializeField] private string consentFlowPrivacyPolicyUrl = string.Empty;
         [SerializeField] private string consentFlowTermsOfServiceUrl = string.Empty;
-        [SerializeField] private string consentFlowAdvertisingPartnerUrls = string.Empty;
-        [SerializeField] private bool includeDefaultAdvertisingPartnerUrls = true;
-        [SerializeField] private string consentFlowAnalyticsPartnerUrls = string.Empty;
-        [SerializeField] private bool consentFlowIncludeDefaultAnalyticsPartnerUrls = true;
         [SerializeField] private bool overrideDefaultUserTrackingUsageDescriptions;
+        [SerializeField] private MaxSdkBase.ConsentFlowUserGeography debugUserGeography;
         [SerializeField] private string userTrackingUsageDescriptionEn = string.Empty;
         [SerializeField] private bool userTrackingUsageLocalizationEnabled;
         [SerializeField] private string userTrackingUsageDescriptionDe = string.Empty;
@@ -121,8 +118,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                     UserTrackingUsageDescriptionEn = string.Empty;
                     UserTrackingUsageLocalizationEnabled = false;
                     OverrideDefaultUserTrackingUsageDescriptions = false;
-                    ConsentFlowIncludeDefaultAdvertisingPartnerUrls = true;
-                    ConsentFlowIncludeDefaultAnalyticsPartnerUrls = true;
                 }
             }
         }
@@ -146,42 +141,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         }
 
         /// <summary>
-        /// An array of advertising partner URLs. These URLs list are shown during the GDPR flow.
-        /// </summary>
-        public string ConsentFlowAdvertisingPartnerUrls
-        {
-            get { return consentFlowAdvertisingPartnerUrls; }
-            set { consentFlowAdvertisingPartnerUrls = value; }
-        }
-
-        /// <summary>
-        /// Whether or not to include a default set of advertising partners. Defaults to <c>true</c>.
-        /// </summary>
-        public bool ConsentFlowIncludeDefaultAdvertisingPartnerUrls
-        {
-            get { return includeDefaultAdvertisingPartnerUrls; }
-            set { includeDefaultAdvertisingPartnerUrls = value; }
-        }
-
-        /// <summary>
-        /// An array of analytics partner URLs. These URLs list are shown during the GDPR flow.
-        /// </summary>
-        public string ConsentFlowAnalyticsPartnerUrls
-        {
-            get { return consentFlowAnalyticsPartnerUrls; }
-            set { consentFlowAnalyticsPartnerUrls = value; }
-        }
-
-        /// <summary>
-        /// Whether or not to include a default set of analytics partners. Defaults to <c>true</c>.
-        /// </summary>
-        public bool ConsentFlowIncludeDefaultAnalyticsPartnerUrls
-        {
-            get { return consentFlowIncludeDefaultAnalyticsPartnerUrls; }
-            set { consentFlowIncludeDefaultAnalyticsPartnerUrls = value; }
-        }
-
-        /// <summary>
         /// A User Tracking Usage Description in English to be shown to users when requesting permission to use data for tracking.
         /// For more information see <see cref="https://developer.apple.com/documentation/bundleresources/information_property_list/nsusertrackingusagedescription">Apple's documentation</see>.
         /// </summary>
@@ -189,6 +148,15 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             get { return userTrackingUsageDescriptionEn; }
             set { userTrackingUsageDescriptionEn = value; }
+        }
+
+        /// <summary>
+        /// An optional string to set debug user geography
+        /// </summary>
+        public MaxSdkBase.ConsentFlowUserGeography DebugUserGeography
+        {
+            get { return debugUserGeography; }
+            set { debugUserGeography = value; }
         }
 
         public bool OverrideDefaultUserTrackingUsageDescriptions

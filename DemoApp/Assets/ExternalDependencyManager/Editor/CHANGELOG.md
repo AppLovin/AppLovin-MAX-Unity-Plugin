@@ -1,8 +1,27 @@
+# Version 1.2.176 - Apr 27, 2023
+* Android Resolver - Added two Android Resolver settings to determine whether
+  EDM4U injects custom local Maven repo path as a relative path or full path.
+  Fixes #537
+* Android Resolver - Inject Maven Repo to `settingTemplate.gradle` from
+  Unity 2022.2+
+  Fixes #594
+* Android Resolver - Jetifier option is enabled by default now.
+* Android Resolver - `Explode Aar` option applies to all cases, whether the
+  project will be exported or not.
+  Fixes #584
+  Fixes #287
+
+# Version 1.2.175 - Nov 16, 2022
+* General - Added tvOS podfile support to the iOS resolver.
+
 # Version 1.2.174 - Oct 06, 2022
-* General - added tvOS support to the iOS resolver.
+* General - Added tvOS support to the iOS resolver.
+* General - Fixed #484 - Changed `EditorMeasurement` to use secure connection.
+* Android Resolver - Fixed Android Resolver unable to resolve
+  `mainTemplate.gradle` in Unity `2022.2+` or `2023.1+`.
 
 # Version 1.2.173 - Sep 28, 2022
-* General - added tvOS library support to the export unity package scripts.
+* General - Added tvOS library support to the export unity package scripts.
 
 # Version 1.2.172 - Jun 23, 2022
 * iOS Resolver - Stop forcing `ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES` to `YES`,

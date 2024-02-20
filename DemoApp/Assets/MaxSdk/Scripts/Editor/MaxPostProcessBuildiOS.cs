@@ -45,47 +45,26 @@ namespace AppLovinMax.Scripts.Editor
         private const string KeyConsentFlowEnabled = "ConsentFlowEnabled";
         private const string KeyConsentFlowTermsOfService = "ConsentFlowTermsOfService";
         private const string KeyConsentFlowPrivacyPolicy = "ConsentFlowPrivacyPolicy";
-        private const string KeyConsentFlowAdvertisingPartners = "ConsentFlowAdvertisingPartners";
-        private const string KeyConsentFlowIncludeDefaultAdvertisingPartners = "ConsentFlowIncludeDefaultAdvertisingPartners";
-        private const string KeyConsentFlowAnalyticsPartners = "ConsentFlowAnalyticsPartners";
-        private const string KeyConsentFlowIncludeDefaultAnalyticsPartners = "ConsentFlowIncludeDefaultAnalyticsPartners";
+        private const string KeyConsentFlowDebugUserGeography = "ConsentFlowDebugUserGeography";
 
         private static readonly List<string> DynamicLibrariesToEmbed = new List<string>
         {
             "DTBiOSSDK.xcframework",
+            "FBAEMKit.xcframework",
             "FBSDKCoreKit_Basics.xcframework",
+            "FBSDKCoreKit.xcframework",
+            "FBSDKGamingServicesKit.xcframework",
+            "FBSDKLoginKit.xcframework",
+            "FBSDKShareKit.xcframework",
             "HyprMX.xcframework",
+            "LinkedinAudienceNetwork.xcframework",
             "IASDKCore.xcframework",
+            "Maio.xcframework",
             "MobileFuseSDK.xcframework",
             "OMSDK_Appodeal.xcframework",
             "OMSDK_Ogury.xcframework",
             "OMSDK_Pubnativenet.xcframework",
             "OMSDK_Smaato.xcframework"
-        };
-
-        private static List<string> SwiftLanguageNetworks
-        {
-            get
-            {
-                var swiftLanguageNetworks = new List<string>();
-                if (AppLovinIntegrationManager.IsAdapterInstalled("Facebook", "6.9.0.0"))
-                {
-                    swiftLanguageNetworks.Add("Facebook");
-                }
-
-                if (AppLovinIntegrationManager.IsAdapterInstalled("UnityAds", "4.4.0.0"))
-                {
-                    swiftLanguageNetworks.Add("UnityAds");
-                }
-
-                return swiftLanguageNetworks;
-            }
-        }
-
-        private static readonly List<string> EmbedSwiftStandardLibrariesNetworks = new List<string>
-        {
-            "Facebook",
-            "UnityAds"
         };
 
         private static string PluginMediationDirectory
@@ -113,7 +92,7 @@ namespace AppLovinMax.Scripts.Editor
 #endif
             EmbedDynamicLibrariesIfNeeded(buildPath, project, unityMainTargetGuid);
 
-            var internalSettingsEnabled = AppLovinSettings.Instance.ShowInternalSettingsInIntegrationManager;
+            var internalSettingsEnabled = AppLovinInternalSettings.Instance.ConsentFlowEnabled;
             var userTrackingUsageDescriptionDe = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionDe : AppLovinSettings.Instance.UserTrackingUsageDescriptionDe;
             LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionDe, "de", buildPath, project, unityMainTargetGuid);
             var userTrackingUsageDescriptionEn = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionEn : AppLovinSettings.Instance.UserTrackingUsageDescriptionEn;
@@ -131,8 +110,7 @@ namespace AppLovinMax.Scripts.Editor
             var userTrackingUsageDescriptionZhHant = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionZhHant : AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHant;
             LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionZhHant, "zh-Hant", buildPath, project, unityMainTargetGuid);
 
-            AddSwiftSupportIfNeeded(buildPath, project, unityFrameworkTargetGuid);
-            EmbedSwiftStandardLibrariesIfNeeded(buildPath, project, unityMainTargetGuid);
+            AddSwiftSupport(buildPath, project, unityFrameworkTargetGuid, unityMainTargetGuid);
             AddYandexSettingsIfNeeded(project, unityMainTargetGuid);
 
             project.WriteToFile(projectPath);
@@ -171,11 +149,7 @@ namespace AppLovinMax.Scripts.Editor
             }
 #else
             string runpathSearchPaths;
-#if UNITY_2018_2_OR_NEWER
             runpathSearchPaths = project.GetBuildPropertyForAnyConfig(targetGuid, "LD_RUNPATH_SEARCH_PATHS");
-#else
-            runpathSearchPaths = "$(inherited)";          
-#endif
             runpathSearchPaths += string.IsNullOrEmpty(runpathSearchPaths) ? "" : " ";
 
             // Check if runtime search paths already contains the required search paths for dynamic libraries.
@@ -258,77 +232,32 @@ namespace AppLovinMax.Scripts.Editor
             if (string.IsNullOrEmpty(localizedUserTrackingDescription)) return true;
 
             var settings = AppLovinSettings.Instance;
-            var internalSettingsEnabled = settings.ShowInternalSettingsInIntegrationManager;
-            if (internalSettingsEnabled)
-            {
-                var internalSettings = AppLovinInternalSettings.Instance;
-                return !internalSettings.ConsentFlowEnabled || !internalSettings.UserTrackingUsageLocalizationEnabled;
-            }
+            var internalSettings = AppLovinInternalSettings.Instance;
 
-            return !settings.ConsentFlowEnabled || !settings.UserTrackingUsageLocalizationEnabled;
+            return (!internalSettings.ConsentFlowEnabled || !internalSettings.UserTrackingUsageLocalizationEnabled)
+                   && (!settings.ConsentFlowEnabled || !settings.UserTrackingUsageLocalizationEnabled);
         }
 
-        private static void AddSwiftSupportIfNeeded(string buildPath, PBXProject project, string targetGuid)
+        private static void AddSwiftSupport(string buildPath, PBXProject project, string unityFrameworkTargetGuid, string unityMainTargetGuid)
         {
             var swiftFileRelativePath = "Classes/MAXSwiftSupport.swift";
             var swiftFilePath = Path.Combine(buildPath, swiftFileRelativePath);
-            var maxMediationDirectory = PluginMediationDirectory;
-            var hasSwiftLanguageNetworksInProject = SwiftLanguageNetworks.Any(network => Directory.Exists(Path.Combine(maxMediationDirectory, network)));
-
-            // Remove Swift file if no need to support Swift
-            if (!hasSwiftLanguageNetworksInProject)
-            {
-                if (File.Exists(swiftFilePath))
-                {
-                    MaxSdkLogger.UserDebug("Removing Swift file references.");
-
-                    var fileGuid = project.FindFileGuidByRealPath(swiftFilePath, PBXSourceTree.Source);
-                    if (!string.IsNullOrEmpty(fileGuid))
-                    {
-                        project.RemoveFile(fileGuid);
-                        project.RemoveFileFromBuild(targetGuid, fileGuid);
-
-                        FileUtil.DeleteFileOrDirectory(swiftFilePath);
-                    }
-                }
-
-                return;
-            }
 
             // Add Swift file
             CreateSwiftFile(swiftFilePath);
             var swiftFileGuid = project.AddFile(swiftFileRelativePath, swiftFileRelativePath, PBXSourceTree.Source);
-            project.AddFileToBuild(targetGuid, swiftFileGuid);
+            project.AddFileToBuild(unityFrameworkTargetGuid, swiftFileGuid);
 
             // Add Swift version property if needed
-#if UNITY_2018_2_OR_NEWER
-            var swiftVersion = project.GetBuildPropertyForAnyConfig(targetGuid, "SWIFT_VERSION");
-#else
-            // Assume that swift version is not set on older versions of Unity.
-            const string swiftVersion = "";
-#endif
+            var swiftVersion = project.GetBuildPropertyForAnyConfig(unityFrameworkTargetGuid, "SWIFT_VERSION");
             if (string.IsNullOrEmpty(swiftVersion))
             {
-                project.SetBuildProperty(targetGuid, "SWIFT_VERSION", "5.0");
+                project.SetBuildProperty(unityFrameworkTargetGuid, "SWIFT_VERSION", "5.0");
             }
 
             // Enable Swift modules
-            project.AddBuildProperty(targetGuid, "CLANG_ENABLE_MODULES", "YES");
-        }
-
-        /// <summary>
-        /// For Swift 5+ code that uses the standard libraries, the Swift Standard Libraries MUST be embedded for iOS < 12.2
-        /// Swift 5 introduced ABI stability, which allowed iOS to start bundling the standard libraries in the OS starting with iOS 12.2
-        /// Issue Reference: https://github.com/facebook/facebook-sdk-for-unity/issues/506
-        /// </summary>
-        private static void EmbedSwiftStandardLibrariesIfNeeded(string buildPath, PBXProject project, string mainTargetGuid)
-        {
-            var maxMediationDirectory = PluginMediationDirectory;
-            var hasEmbedSwiftStandardLibrariesNetworksInProject = EmbedSwiftStandardLibrariesNetworks.Any(network => Directory.Exists(Path.Combine(maxMediationDirectory, network)));
-            if (!hasEmbedSwiftStandardLibrariesNetworksInProject) return;
-
-            // This needs to be added the main target. App Store may reject builds if added to UnityFramework (i.e. MoPub in FT).
-            project.AddBuildProperty(mainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
+            project.AddBuildProperty(unityFrameworkTargetGuid, "CLANG_ENABLE_MODULES", "YES");
+            project.AddBuildProperty(unityMainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
         }
 
         private static void CreateSwiftFile(string swiftFilePath)
@@ -356,10 +285,8 @@ namespace AppLovinMax.Scripts.Editor
             SetSdkKeyIfNeeded(plist);
             SetAttributionReportEndpointIfNeeded(plist);
 
-#if UNITY_2018_2_OR_NEWER
             EnableVerboseLoggingIfNeeded(plist);
             AddGoogleApplicationIdIfNeeded(plist);
-#endif
 
             AddSdkSettingsIfNeeded(plist, path);
             EnableTermsFlowIfNeeded(plist);
@@ -396,7 +323,6 @@ namespace AppLovinMax.Scripts.Editor
             }
         }
 
-#if UNITY_2018_2_OR_NEWER
         private static void EnableVerboseLoggingIfNeeded(PlistDocument plist)
         {
             if (!EditorPrefs.HasKey(MaxSdkLogger.KeyVerboseLoggingEnabled)) return;
@@ -428,7 +354,6 @@ namespace AppLovinMax.Scripts.Editor
 
             plist.root.SetString(googleApplicationIdentifier, appId);
         }
-#endif
 
         private static void AddYandexSettingsIfNeeded(PBXProject project, string unityMainTargetGuid)
         {
@@ -445,8 +370,6 @@ namespace AppLovinMax.Scripts.Editor
 
         private static void AddSdkSettingsIfNeeded(PlistDocument infoPlist, string buildPath)
         {
-            if (!AppLovinSettings.Instance.ShowInternalSettingsInIntegrationManager) return;
-
             // Right now internal settings is only needed for Consent Flow. Remove this setting once we add more settings.
             if (!AppLovinInternalSettings.Instance.ConsentFlowEnabled) return;
 
@@ -495,44 +418,22 @@ namespace AppLovinMax.Scripts.Editor
             consentFlowInfoRoot.SetString(KeyConsentFlowPrivacyPolicy, privacyPolicyUrl);
 
             var termsOfServiceUrl = AppLovinInternalSettings.Instance.ConsentFlowTermsOfServiceUrl;
-            if (!string.IsNullOrEmpty(termsOfServiceUrl))
+            if (MaxSdkUtils.IsValidString(termsOfServiceUrl))
             {
                 consentFlowInfoRoot.SetString(KeyConsentFlowTermsOfService, termsOfServiceUrl);
             }
 
-            var advertisingPartnerUrls = AppLovinInternalSettings.Instance.ConsentFlowAdvertisingPartnerUrls;
-            if (MaxSdkUtils.IsValidString(advertisingPartnerUrls))
+            var debugUserGeography = AppLovinInternalSettings.Instance.DebugUserGeography;
+            if (debugUserGeography == MaxSdkBase.ConsentFlowUserGeography.Gdpr)
             {
-                var advertisingPartnerUrlsList = advertisingPartnerUrls.Split(',');
-                var advertisingPartnersArray = consentFlowInfoRoot.CreateArray(KeyConsentFlowAdvertisingPartners);
-                foreach (var advertisingPartner in advertisingPartnerUrlsList)
-                {
-                    advertisingPartnersArray.AddString(advertisingPartner);
-                }
+                consentFlowInfoRoot.SetString(KeyConsentFlowDebugUserGeography, "gdpr");
             }
-
-            consentFlowInfoRoot.SetBoolean(KeyConsentFlowIncludeDefaultAdvertisingPartners, AppLovinInternalSettings.Instance.ConsentFlowIncludeDefaultAdvertisingPartnerUrls);
-
-            var analyticsPartnerUrls = AppLovinInternalSettings.Instance.ConsentFlowAnalyticsPartnerUrls;
-            if (MaxSdkUtils.IsValidString(analyticsPartnerUrls))
-            {
-                var analyticsPartnerUrlsList = analyticsPartnerUrls.Split(',');
-                var analyticsPartnersArray = consentFlowInfoRoot.CreateArray(KeyConsentFlowAnalyticsPartners);
-                foreach (var analyticsPartnerUrl in analyticsPartnerUrlsList)
-                {
-                    analyticsPartnersArray.AddString(analyticsPartnerUrl);
-                }
-            }
-
-            consentFlowInfoRoot.SetBoolean(KeyConsentFlowIncludeDefaultAnalyticsPartners, AppLovinInternalSettings.Instance.ConsentFlowIncludeDefaultAnalyticsPartnerUrls);
 
             infoPlist.root.SetString("NSUserTrackingUsageDescription", userTrackingUsageDescription);
         }
 
         private static void EnableTermsFlowIfNeeded(PlistDocument plist)
         {
-            if (AppLovinSettings.Instance.ShowInternalSettingsInIntegrationManager) return;
-
             // Check if terms flow is enabled. No need to update info.plist if consent flow is disabled.
             var consentFlowEnabled = AppLovinSettings.Instance.ConsentFlowEnabled;
             if (!consentFlowEnabled) return;
@@ -625,37 +526,36 @@ namespace AppLovinMax.Scripts.Editor
 
         private static SkAdNetworkData GetSkAdNetworkData()
         {
-            var uriBuilder = new UriBuilder("https://dash.applovin.com/docs/v1/unity_integration_manager/sk_ad_networks_info");
+            var uriBuilder = new UriBuilder("https://unity.applovin.com/max/1.0/skadnetwork_ids");
 
             // Get the list of installed ad networks to be passed up
             var maxMediationDirectory = PluginMediationDirectory;
             if (Directory.Exists(maxMediationDirectory))
             {
                 var mediationNetworkDirectories = Directory.GetDirectories(maxMediationDirectory);
-                var installedNetworks = mediationNetworkDirectories.Select(Path.GetFileName).ToArray();
-                var adNetworks = string.Join(",", installedNetworks);
+                var installedNetworks = mediationNetworkDirectories.Select(Path.GetFileName).ToList();
+                if (AppLovinSettings.Instance.AddApsSkAdNetworkIds)
+                {
+                    installedNetworks.Add("AmazonPublisherServices");
+                }
+
+                var adNetworks = string.Join(",", installedNetworks.ToArray());
                 if (!string.IsNullOrEmpty(adNetworks))
                 {
-                    uriBuilder.Query += string.Format("adnetworks={0}", adNetworks);
+                    uriBuilder.Query += string.Format("ad_networks={0}", adNetworks);
                 }
             }
 
             using (var unityWebRequest = UnityWebRequest.Get(uriBuilder.ToString()))
             {
-#if UNITY_2017_2_OR_NEWER
                 var operation = unityWebRequest.SendWebRequest();
-#else
-                var operation = unityWebRequest.Send();
-#endif
                 // Wait for the download to complete or the request to timeout.
                 while (!operation.isDone) { }
 
 #if UNITY_2020_1_OR_NEWER
                 if (unityWebRequest.result != UnityWebRequest.Result.Success)
-#elif UNITY_2017_2_OR_NEWER
-                if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
 #else
-                if (unityWebRequest.isError)
+                if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
 #endif
                 {
                     MaxSdkLogger.UserError("Failed to retrieve SKAdNetwork IDs with error: " + unityWebRequest.error);

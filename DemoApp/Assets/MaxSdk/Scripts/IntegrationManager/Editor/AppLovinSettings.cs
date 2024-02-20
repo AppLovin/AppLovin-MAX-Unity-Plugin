@@ -58,6 +58,10 @@ public class AppLovinSettings : ScriptableObject
     [SerializeField] private string sdkKey;
 
     [SerializeField] private bool setAttributionReportEndpoint;
+    [SerializeField] private bool addApsSkAdNetworkIds;
+
+    [SerializeField] private string customGradleVersionUrl;
+    [SerializeField] private string customGradleToolsVersion;
 
     [SerializeField] private bool consentFlowEnabled;
     [SerializeField] private Platform consentFlowPlatform;
@@ -161,6 +165,33 @@ public class AppLovinSettings : ScriptableObject
     {
         get { return Instance.setAttributionReportEndpoint; }
         set { Instance.setAttributionReportEndpoint = value; }
+    }
+
+    /// <summary>
+    /// Whether or not to add Amazon Publisher Services SKAdNetworkID's.
+    /// </summary>
+    public bool AddApsSkAdNetworkIds
+    {
+        get { return Instance.addApsSkAdNetworkIds; }
+        set { Instance.addApsSkAdNetworkIds = value; }
+    }
+
+    /// <summary>
+    /// A URL to set the distributionUrl in the gradle-wrapper.properties file (ex: https\://services.gradle.org/distributions/gradle-6.9.3-bin.zip)
+    /// </summary>
+    public string CustomGradleVersionUrl
+    {
+        get { return Instance.customGradleVersionUrl;  }
+        set { Instance.customGradleVersionUrl = value; }
+    }
+
+    /// <summary>
+    /// A string to set the custom gradle tools version (ex: com.android.tools.build:gradle:4.2.0)
+    /// </summary>
+    public string CustomGradleToolsVersion
+    {
+        get { return Instance.customGradleToolsVersion;  }
+        set { Instance.customGradleToolsVersion = value; }
     }
 
     /// <summary>

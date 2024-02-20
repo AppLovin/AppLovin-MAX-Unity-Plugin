@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
-using AppLovinMax.Internal.API;
 using AppLovinMax.ThirdParty.MiniJson;
 
 public class MaxSdkCallbacks : MonoBehaviour
@@ -45,23 +44,6 @@ public class MaxSdkCallbacks : MonoBehaviour
         {
             LogUnsubscribedToEvent("OnSdkInitializedEvent");
             _onSdkInitializedEvent -= value;
-        }
-    }
-
-    // Fire when the MaxVariableService has finished loading the latest set of variables.
-    private static Action _onVariablesUpdatedEvent;
-    [System.Obsolete("This API has been deprecated. Please use our SDK's initialization callback to retrieve variables instead.")]
-    public static event Action OnVariablesUpdatedEvent
-    {
-        add
-        {
-            LogSubscribedToEvent("OnVariablesUpdatedEvent");
-            _onVariablesUpdatedEvent += value;
-        }
-        remove
-        {
-            LogUnsubscribedToEvent("OnVariablesUpdatedEvent");
-            _onVariablesUpdatedEvent -= value;
         }
     }
 
@@ -186,6 +168,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         /// <summary>
         /// Fired when an Ad Review Creative ID has been generated.
         /// The parameters returned are the adUnitIdentifier, adReviewCreativeId, and adInfo in that respective order.
+        /// Executed on a background thread to avoid any delays in execution.
         /// </summary>
         public static event Action<string, string, MaxSdkBase.AdInfo> OnAdReviewCreativeIdGeneratedEvent
         {
@@ -438,6 +421,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         /// <summary>
         /// Fired when an Ad Review Creative ID has been generated.
         /// The parameters returned are the adUnitIdentifier, adReviewCreativeId, and adInfo in that respective order.
+        /// Executed on a background thread to avoid any delays in execution.
         /// </summary>
         public static event Action<string, string, MaxSdkBase.AdInfo> OnAdReviewCreativeIdGeneratedEvent
         {
@@ -589,6 +573,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         /// <summary>
         /// Fired when an Ad Review Creative ID has been generated.
         /// The parameters returned are the adUnitIdentifier, adReviewCreativeId, and adInfo in that respective order.
+        /// Executed on a background thread to avoid any delays in execution.
         /// </summary>
         public static event Action<string, string, MaxSdkBase.AdInfo> OnAdReviewCreativeIdGeneratedEvent
         {
@@ -855,100 +840,6 @@ public class MaxSdkCallbacks : MonoBehaviour
             {
                 LogUnsubscribedToEvent("OnMRecAdCollapsedEvent");
                 _onMRecAdCollapsedEventV2 -= value;
-            }
-        }
-    }
-
-    private static Action<string, MaxSdkBase.AdInfo> _onCrossPromoAdLoadedEvent;
-    private static Action<string, MaxSdkBase.ErrorInfo> _onCrossPromoAdLoadFailedEvent;
-    private static Action<string, MaxSdkBase.AdInfo> _onCrossPromoAdClickedEvent;
-    private static Action<string, MaxSdkBase.AdInfo> _onCrossPromoAdRevenuePaidEvent;
-    private static Action<string, MaxSdkBase.AdInfo> _onCrossPromoAdExpandedEvent;
-    private static Action<string, MaxSdkBase.AdInfo> _onCrossPromoAdCollapsedEvent;
-
-    public class CrossPromo
-    {
-        public static event Action<string, MaxSdkBase.AdInfo> OnAdLoadedEvent
-        {
-            add
-            {
-                LogSubscribedToEvent("OnCrossPromoAdLoadedEvent");
-                _onCrossPromoAdLoadedEvent += value;
-            }
-            remove
-            {
-                LogUnsubscribedToEvent("OnCrossPromoAdLoadedEvent");
-                _onCrossPromoAdLoadedEvent -= value;
-            }
-        }
-
-        public static event Action<string, MaxSdkBase.ErrorInfo> OnAdLoadFailedEvent
-        {
-            add
-            {
-                LogSubscribedToEvent("OnCrossPromoAdLoadFailedEvent");
-                _onCrossPromoAdLoadFailedEvent += value;
-            }
-            remove
-            {
-                LogUnsubscribedToEvent("OnCrossPromoAdLoadFailedEvent");
-                _onCrossPromoAdLoadFailedEvent -= value;
-            }
-        }
-
-        public static event Action<string, MaxSdkBase.AdInfo> OnAdClickedEvent
-        {
-            add
-            {
-                LogSubscribedToEvent("OnCrossPromoAdClickedEvent");
-                _onCrossPromoAdClickedEvent += value;
-            }
-            remove
-            {
-                LogUnsubscribedToEvent("OnCrossPromoAdClickedEvent");
-                _onCrossPromoAdClickedEvent -= value;
-            }
-        }
-
-        public static event Action<string, MaxSdkBase.AdInfo> OnAdRevenuePaidEvent
-        {
-            add
-            {
-                LogSubscribedToEvent("OnCrossPromoAdRevenuePaidEvent");
-                _onCrossPromoAdRevenuePaidEvent += value;
-            }
-            remove
-            {
-                LogUnsubscribedToEvent("OnCrossPromoAdRevenuePaidEvent");
-                _onCrossPromoAdRevenuePaidEvent -= value;
-            }
-        }
-
-        public static event Action<string, MaxSdkBase.AdInfo> OnAdExpandedEvent
-        {
-            add
-            {
-                LogSubscribedToEvent("OnCrossPromoAdExpandedEvent");
-                _onCrossPromoAdExpandedEvent += value;
-            }
-            remove
-            {
-                LogUnsubscribedToEvent("OnCrossPromoAdExpandedEvent");
-                _onCrossPromoAdExpandedEvent -= value;
-            }
-        }
-
-        public static event Action<string, MaxSdkBase.AdInfo> OnAdCollapsedEvent
-        {
-            add
-            {
-                LogSubscribedToEvent("OnCrossPromoAdCollapsedEvent");
-                _onCrossPromoAdCollapsedEvent += value;
-            }
-            remove
-            {
-                LogUnsubscribedToEvent("OnCrossPromoAdCollapsedEvent");
-                _onCrossPromoAdCollapsedEvent -= value;
             }
         }
     }
@@ -1343,27 +1234,28 @@ public class MaxSdkCallbacks : MonoBehaviour
         var eventProps = Json.Deserialize(eventPropsStr) as Dictionary<string, object>;
         if (eventProps == null)
         {
-            MaxSdkLogger.E("Failed to forward event for serialized event data: " + eventPropsStr);
+            MaxSdkLogger.E("Failed to forward event due to invalid event data");
             return;
         }
 
         var eventName = MaxSdkUtils.GetStringFromDictionary(eventProps, "name", "");
-        if (eventName == "OnSdkInitializedEvent")
+        if (eventName == "OnInitialCallbackEvent")
+        {
+            MaxSdkLogger.D("Initial background callback.");
+        }
+        else if (eventName == "OnSdkInitializedEvent")
         {
             var sdkConfiguration = MaxSdkBase.SdkConfiguration.Create(eventProps);
             InvokeEvent(_onSdkInitializedEvent, sdkConfiguration, eventName);
-        }
-        else if (eventName == "OnVariablesUpdatedEvent")
-        {
-            InvokeEvent(_onVariablesUpdatedEvent, eventName);
         }
         else if (eventName == "OnSdkConsentDialogDismissedEvent")
         {
             InvokeEvent(_onSdkConsentDialogDismissedEvent, eventName);
         }
-        else if (eventName == "OnSdkConsentFlowCompletedEvent")
+        else if (eventName == "OnCmpCompletedEvent")
         {
-            CFService.NotifyConsentFlowCompletedIfNeeded(eventProps);
+            var errorProps = MaxSdkUtils.GetDictionaryFromDictionary(eventProps, "error");
+            MaxCmpService.NotifyCompletedIfNeeded(errorProps);
         }
         // Ad Events
         else
@@ -1443,32 +1335,6 @@ public class MaxSdkCallbacks : MonoBehaviour
             {
                 InvokeEvent(_onMRecAdCollapsedEvent, adUnitIdentifier, eventName);
                 InvokeEvent(_onMRecAdCollapsedEventV2, adUnitIdentifier, adInfo, eventName);
-            }
-            else if (eventName == "OnCrossPromoAdLoadedEvent")
-            {
-                InvokeEvent(_onCrossPromoAdLoadedEvent, adUnitIdentifier, adInfo, eventName);
-            }
-            else if (eventName == "OnCrossPromoAdLoadFailedEvent")
-            {
-                var errorInfo = new MaxSdkBase.ErrorInfo(eventProps);
-
-                InvokeEvent(_onCrossPromoAdLoadFailedEvent, adUnitIdentifier, errorInfo, eventName);
-            }
-            else if (eventName == "OnCrossPromoAdClickedEvent")
-            {
-                InvokeEvent(_onCrossPromoAdClickedEvent, adUnitIdentifier, adInfo, eventName);
-            }
-            else if (eventName == "OnCrossPromoAdRevenuePaidEvent")
-            {
-                InvokeEvent(_onCrossPromoAdRevenuePaidEvent, adUnitIdentifier, adInfo, eventName);
-            }
-            else if (eventName == "OnCrossPromoAdExpandedEvent")
-            {
-                InvokeEvent(_onCrossPromoAdExpandedEvent, adUnitIdentifier, adInfo, eventName);
-            }
-            else if (eventName == "OnCrossPromoAdCollapsedEvent")
-            {
-                InvokeEvent(_onCrossPromoAdCollapsedEvent, adUnitIdentifier, adInfo, eventName);
             }
             else if (eventName == "OnInterstitialLoadedEvent")
             {
@@ -1669,7 +1535,15 @@ public class MaxSdkCallbacks : MonoBehaviour
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName);
-        evt();
+        try
+        {
+            evt();
+        }
+        catch (Exception exception)
+        {
+            MaxSdkLogger.UserError("Caught exception in publisher event: " + eventName + ", exception: " + exception);
+            Debug.LogException(exception);
+        }
     }
 
     private static void InvokeEvent<T>(Action<T> evt, T param, string eventName)
@@ -1677,7 +1551,15 @@ public class MaxSdkCallbacks : MonoBehaviour
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName + ". Param: " + param);
-        evt(param);
+        try
+        {
+            evt(param);
+        }
+        catch (Exception exception)
+        {
+            MaxSdkLogger.UserError("Caught exception in publisher event: " + eventName + ", exception: " + exception);
+            Debug.LogException(exception);
+        }
     }
 
     private static void InvokeEvent<T1, T2>(Action<T1, T2> evt, T1 param1, T2 param2, string eventName)
@@ -1685,7 +1567,15 @@ public class MaxSdkCallbacks : MonoBehaviour
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName + ". Params: " + param1 + ", " + param2);
-        evt(param1, param2);
+        try
+        {
+            evt(param1, param2);
+        }
+        catch (Exception exception)
+        {
+            MaxSdkLogger.UserError("Caught exception in publisher event: " + eventName + ", exception: " + exception);
+            Debug.LogException(exception);
+        }
     }
 
     private static void InvokeEvent<T1, T2, T3>(Action<T1, T2, T3> evt, T1 param1, T2 param2, T3 param3, string eventName)
@@ -1693,7 +1583,15 @@ public class MaxSdkCallbacks : MonoBehaviour
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName + ". Params: " + param1 + ", " + param2 + ", " + param3);
-        evt(param1, param2, param3);
+        try
+        {
+            evt(param1, param2, param3);
+        }
+        catch (Exception exception)
+        {
+            MaxSdkLogger.UserError("Caught exception in publisher event: " + eventName + ", exception: " + exception);
+            Debug.LogException(exception);
+        }
     }
 
     private static bool CanInvokeEvent(Delegate evt)
@@ -1727,7 +1625,6 @@ public class MaxSdkCallbacks : MonoBehaviour
     private static void ResetOnDomainReload()
     {
         _onSdkInitializedEvent = null;
-        _onVariablesUpdatedEvent = null;
         _onSdkConsentDialogDismissedEvent = null;
 
         _onInterstitialAdLoadedEventV2 = null;
@@ -1782,14 +1679,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         _onMRecAdReviewCreativeIdGeneratedEvent = null;
         _onMRecAdExpandedEventV2 = null;
         _onMRecAdCollapsedEventV2 = null;
-
-        _onCrossPromoAdLoadedEvent = null;
-        _onCrossPromoAdLoadFailedEvent = null;
-        _onCrossPromoAdClickedEvent = null;
-        _onCrossPromoAdRevenuePaidEvent = null;
-        _onCrossPromoAdExpandedEvent = null;
-        _onCrossPromoAdCollapsedEvent = null;
-
+        
         _onBannerAdLoadedEvent = null;
         _onBannerAdLoadFailedEvent = null;
         _onBannerAdClickedEvent = null;

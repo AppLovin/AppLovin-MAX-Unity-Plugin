@@ -25,6 +25,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string appLovinSdkKeyLink = "https://dash.applovin.com/o/account#keys";
 
         private const string userTrackingUsageDescriptionDocsLink = "https://developer.apple.com/documentation/bundleresources/information_property_list/nsusertrackingusagedescription";
+        private const string documentationTermsAndPrivacyPolicyFlow = "https://dash.applovin.com/documentation/mediation/ios/getting-started/terms-and-privacy-policy-flow";
         private const string documentationAdaptersLink = "https://dash.applovin.com/documentation/mediation/unity/mediation-adapters";
         private const string documentationNote = "Please ensure that integration instructions (e.g. permissions, ATS settings, etc) specific to each network are implemented as well. Click the link below for more info:";
         private const string uninstallIconExportPath = "MaxSdk/Resources/Images/uninstall_icon.png";
@@ -33,8 +34,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private const string qualityServiceRequiresGradleBuildErrorMsg = "AppLovin Quality Service integration via AppLovin Integration Manager requires Custom Gradle Template enabled or Unity 2018.2 or higher.\n" +
                                                                          "If you would like to continue using your existing setup, please add Quality Service Plugin to your build.gradle manually.";
-        
+
+        private const string customGradleVersionTooltip = "To set the version to 6.9.3, set the field to: https://services.gradle.org/distributions/gradle-6.9.3-bin.zip";
+        private const string customGradleToolsVersionTooltip = "To set the version to 4.2.0, set the field to: 4.2.0";
+
         private readonly string[] termsFlowPlatforms = new string[3] {"Both", "Android", "iOS"};
+        private readonly string[] debugUserGeographies = new string[2] {"Not Set", "GDPR"};
 
         private Vector2 scrollPosition;
         private static readonly Vector2 windowMinSize = new Vector2(750, 750);
@@ -146,10 +151,11 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             // Plugin downloaded and imported. Update current versions for the imported package.
             AppLovinIntegrationManager.importPackageCompletedCallback = OnImportPackageCompleted;
 
-            // Disable old consent flow if internal settings are enabled.
-            if (AppLovinSettings.Instance.ShowInternalSettingsInIntegrationManager)
+            // Disable old consent flow if new flow is enabled.
+            if (AppLovinInternalSettings.Instance.ConsentFlowEnabled)
             {
                 AppLovinSettings.Instance.ConsentFlowEnabled = false;
+                AppLovinSettings.Instance.SaveAsync();
             }
 
             Load();
@@ -189,6 +195,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 EditorGUILayout.LabelField("AppLovin MAX Plugin Details", titleLabelStyle);
 
                 DrawPluginDetails();
+
+                if (pluginData != null && pluginData.PartnerMicroSdks != null)
+                {
+                    EditorGUILayout.LabelField("AppLovin Micro SDK Partners", titleLabelStyle);
+                    DrawPartnerMicroSdks();
+                }
 
                 // Draw mediated networks
                 using (new EditorGUILayout.HorizontalScope(GUILayout.ExpandHeight(false)))
@@ -313,10 +325,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                     GUILayout.Space(5);
                 }
-
-#if !UNITY_2018_2_OR_NEWER
-                EditorGUILayout.HelpBox("AppLovin MAX Unity plugin will soon require Unity 2018.2 or newer to function. Please upgrade to a newer Unity version.", MessageType.Warning);
-#endif
             }
 
             GUILayout.Space(5);
@@ -391,6 +399,29 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                     GUILayout.Space(10);
                 }
+            }
+
+            GUILayout.Space(5);
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawPartnerMicroSdks()
+        {
+            if (pluginData == null) return;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(10);
+            using (new EditorGUILayout.VerticalScope("box"))
+            {
+                DrawHeaders("Network", true);
+
+                var partnerMicroSdks = pluginData.PartnerMicroSdks;
+                foreach (var partnerMicroSdk in partnerMicroSdks)
+                {
+                    DrawNetworkDetailRow(partnerMicroSdk);
+                }
+
+                GUILayout.Space(10);
             }
 
             GUILayout.Space(5);
@@ -476,7 +507,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                     var pluginRoot = AppLovinIntegrationManager.MediationSpecificPluginParentDirectory;
                     foreach (var pluginFilePath in network.PluginFilePaths)
                     {
-                        FileUtil.DeleteFileOrDirectory(Path.Combine(pluginRoot, pluginFilePath));
+                        var filePath = Path.Combine(pluginRoot, pluginFilePath);
+                        FileUtil.DeleteFileOrDirectory(filePath);
+                        FileUtil.DeleteFileOrDirectory(filePath + ".meta");
                     }
 
                     AppLovinIntegrationManager.UpdateCurrentVersions(network, pluginRoot);
@@ -591,11 +624,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             GUILayout.EndHorizontal();
         }
 
-        private string DrawTextField(string fieldTitle, string text, GUILayoutOption labelWidth, GUILayoutOption textFieldWidthOption = null, bool isTextFieldEditable = true)
+        private string DrawTextField(string fieldTitle, string text, GUILayoutOption labelWidth, GUILayoutOption textFieldWidthOption = null, bool isTextFieldEditable = true, string tooltip = "")
         {
             GUILayout.BeginHorizontal();
             GUILayout.Space(4);
-            EditorGUILayout.LabelField(new GUIContent(fieldTitle), labelWidth);
+            var guiContent = MaxSdkUtils.IsValidString(tooltip) ? new GUIContent(fieldTitle, tooltip) : new GUIContent(fieldTitle);
+            EditorGUILayout.LabelField(guiContent, labelWidth);
             GUILayout.Space(4);
             if (isTextFieldEditable)
             {
@@ -626,14 +660,13 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             GUILayout.Space(10);
             using (new EditorGUILayout.VerticalScope("box"))
             {
-                var shouldDrawInternalSettings = AppLovinSettings.Instance.ShowInternalSettingsInIntegrationManager;
-                if (shouldDrawInternalSettings)
+                if (AppLovinSettings.Instance.ConsentFlowEnabled)
                 {
-                    DrawConsentFlowSettings();
+                    DrawTermsFlowSettings();
                 }
                 else
                 {
-                    DrawTermsFlowSettings();
+                    DrawConsentFlowSettings();
                 }
             }
 
@@ -643,6 +676,26 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private void DrawTermsFlowSettings()
         {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(4);
+            EditorGUILayout.HelpBox("The Terms Flow has been deprecated; switch to the MAX Terms and Privacy Policy Flow instead.", MessageType.Warning); // TODO Refine
+            GUILayout.Space(4);
+            GUILayout.EndHorizontal();
+            GUILayout.Space(4);
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Switch to MAX Terms and Privacy Policy Flow"))
+            {
+                AppLovinInternalSettings.Instance.ConsentFlowPrivacyPolicyUrl = AppLovinSettings.Instance.ConsentFlowPrivacyPolicyUrl;
+                AppLovinInternalSettings.Instance.ConsentFlowTermsOfServiceUrl = AppLovinSettings.Instance.ConsentFlowTermsOfServiceUrl;
+                AppLovinInternalSettings.Instance.ConsentFlowEnabled = true;
+                AppLovinSettings.Instance.ConsentFlowEnabled = false;
+            }
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(4);
+
             GUILayout.BeginHorizontal();
             GUILayout.Space(4);
             AppLovinSettings.Instance.ConsentFlowEnabled = GUILayout.Toggle(AppLovinSettings.Instance.ConsentFlowEnabled, "  Enable Terms Flow");
@@ -711,39 +764,37 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             GUILayout.BeginHorizontal();
             GUILayout.Space(4);
-            AppLovinInternalSettings.Instance.ConsentFlowEnabled = GUILayout.Toggle(AppLovinInternalSettings.Instance.ConsentFlowEnabled, "  Enable Consent Flow");
+            AppLovinInternalSettings.Instance.ConsentFlowEnabled = GUILayout.Toggle(AppLovinInternalSettings.Instance.ConsentFlowEnabled, "  Enable MAX Terms and Privacy Policy Flow");
             GUILayout.EndHorizontal();
+            GUILayout.Space(6);
             GUILayout.Space(4);
+            EditorGUILayout.HelpBox("This flow automatically includes Google UMP.", MessageType.Info);
+
             GUI.enabled = true;
 
             if (!AppLovinInternalSettings.Instance.ConsentFlowEnabled) return;
 
+            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(4);
+            EditorGUILayout.LabelField("Click the link below to access the guide on creating the GDPR form within AdMob's dashboard.");
+            GUILayout.Space(4);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(4);
+            if (GUILayout.Button(new GUIContent(documentationTermsAndPrivacyPolicyFlow), linkLabelStyle))
+            {
+                Application.OpenURL(documentationTermsAndPrivacyPolicyFlow);
+            }
+
+            GUILayout.Space(4);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(8);
+
             AppLovinInternalSettings.Instance.ConsentFlowPrivacyPolicyUrl = DrawTextField("Privacy Policy URL", AppLovinInternalSettings.Instance.ConsentFlowPrivacyPolicyUrl, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
             AppLovinInternalSettings.Instance.ConsentFlowTermsOfServiceUrl = DrawTextField("Terms of Service URL (optional)", AppLovinInternalSettings.Instance.ConsentFlowTermsOfServiceUrl, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
 
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            AppLovinInternalSettings.Instance.ConsentFlowIncludeDefaultAdvertisingPartnerUrls = GUILayout.Toggle(AppLovinInternalSettings.Instance.ConsentFlowIncludeDefaultAdvertisingPartnerUrls, "  Include Default Advertising Partner URLs");
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            AppLovinInternalSettings.Instance.ConsentFlowAdvertisingPartnerUrls = DrawTextField("Advertising Partner URLs (CSV)", AppLovinInternalSettings.Instance.ConsentFlowAdvertisingPartnerUrls, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            AppLovinInternalSettings.Instance.ConsentFlowIncludeDefaultAnalyticsPartnerUrls = GUILayout.Toggle(AppLovinInternalSettings.Instance.ConsentFlowIncludeDefaultAnalyticsPartnerUrls, "  Include Default Analytics Partner URLs");
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            AppLovinInternalSettings.Instance.ConsentFlowAnalyticsPartnerUrls = DrawTextField("Analytics Partner URLs (CSV)", AppLovinInternalSettings.Instance.ConsentFlowAnalyticsPartnerUrls, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-            GUILayout.EndHorizontal();
             GUILayout.Space(4);
             GUILayout.BeginHorizontal();
             GUILayout.Space(4);
@@ -800,7 +851,21 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             GUILayout.Space(4);
             GUILayout.EndHorizontal();
+            GUILayout.Space(8);
+
+            GUILayout.BeginHorizontal();
             GUILayout.Space(4);
+            EditorGUILayout.LabelField("Testing:", headerLabelStyle);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(4);
+            EditorGUILayout.LabelField("Debug User Geography");
+            AppLovinInternalSettings.Instance.DebugUserGeography = (MaxSdkBase.ConsentFlowUserGeography) EditorGUILayout.Popup((int) AppLovinInternalSettings.Instance.DebugUserGeography, debugUserGeographies, privacySettingFieldWidthOption);
+            GUILayout.Space(4);
+            GUILayout.EndHorizontal();
+
+            EditorGUILayout.HelpBox("Debug User Geography is only enabled in debug mode", MessageType.Info);
         }
 
         private void DrawOtherSettings()
@@ -812,18 +877,17 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 GUILayout.Space(5);
                 AppLovinSettings.Instance.SetAttributionReportEndpoint = DrawOtherSettingsToggle(AppLovinSettings.Instance.SetAttributionReportEndpoint, "  Set Advertising Attribution Report Endpoint in Info.plist (iOS only)");
                 GUILayout.Space(5);
+                AppLovinSettings.Instance.AddApsSkAdNetworkIds = DrawOtherSettingsToggle(AppLovinSettings.Instance.AddApsSkAdNetworkIds, "  Add Amazon Publisher Services SKAdNetworkID's");
+                GUILayout.Space(5);
                 var autoUpdateEnabled = DrawOtherSettingsToggle(EditorPrefs.GetBool(AppLovinAutoUpdater.KeyAutoUpdateEnabled, true), "  Enable Auto Update");
                 EditorPrefs.SetBool(AppLovinAutoUpdater.KeyAutoUpdateEnabled, autoUpdateEnabled);
                 GUILayout.Space(5);
-                var verboseLoggingEnabled = DrawOtherSettingsToggle(EditorPrefs.GetBool(MaxSdkLogger.KeyVerboseLoggingEnabled, false),
-#if UNITY_2018_2_OR_NEWER
-                    "  Enable Verbose Logging"
-#else
-                    "  Enable Build Verbose Logging"
-#endif
-                );
+                var verboseLoggingEnabled = DrawOtherSettingsToggle(EditorPrefs.GetBool(MaxSdkLogger.KeyVerboseLoggingEnabled, false), "  Enable Verbose Logging");
                 EditorPrefs.SetBool(MaxSdkLogger.KeyVerboseLoggingEnabled, verboseLoggingEnabled);
                 GUILayout.Space(5);
+                AppLovinSettings.Instance.CustomGradleVersionUrl = DrawTextField("Custom Gradle Version URL", AppLovinSettings.Instance.CustomGradleVersionUrl, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption, tooltip: customGradleVersionTooltip);
+                AppLovinSettings.Instance.CustomGradleToolsVersion = DrawTextField("Custom Gradle Tools Version", AppLovinSettings.Instance.CustomGradleToolsVersion, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption, tooltip: customGradleToolsVersionTooltip);
+                EditorGUILayout.HelpBox("This will overwrite the gradle build tools version in your base gradle template.", MessageType.Info);
             }
 
             GUILayout.Space(5);

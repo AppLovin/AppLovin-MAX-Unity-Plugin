@@ -49,11 +49,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
 
             // Download the ruby script needed to install Quality Service
-#if UNITY_2017_2_OR_NEWER
             var downloadHandler = new DownloadHandlerFile(outputFilePath);
-#else
-            var downloadHandler = new AppLovinDownloadHandler(path);
-#endif
             var postJson = string.Format("{{\"sdk_key\" : \"{0}\"}}", sdkKey);
             var bodyRaw = Encoding.UTF8.GetBytes(postJson);
             var uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -64,21 +60,15 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 unityWebRequest.method = UnityWebRequest.kHttpVerbPOST;
                 unityWebRequest.downloadHandler = downloadHandler;
                 unityWebRequest.uploadHandler = uploadHandler;
-#if UNITY_2017_2_OR_NEWER
                 var operation = unityWebRequest.SendWebRequest();
-#else
-                var operation = webRequest.Send();
-#endif
 
                 // Wait for the download to complete or the request to timeout.
                 while (!operation.isDone) { }
 
 #if UNITY_2020_1_OR_NEWER
                 if (unityWebRequest.result != UnityWebRequest.Result.Success)
-#elif UNITY_2017_2_OR_NEWER
-                if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
 #else
-                if (webRequest.isError)
+                if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
 #endif
                 {
                     MaxSdkLogger.UserError("AppLovin Quality Service installation failed. Failed to download script with error: " + unityWebRequest.error);

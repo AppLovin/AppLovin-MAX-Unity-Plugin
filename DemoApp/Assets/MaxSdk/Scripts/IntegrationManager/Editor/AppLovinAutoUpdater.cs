@@ -19,9 +19,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     public class AppLovinAutoUpdater
     {
         public const string KeyAutoUpdateEnabled = "com.applovin.auto_update_enabled";
-#if !UNITY_2018_2_OR_NEWER
-        private const string KeyOldUnityVersionWarningShown = "com.applovin.old_unity_version_warning_shown";
-#endif
         private const string KeyLastUpdateCheckTime = "com.applovin.last_update_check_time_v2"; // Updated to v2 to force adapter version checks in plugin version 3.1.10.
         private static readonly DateTime EpochTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private static readonly int SecondsInADay = (int) TimeSpan.FromDays(1).TotalSeconds;
@@ -29,7 +26,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         // TODO: Make this list dynamic.
         public static readonly Dictionary<string, string> MinAdapterVersions = new Dictionary<string, string>()
         {
-            {"ADCOLONY_NETWORK", "android_4.2.3.1_ios_4.3.1.1"},
             {"ADMOB_NETWORK", "android_19.3.0.3_ios_7.65.0.0"},
             {"CHARTBOOST_NETWORK", "android_8.1.0.7_ios_8.2.1.3"},
             {"FACEBOOK_MEDIATE", "android_6.0.0.1_ios_6.0.0.3"},
@@ -39,10 +35,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {"IRONSOURCE_NETWORK", "android_7.0.1.1.1_ios_7.0.1.0.1"},
             {"MYTARGET_NETWORK", "android_5.9.1.2_ios_5.7.5.1"},
             {"SMAATO_NETWORK", "android_21.5.2.5_ios_21.5.2.3"},
-            {"TAPJOY_NETWORK", "android_12.6.1.5_ios_12.6.1.6"},
             {"TIKTOK_NETWORK", "android_3.1.0.1.6_ios_3.2.5.1.1"},
             {"UNITY_NETWORK", "android_3.4.8.2_ios_3.4.8.2"},
-            {"VERIZON_NETWORK", "android_1.6.0.5_ios_1.7.1.1"},
             {"VUNGLE_NETWORK", "android_6.7.1.2_ios_6.7.1.3"},
             {"YANDEX_NETWORK", "android_2.170.2_ios_2.18.0.1"}
         };
@@ -63,10 +57,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             // Update last checked time.
             EditorPrefs.SetInt(KeyLastUpdateCheckTime, now);
-
-#if !UNITY_2018_2_OR_NEWER
-            ShowNotSupportingOldUnityVersionsIfNeeded();
-#endif
 
             // Load the plugin data
             AppLovinEditorCoroutine.StartCoroutine(AppLovinIntegrationManager.Instance.LoadPluginData(data =>
@@ -155,27 +145,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             AppLovinIntegrationManager.ShowBuildFailureDialog(message);
         }
-
-#if !UNITY_2018_2_OR_NEWER
-        private static void ShowNotSupportingOldUnityVersionsIfNeeded()
-        {
-            // Check if publisher has seen the warning before
-            if (EditorPrefs.GetBool(KeyOldUnityVersionWarningShown, false)) return;
-
-            // Show a dialog if they haven't seen the warning yet.
-            var option = EditorUtility.DisplayDialog(
-                "WARNING: Old Unity Version Detected",
-                "AppLovin MAX Unity plugin will soon require Unity 2018.2 or newer to function. Please upgrade to a newer Unity version.",
-                "Ok",
-                "Don't Ask Again"
-            );
-
-            if (!option) // 'false' means `Don't Ask Again` was clicked.
-            {
-                EditorPrefs.SetBool(KeyOldUnityVersionWarningShown, true);
-            }
-        }
-#endif
 
         private static bool GoogleNetworkAdaptersCompatible(string googleVersion, string googleAdManagerVersion, string breakingVersion)
         {

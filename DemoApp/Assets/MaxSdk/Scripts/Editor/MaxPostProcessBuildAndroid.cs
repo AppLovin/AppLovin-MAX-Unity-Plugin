@@ -6,12 +6,13 @@
 //  Copyright © 2020 AppLovin. All rights reserved.
 //
 
-#if UNITY_ANDROID && UNITY_2018_2_OR_NEWER
+#if UNITY_ANDROID
 using AppLovinMax.Scripts.IntegrationManager.Editor;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using AppLovinMax.ThirdParty.MiniJson;
 using UnityEditor;
@@ -38,6 +39,18 @@ namespace AppLovinMax.Scripts.Editor
         private const string KeyMetaDataGoogleApplicationId = "com.google.android.gms.ads.APPLICATION_ID";
         private const string KeyMetaDataGoogleAdManagerApp = "com.google.android.gms.ads.AD_MANAGER_APP";
 
+#if UNITY_2022_3_OR_NEWER
+        // To match "'com.android.library' version '7.3.1'" line in build.gradle
+        private static readonly Regex TokenGradleVersionLibrary = new Regex(".*id ['\"]com\\.android\\.library['\"] version");
+        private static readonly Regex TokenGradleVersion = new Regex(".*id ['\"]com\\.android\\.application['\"] version");
+#else
+        // To match "classpath 'com.android.tools.build:gradle:4.0.1'" line in build.gradle
+        private static readonly Regex TokenGradleVersion = new Regex(".*classpath ['\"]com\\.android\\.tools\\.build:gradle:.*");
+#endif
+
+        // To match "distributionUrl=..." in gradle-wrapper.properties file
+        private static readonly Regex TokenDistributionUrl = new Regex(".*distributionUrl.*");
+
         private static readonly XNamespace AndroidNamespace = "http://schemas.android.com/apk/res/android";
 
         private static string PluginMediationDirectory
@@ -52,10 +65,17 @@ namespace AppLovinMax.Scripts.Editor
         public void OnPostGenerateGradleAndroidProject(string path)
         {
 #if UNITY_2019_3_OR_NEWER
+            var rootGradleBuildFilePath = Path.Combine(path, "../build.gradle");
             var gradlePropertiesPath = Path.Combine(path, "../gradle.properties");
+            var gradleWrapperPropertiesPath = Path.Combine(path, "../gradle/wrapper/gradle-wrapper.properties");
 #else
+            var rootGradleBuildFilePath = Path.Combine(path, "build.gradle");
             var gradlePropertiesPath = Path.Combine(path, "gradle.properties");
+            var gradleWrapperPropertiesPath = Path.Combine(path, "gradle/wrapper/gradle-wrapper.properties");
 #endif
+
+            UpdateGradleVersionsIfNeeded(gradleWrapperPropertiesPath, rootGradleBuildFilePath);
+
             var gradlePropertiesUpdated = new List<string>();
 
             // If the gradle properties file already exists, make sure to add any previous properties.
@@ -93,9 +113,8 @@ namespace AppLovinMax.Scripts.Editor
             ProcessAndroidManifest(path);
 
             var rawResourceDirectory = Path.Combine(path, "src/main/res/raw");
-            if (AppLovinSettings.Instance.ShowInternalSettingsInIntegrationManager)
+            if (AppLovinInternalSettings.Instance.ConsentFlowEnabled)
             {
-                // For Unity 2018.1 or older, the consent flow is enabled in AppLovinPreProcessAndroid.
                 AppLovinPreProcessAndroid.EnableConsentFlowIfNeeded(rawResourceDirectory);
             }
             else
@@ -236,6 +255,59 @@ namespace AppLovinMax.Scripts.Editor
             }
         }
 
+        private static void UpdateGradleVersionsIfNeeded(string gradleWrapperPropertiesPath, string rootGradleBuildFilePath)
+        {
+            var customGradleVersionUrl = AppLovinSettings.Instance.CustomGradleVersionUrl;
+            var customGradleToolsVersion = AppLovinSettings.Instance.CustomGradleToolsVersion;
+
+            if (MaxSdkUtils.IsValidString(customGradleVersionUrl))
+            {
+                var newDistributionUrl = string.Format("distributionUrl={0}", customGradleVersionUrl);
+                if (ReplaceStringInFile(gradleWrapperPropertiesPath, TokenDistributionUrl, newDistributionUrl))
+                {
+                    MaxSdkLogger.D("Distribution url set to " + newDistributionUrl);
+                }
+                else
+                {
+                    MaxSdkLogger.E("Failed to set distribution URL");
+                }
+            }
+
+            if (MaxSdkUtils.IsValidString(customGradleToolsVersion))
+            {
+#if UNITY_2022_3_OR_NEWER
+                // Unity 2022.3+ requires Gradle Plugin version 7.1.2+.
+                if (MaxSdkUtils.CompareVersions(customGradleToolsVersion, "7.1.2") == MaxSdkUtils.VersionComparisonResult.Lesser)
+                {
+                    MaxSdkLogger.E("Failed to set gradle plugin version. Unity 2022.3+ requires gradle plugin version 7.1.2+");
+                    return;
+                }
+
+                var newGradleVersionLibraryLine = AppLovinProcessGradleBuildFile.GetFormattedBuildScriptLine(string.Format("id 'com.android.library' version '{0}' apply false", customGradleToolsVersion));
+                if (ReplaceStringInFile(rootGradleBuildFilePath, TokenGradleVersionLibrary, newGradleVersionLibraryLine))
+                {
+                    MaxSdkLogger.D("Gradle library version set to " + newGradleVersionLibraryLine);
+                }
+                else
+                {
+                    MaxSdkLogger.E("Failed to set gradle library version");
+                }
+
+                var newGradleVersionLine = AppLovinProcessGradleBuildFile.GetFormattedBuildScriptLine(string.Format("id 'com.android.application' version '{0}' apply false", customGradleToolsVersion));
+#else
+                var newGradleVersionLine = AppLovinProcessGradleBuildFile.GetFormattedBuildScriptLine(string.Format("classpath 'com.android.tools.build:gradle:{0}'", customGradleToolsVersion));
+#endif
+                if (ReplaceStringInFile(rootGradleBuildFilePath, TokenGradleVersion, newGradleVersionLine))
+                {
+                    MaxSdkLogger.D("Gradle version set to " + newGradleVersionLine);
+                }
+                else
+                {
+                    MaxSdkLogger.E("Failed to set gradle plugin version");
+                }
+            }
+        }
+
         /// <summary>
         /// Creates and returns a <c>meta-data</c> element with the given name and value. 
         /// </summary>
@@ -265,6 +337,31 @@ namespace AppLovinMax.Scripts.Editor
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Finds the first line that contains regexToMatch and replaces the whole line with replacement
+        /// </summary>
+        /// <param name="path">Path to the file you want to replace a line in</param>
+        /// <param name="regexToMatch">Regex to search for in the line you want to replace</param>
+        /// <param name="replacement">String that you want as the new line</param>
+        /// <returns>Returns whether the string was successfully replaced or not</returns>
+        private static bool ReplaceStringInFile(string path, Regex regexToMatch, string replacement)
+        {
+            if (!File.Exists(path)) return false;
+
+            var lines = File.ReadAllLines(path);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (regexToMatch.IsMatch(lines[i]))
+                {
+                    lines[i] = replacement;
+                    File.WriteAllLines(path, lines);
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
