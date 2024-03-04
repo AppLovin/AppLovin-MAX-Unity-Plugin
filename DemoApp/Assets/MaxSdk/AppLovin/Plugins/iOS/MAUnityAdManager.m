@@ -5,7 +5,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"6.2.1"
+#define VERSION @"6.3.0"
 
 #define KEY_WINDOW [UIApplication sharedApplication].keyWindow
 #define DEVICE_SPECIFIC_ADVIEW_AD_FORMAT ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? MAAdFormat.leader : MAAdFormat.banner
@@ -566,6 +566,7 @@ static ALUnityBackgroundCallback backgroundCallback;
              @"revenue" : [@(ad.revenue) stringValue],
              @"revenuePrecision" : ad.revenuePrecision,
              @"waterfallInfo" : [self createAdWaterfallInfo: ad.waterfall],
+             @"latencyMillis" : [self requestLatencyMillisFromRequestLatency: ad.requestLatency],
              @"dspName" : ad.DSPName ?: @""};
 }
 
@@ -584,11 +585,9 @@ static ALUnityBackgroundCallback backgroundCallback;
     {
         [networkResponsesArray addObject: [self createNetworkResponseInfo: response]];
     }
-    waterfallInfoDict[@"networkResponses"] = networkResponsesArray;
     
-    // Convert latency from seconds to milliseconds to match Android.
-    long latencyMillis = waterfallInfo.latency * 1000;
-    waterfallInfoDict[@"latencyMillis"] = @(latencyMillis).stringValue;
+    waterfallInfoDict[@"networkResponses"] = networkResponsesArray;
+    waterfallInfoDict[@"latencyMillis"] = [self requestLatencyMillisFromRequestLatency: waterfallInfo.latency];
     
     return waterfallInfoDict;
 }
@@ -621,13 +620,12 @@ static ALUnityBackgroundCallback backgroundCallback;
         errorObject[@"errorMessage"] = error.message;
         errorObject[@"adLoadFailure"] = error.adLoadFailureInfo;
         errorObject[@"errorCode"] = @(error.code).stringValue;
+        errorObject[@"latencyMillis"] = [self requestLatencyMillisFromRequestLatency: error.requestLatency];
         
         networkResponseDict[@"error"] = errorObject;
     }
     
-    // Convert latency from seconds to milliseconds to match Android.
-    long latencySeconds = response.latency * 1000;
-    networkResponseDict[@"latencyMillis"] = @(latencySeconds).stringValue;
+    networkResponseDict[@"latencyMillis"] = [self requestLatencyMillisFromRequestLatency: response.latency];
     
     return networkResponseDict;
 }
@@ -758,7 +756,8 @@ static ALUnityBackgroundCallback backgroundCallback;
                                                    @"errorCode" : [@(error.code) stringValue],
                                                    @"errorMessage" : error.message,
                                                    @"waterfallInfo" : [self createAdWaterfallInfo: error.waterfall],
-                                                   @"adLoadFailureInfo" : error.adLoadFailureInfo ?: @""}];
+                                                   @"adLoadFailureInfo" : error.adLoadFailureInfo ?: @"",
+                                                   @"latencyMillis" : [self requestLatencyMillisFromRequestLatency: error.requestLatency]}];
 }
 
 - (void)didClickAd:(MAAd *)ad
@@ -861,6 +860,7 @@ static ALUnityBackgroundCallback backgroundCallback;
     args[@"mediatedNetworkErrorCode"] = [@(error.mediatedNetworkErrorCode) stringValue];
     args[@"mediatedNetworkErrorMessage"] = error.mediatedNetworkErrorMessage;
     args[@"waterfallInfo"] = [self createAdWaterfallInfo: error.waterfall];
+    args[@"latencyMillis"] = [self requestLatencyMillisFromRequestLatency: error.requestLatency];
     [MAUnityAdManager forwardUnityEventWithArgs: args];
 }
 
@@ -1950,6 +1950,13 @@ static ALUnityBackgroundCallback backgroundCallback;
     {
         return DEVICE_SPECIFIC_ADVIEW_AD_FORMAT;
     }
+}
+
+- (NSString *)requestLatencyMillisFromRequestLatency:(NSTimeInterval)requestLatency
+{
+    // Convert latency from seconds to milliseconds to match Android.
+    long requestLatencyMillis = requestLatency * 1000;
+    return @(requestLatencyMillis).stringValue;
 }
 
 #pragma mark - User Service

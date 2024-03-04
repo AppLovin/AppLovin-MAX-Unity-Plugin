@@ -168,7 +168,6 @@ public abstract class MaxSdkBase
                 sdkConfiguration.ConsentFlowUserGeography = ConsentFlowUserGeography.Unknown;
             }
 
-
 #pragma warning disable 0618
             var consentDialogStateStr = MaxSdkUtils.GetStringFromDictionary(eventProps, "consentDialogState", "");
             if ("1".Equals(consentDialogStateStr))
@@ -325,6 +324,7 @@ public abstract class MaxSdkBase
         public double Revenue { get; private set; }
         public string RevenuePrecision { get; private set; }
         public WaterfallInfo WaterfallInfo { get; private set; }
+        public long LatencyMillis { get; private set; }
         public string DspName { get; private set; }
 
         public AdInfo(IDictionary<string, object> adInfoDictionary)
@@ -338,6 +338,7 @@ public abstract class MaxSdkBase
             Revenue = MaxSdkUtils.GetDoubleFromDictionary(adInfoDictionary, "revenue", -1);
             RevenuePrecision = MaxSdkUtils.GetStringFromDictionary(adInfoDictionary, "revenuePrecision");
             WaterfallInfo = new WaterfallInfo(MaxSdkUtils.GetDictionaryFromDictionary(adInfoDictionary, "waterfallInfo", new Dictionary<string, object>()));
+            LatencyMillis = MaxSdkUtils.GetLongFromDictionary(adInfoDictionary, "latencyMillis");
             DspName = MaxSdkUtils.GetStringFromDictionary(adInfoDictionary, "dspName");
         }
 
@@ -351,6 +352,7 @@ public abstract class MaxSdkBase
                    ", placement: " + Placement +
                    ", revenue: " + Revenue +
                    ", revenuePrecision: " + RevenuePrecision +
+                   ", latency: " + LatencyMillis +
                    ", dspName: " + DspName + "]";
         }
     }
@@ -469,6 +471,7 @@ public abstract class MaxSdkBase
         public string MediatedNetworkErrorMessage { get; private set; }
         public string AdLoadFailureInfo { get; private set; }
         public WaterfallInfo WaterfallInfo { get; private set; }
+        public long LatencyMillis { get; private set; }
 
         public ErrorInfo(IDictionary<string, object> errorInfoDictionary)
         {
@@ -478,6 +481,7 @@ public abstract class MaxSdkBase
             MediatedNetworkErrorMessage = MaxSdkUtils.GetStringFromDictionary(errorInfoDictionary, "mediatedNetworkErrorMessage", "");
             AdLoadFailureInfo = MaxSdkUtils.GetStringFromDictionary(errorInfoDictionary, "adLoadFailureInfo", "");
             WaterfallInfo = new WaterfallInfo(MaxSdkUtils.GetDictionaryFromDictionary(errorInfoDictionary, "waterfallInfo", new Dictionary<string, object>()));
+            LatencyMillis = MaxSdkUtils.GetLongFromDictionary(errorInfoDictionary, "latencyMillis");
         }
 
         public override string ToString()
@@ -491,6 +495,7 @@ public abstract class MaxSdkBase
                 stringbuilder.Append(", mediatedNetworkMessage: ").Append(MediatedNetworkErrorMessage);
             }
 
+            stringbuilder.Append(", latency: ").Append(LatencyMillis);
             return stringbuilder.Append(", adLoadFailureInfo: ").Append(AdLoadFailureInfo).Append("]").ToString();
         }
     }
