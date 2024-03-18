@@ -793,7 +793,7 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     #endregion
-    
+
     #region Interstitials
 
     [DllImport("__Internal")]
@@ -1315,6 +1315,30 @@ public class MaxSdkiOS : MaxSdkBase
     public static void SetExtraParameter(string key, string value)
     {
         _MaxSetExtraParameter(key, value);
+    }
+
+    [DllImport("__Internal")]
+    private static extern IntPtr _MaxGetSafeAreaInsets();
+
+    /// <summary>
+    /// Get the native insets in pixels for the safe area.
+    /// These insets are used to position ads within the safe area of the screen.
+    /// </summary>
+    public static SafeAreaInsets GetSafeAreaInsets()
+    {
+        // Use an int array instead of json serialization for performance
+        var insetsPtr = _MaxGetSafeAreaInsets();
+        var insets = new int[4];
+        Marshal.Copy(insetsPtr, insets, 0, 4);
+
+        // Convert from points to pixels
+        var screenDensity = MaxSdkUtils.GetScreenDensity();
+        for (var i = 0; i < insets.Length; i++)
+        {
+            insets[i] *= (int) screenDensity;
+        }
+
+        return new SafeAreaInsets(insets);
     }
 
     #endregion

@@ -1194,6 +1194,13 @@ extern "C"
             }
         }
     }
+
+    int * _MaxGetSafeAreaInsets()
+    {
+        UIEdgeInsets safeAreaInsets = UnityGetGLView().safeAreaInsets;
+        static int insets[4] = {(int) safeAreaInsets.left, (int) safeAreaInsets.top, (int) safeAreaInsets.right, (int) safeAreaInsets.bottom};
+        return insets;
+    }
     
     void _MaxShowCmpForExistingUser()
     {

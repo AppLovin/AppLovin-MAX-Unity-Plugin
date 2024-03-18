@@ -28,6 +28,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
     private static bool _doNotSell = false;
     private static bool _isDoNotSellSet = false;
     private static bool _showStubAds = true;
+    private static SafeAreaInsets _safeAreaInsets = new SafeAreaInsets(new int[] {0, 0, 0, 0});
     private static readonly HashSet<string> RequestedAdUnits = new HashSet<string>();
     private static readonly HashSet<string> ReadyAdUnits = new HashSet<string>();
     private static readonly Dictionary<string, GameObject> StubBanners = new Dictionary<string, GameObject>();
@@ -1301,7 +1302,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// </summary>
     /// <param name="advertisingIdentifiers">String list of advertising identifiers from devices to receive test ads.</param>
     public static void SetTestDeviceAdvertisingIdentifiers(string[] advertisingIdentifiers)
-    { 
+    {
         if (IsInitialized())
         {
             MaxSdkLogger.UserError("Test Device Advertising Identifiers must be set before SDK initialization.");
@@ -1326,6 +1327,15 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// <param name="key">The key for the extra parameter. Must not be null.</param>
     /// <param name="value">The value for the extra parameter. May be null.</param>
     public static void SetExtraParameter(string key, string value) { }
+
+    /// <summary>
+    /// Get the native insets in pixels for the safe area.
+    /// These insets are used to position ads within the safe area of the screen.
+    /// </summary>
+    public static SafeAreaInsets GetSafeAreaInsets()
+    {
+        return _safeAreaInsets;
+    }
 
     #endregion
 

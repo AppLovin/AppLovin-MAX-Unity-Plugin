@@ -1054,6 +1054,25 @@ public class MaxSdkAndroid : MaxSdkBase
         MaxUnityPluginClass.CallStatic("setExtraParameter", key, value);
     }
 
+    /// <summary>
+    /// Get the native insets in pixels for the safe area.
+    /// These insets are used to position ads within the safe area of the screen.
+    /// </summary>
+    public static SafeAreaInsets GetSafeAreaInsets()
+    {
+        // Use an int array instead of json serialization for performance
+        var insets = MaxUnityPluginClass.CallStatic<int[]>("getSafeAreaInsets");
+
+        // Convert from points to pixels
+        var screenDensity = MaxSdkUtils.GetScreenDensity();
+        for (var i = 0; i < insets.Length; i++)
+        {
+            insets[i] *= (int) screenDensity;
+        }
+
+        return new SafeAreaInsets(insets);
+    }
+
     #endregion
 
     #region Private

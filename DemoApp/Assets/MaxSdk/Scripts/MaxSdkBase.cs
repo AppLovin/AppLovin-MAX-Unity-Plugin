@@ -501,6 +501,37 @@ public abstract class MaxSdkBase
     }
 
     /// <summary>
+    /// Inset values for the safe area on the screen used to render banner ads.
+    /// </summary>
+    public class SafeAreaInsets
+    {
+        public int Left { get; private set; }
+        public int Top { get; private set; }
+        public int Right { get; private set; }
+        public int Bottom { get; private set; }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="SafeAreaInsets"/>.
+        /// </summary>
+        /// <param name="insets">An integer array with insets values in the order of left, top, right, and bottom</param>
+        internal SafeAreaInsets(int[] insets)
+        {
+            Left = insets[0];
+            Top = insets[1];
+            Right = insets[2];
+            Bottom = insets[3];
+        }
+
+        public override string ToString()
+        {
+            return "[SafeAreaInsets: Left: " + Left +
+                   ", Top: " + Top +
+                   ", Right: " + Right +
+                   ", Bottom: " + Bottom + "]";
+        }
+    }
+
+    /// <summary>
     /// The CMP service, which provides direct APIs for interfacing with the Google-certified CMP installed, if any.
     /// </summary>
     public static MaxCmpService CmpService
