@@ -1,8 +1,8 @@
 fileFormatVersion: 2
-guid: 75fed160a41749d4990cee871ee618a4
+guid: c01ea79d0cb2a43c093e2fd07201df9e
 labels:
 - al_max
-- al_max_export_path-MaxSdk/Scripts/Editor/MaxPostProcessBuildAndroid.cs
+- al_max_export_path-MaxSdk/Scripts/IntegrationManager/Editor/AppLovinPostProcessAndroid.cs
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

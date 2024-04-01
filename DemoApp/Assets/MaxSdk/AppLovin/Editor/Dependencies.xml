@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dependencies>
     <androidPackages>
-        <androidPackage spec="com.applovin:applovin-sdk:12.3.1" />
+        <androidPackage spec="com.applovin:applovin-sdk:12.4.0" />
     </androidPackages>
     <iosPods>
-        <iosPod name="AppLovinSDK" version="12.3.1" />
+        <iosPod name="AppLovinSDK" version="12.4.0" />
     </iosPods>
 </dependencies>

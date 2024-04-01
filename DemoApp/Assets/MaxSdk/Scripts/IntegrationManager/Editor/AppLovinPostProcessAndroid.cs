@@ -14,7 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using AppLovinMax.ThirdParty.MiniJson;
 using UnityEditor;
 using UnityEditor.Android;
 using UnityEngine;
@@ -24,7 +23,7 @@ namespace AppLovinMax.Scripts.Editor
     /// <summary>
     /// A post processor used to update the Android project once it is generated.
     /// </summary>
-    public class MaxPostProcessBuildAndroid : IPostGenerateGradleAndroidProject
+    public class AppLovinPostProcessAndroid : IPostGenerateGradleAndroidProject
     {
 #if UNITY_2019_3_OR_NEWER
         private const string PropertyAndroidX = "android.useAndroidX";
@@ -37,7 +36,11 @@ namespace AppLovinMax.Scripts.Editor
         private const string KeyMetaDataAppLovinSdkKey = "applovin.sdk.key";
         private const string KeyMetaDataAppLovinVerboseLoggingOn = "applovin.sdk.verbose_logging";
         private const string KeyMetaDataGoogleApplicationId = "com.google.android.gms.ads.APPLICATION_ID";
-        private const string KeyMetaDataGoogleAdManagerApp = "com.google.android.gms.ads.AD_MANAGER_APP";
+        private const string KeyMetaDataGoogleOptimizeInitialization = "com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION";
+        private const string KeyMetaDataGoogleOptimizeAdLoading = "com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING";
+
+        private const string KeyMetaDataMobileFuseAutoInit = "com.mobilefuse.sdk.disable_auto_init";
+        private const string KeyMetaDataMyTargetAutoInit = "com.my.target.autoInitMode";
 
 #if UNITY_2022_3_OR_NEWER
         // To match "'com.android.library' version '7.3.1'" line in build.gradle
@@ -164,6 +167,8 @@ namespace AppLovinMax.Scripts.Editor
             AddSdkKeyIfNeeded(elementApplication);
             EnableVerboseLoggingIfNeeded(elementApplication);
             AddGoogleApplicationIdIfNeeded(elementApplication, metaDataElements);
+            AddGoogleOptimizationFlagsIfNeeded(elementApplication, metaDataElements);
+            DisableAutoInitIfNeeded(elementApplication, metaDataElements);
 
             // Save the updated manifest file.
             manifest.Save(manifestPath);
@@ -252,6 +257,48 @@ namespace AppLovinMax.Scripts.Editor
             else
             {
                 elementApplication.Add(CreateMetaDataElement(KeyMetaDataGoogleApplicationId, appId));
+            }
+        }
+
+        private static void AddGoogleOptimizationFlagsIfNeeded(XElement elementApplication, IEnumerable<XElement> metaDataElements)
+        {
+            if (!AppLovinIntegrationManager.IsAdapterInstalled("Google") && !AppLovinIntegrationManager.IsAdapterInstalled("GoogleAdManager")) return;
+
+            var googleOptimizeInitializationMetaData = GetMetaDataElement(metaDataElements, KeyMetaDataGoogleOptimizeInitialization);
+            // If meta data doesn't exist, add it
+            if (googleOptimizeInitializationMetaData == null)
+            {
+                elementApplication.Add(CreateMetaDataElement(KeyMetaDataGoogleOptimizeInitialization, true));
+            }
+
+            var googleOptimizeAdLoadingMetaData = GetMetaDataElement(metaDataElements, KeyMetaDataGoogleOptimizeAdLoading);
+            // If meta data doesn't exist, add it
+            if (googleOptimizeAdLoadingMetaData == null)
+            {
+                elementApplication.Add(CreateMetaDataElement(KeyMetaDataGoogleOptimizeAdLoading, true));
+            }
+        }
+
+        private static void DisableAutoInitIfNeeded(XElement elementApplication, IEnumerable<XElement> metaDataElements)
+        {
+            if (AppLovinIntegrationManager.IsAdapterInstalled("MobileFuse"))
+            {
+                var mobileFuseMetaData = GetMetaDataElement(metaDataElements, KeyMetaDataMobileFuseAutoInit);
+                // If MobileFuse meta data doesn't exist, add it
+                if (mobileFuseMetaData == null)
+                {
+                    elementApplication.Add(CreateMetaDataElement(KeyMetaDataMobileFuseAutoInit, true));
+                }
+            }
+
+            if (AppLovinIntegrationManager.IsAdapterInstalled("MyTarget"))
+            {
+                var myTargetMetaData = GetMetaDataElement(metaDataElements, KeyMetaDataMyTargetAutoInit);
+                // If MyTarget meta data doesn't exist, add it
+                if (myTargetMetaData == null)
+                {
+                    elementApplication.Add(CreateMetaDataElement(KeyMetaDataMyTargetAutoInit, 0));
+                }
             }
         }
 
