@@ -131,9 +131,13 @@ public class AppLovinSettings : ScriptableObject
                     Directory.CreateDirectory(settingsDir);
                 }
 
-                instance = CreateInstance<AppLovinSettings>();
-                AssetDatabase.CreateAsset(instance, settingsFilePath);
-                MaxSdkLogger.D("Creating new AppLovinSettings asset at path: " + settingsFilePath);
+                // On script reload AssetDatabase.FindAssets() can fail and will overwrite AppLovinSettings without this check
+                if (!File.Exists(settingsFilePath))
+                {
+                    instance = CreateInstance<AppLovinSettings>();
+                    AssetDatabase.CreateAsset(instance, settingsFilePath);
+                    MaxSdkLogger.D("Creating new AppLovinSettings asset at path: " + settingsFilePath);
+                }
             }
 
             return instance;

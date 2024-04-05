@@ -146,6 +146,26 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private void OnEnable()
         {
+            // Script reloads can cause AppLovinSettings.Instance to be null for one frame,
+            // so we load the Integration Manager on the following frame
+            if (AppLovinSettings.Instance == null)
+            {
+                AppLovinEditorCoroutine.StartCoroutine(WaitForNextFrameForEnable());
+            }
+            else
+            {
+                OnWindowEnabled();
+            }
+        }
+
+        private IEnumerator WaitForNextFrameForEnable()
+        {
+            yield return new WaitForEndOfFrame();
+            OnWindowEnabled();
+        }
+
+        private void OnWindowEnabled()
+        {
             AppLovinIntegrationManager.downloadPluginProgressCallback = OnDownloadPluginProgress;
 
             // Plugin downloaded and imported. Update current versions for the imported package.
@@ -434,7 +454,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private void DrawNetworkDetailRow(Network network)
         {
             string action;
-            var currentVersion = network.CurrentVersions.Unity;
+            var currentVersion = network.CurrentVersions != null ? network.CurrentVersions.Unity : "";
             var latestVersion = network.LatestVersions.Unity;
             bool isActionEnabled;
             bool isInstalled;

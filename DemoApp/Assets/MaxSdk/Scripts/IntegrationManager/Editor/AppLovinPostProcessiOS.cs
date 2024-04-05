@@ -52,6 +52,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static readonly List<string> DynamicLibrariesToEmbed = new List<string>
         {
+            "AppLovinSDK.xcframework",
             "DTBiOSSDK.xcframework",
             "FBAEMKit.xcframework",
             "FBSDKCoreKit_Basics.xcframework",
