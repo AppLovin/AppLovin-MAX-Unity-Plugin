@@ -5,7 +5,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"6.4.1"
+#define VERSION @"6.4.2"
 
 #define KEY_WINDOW [UIApplication sharedApplication].keyWindow
 #define DEVICE_SPECIFIC_ADVIEW_AD_FORMAT ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? MAAdFormat.leader : MAAdFormat.banner
@@ -23,6 +23,12 @@ extern "C" {
     // life cycle management
     void UnityPause(int pause);
     void UnitySendMessage(const char* obj, const char* method, const char* msg);
+    
+    static const char * cStringCopy(NSString *string)
+    {
+        const char *value = string.UTF8String;
+        return value ? strdup(value) : NULL;
+    }
     
     void max_unity_dispatch_on_main_thread(dispatch_block_t block)
     {
@@ -809,14 +815,16 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)didDisplayAd:(MAAd *)ad
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // BMLs do not support [DISPLAY] events in Unity
-        MAAdFormat *adFormat = ad.format;
-        if ( ![adFormat isFullscreenAd] ) return;
-        
+    // BMLs do not support [DISPLAY] events in Unity
+    MAAdFormat *adFormat = ad.format;
+    if ( ![adFormat isFullscreenAd] ) return;
+    
+    // UnityPause needs to be called on the main thread.
 #if !IS_TEST_APP
-        UnityPause(1);
+    UnityPause(1);
 #endif
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         NSString *name;
         if ( MAAdFormat.interstitial == adFormat )
@@ -879,14 +887,16 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)didHideAd:(MAAd *)ad
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // BMLs do not support [HIDDEN] events in Unity
-        MAAdFormat *adFormat = ad.format;
-        if ( ![adFormat isFullscreenAd] ) return;
-        
+    // BMLs do not support [HIDDEN] events in Unity
+    MAAdFormat *adFormat = ad.format;
+    if ( ![adFormat isFullscreenAd] ) return;
+    
+    // UnityPause needs to be called on the main thread.
 #if !IS_TEST_APP
-        UnityPause(0);
+    UnityPause(0);
 #endif
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         NSString *name;
         if ( MAAdFormat.interstitial == adFormat )
@@ -913,17 +923,19 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)didExpandAd:(MAAd *)ad
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        MAAdFormat *adFormat = ad.format;
-        if ( ![adFormat isAdViewAd] )
-        {
-            [self logInvalidAdFormat: adFormat];
-            return;
-        }
-        
+    MAAdFormat *adFormat = ad.format;
+    if ( ![adFormat isAdViewAd] )
+    {
+        [self logInvalidAdFormat: adFormat];
+        return;
+    }
+    
+    // UnityPause needs to be called on the main thread.
 #if !IS_TEST_APP
-        UnityPause(1);
+    UnityPause(1);
 #endif
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         NSString *name;
         if ( MAAdFormat.mrec == adFormat )
@@ -942,17 +954,19 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)didCollapseAd:(MAAd *)ad
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        MAAdFormat *adFormat = ad.format;
-        if ( ![adFormat isAdViewAd] )
-        {
-            [self logInvalidAdFormat: adFormat];
-            return;
-        }
-        
+    MAAdFormat *adFormat = ad.format;
+    if ( ![adFormat isAdViewAd] )
+    {
+        [self logInvalidAdFormat: adFormat];
+        return;
+    }
+    
+    // UnityPause needs to be called on the main thread.
 #if !IS_TEST_APP
-        UnityPause(0);
+    UnityPause(0);
 #endif
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         NSString *name;
         if ( MAAdFormat.mrec == adFormat )
@@ -1923,7 +1937,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 {
 #if !IS_TEST_APP
     void (^runnable)(void) = ^{
-        char *serializedParameters = [self serializeParameters: args].UTF8String;
+        const char *serializedParameters = cStringCopy([self serializeParameters: args]);
         backgroundCallback(serializedParameters);
     };
     
