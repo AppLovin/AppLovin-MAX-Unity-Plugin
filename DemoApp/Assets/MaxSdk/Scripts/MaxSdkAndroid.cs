@@ -20,7 +20,7 @@ public class MaxSdkAndroid : MaxSdkBase
 
     static MaxSdkAndroid()
     {
-        InitCallbacks();
+        InitializeEventExecutor();
     }
 
     #region Initialization

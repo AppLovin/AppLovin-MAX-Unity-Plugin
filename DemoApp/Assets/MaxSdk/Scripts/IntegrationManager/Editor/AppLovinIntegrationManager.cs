@@ -467,19 +467,37 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// Checks whether or not an adapter with the given version or newer exists.
         /// </summary>
         /// <param name="adapterName">The name of the network (the root adapter folder name in "MaxSdk/Mediation/" folder.</param>
-        /// <param name="version">The min adapter version to check for. Can be <c>null</c> if we want to check for any version.</param>
+        /// <param name="iosVersion">The min adapter version to check for. Can be <c>null</c> if we want to check for any version.</param>
         /// <returns><c>true</c> if an adapter with the min version is installed.</returns>
-        public static bool IsAdapterInstalled(string adapterName, string version = null)
+        public static bool IsAdapterInstalled(string adapterName, string iosVersion = null) // TODO: Add Android version check.
         {
             var dependencyFilePath = MaxSdkUtils.GetAssetPathForExportPath("MaxSdk/Mediation/" + adapterName + "/Editor/Dependencies.xml");
             if (!File.Exists(dependencyFilePath)) return false;
 
             // If version is null, we just need the adapter installed. We don't have to check for a specific version.
-            if (version == null) return true;
+            if (iosVersion == null) return true;
 
-            var currentVersion = AppLovinIntegrationManager.GetCurrentVersions(dependencyFilePath);
-            var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, version);
-            return iosVersionComparison != MaxSdkUtils.VersionComparisonResult.Lesser;
+            var currentVersion = GetCurrentVersions(dependencyFilePath);
+            var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, iosVersion);
+            return iosVersionComparison != VersionComparisonResult.Lesser;
+        }
+
+        /// <summary>
+        /// Checks whether or not an adapter older than the given version exists.
+        ///
+        /// TODO: Consolidate this method with <see cref="IsAdapterInstalled"/> and return a state enum.
+        /// </summary>
+        /// <param name="adapterName">The name of the network (the root adapter folder name in "MaxSdk/Mediation/" folder.</param>
+        /// <param name="iosVersion">The adapter version to check for.</param>
+        /// <returns><c>true</c> if an adapter older than the provided version is installed.</returns>
+        public static bool IsAdapterOlderThanMinVersionInstalled(string adapterName, string iosVersion) // TODO: Add Android version check.
+        {
+            var dependencyFilePath = MaxSdkUtils.GetAssetPathForExportPath("MaxSdk/Mediation/" + adapterName + "/Editor/Dependencies.xml");
+            if (!File.Exists(dependencyFilePath)) return false;
+
+            var currentVersion = GetCurrentVersions(dependencyFilePath);
+            var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, iosVersion);
+            return iosVersionComparison == VersionComparisonResult.Lesser;
         }
 
         #region Utility Methods

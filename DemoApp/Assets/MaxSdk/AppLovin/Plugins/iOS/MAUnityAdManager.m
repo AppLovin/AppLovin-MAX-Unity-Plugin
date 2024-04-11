@@ -5,7 +5,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"6.4.2"
+#define VERSION @"6.4.3"
 
 #define KEY_WINDOW [UIApplication sharedApplication].keyWindow
 #define DEVICE_SPECIFIC_ADVIEW_AD_FORMAT ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? MAAdFormat.leader : MAAdFormat.banner
@@ -655,53 +655,54 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)didLoadAd:(MAAd *)ad
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *name;
-        MAAdFormat *adFormat = ad.format;
-        if ( [adFormat isAdViewAd] )
+    NSString *name;
+    MAAdFormat *adFormat = ad.format;
+    if ( [adFormat isAdViewAd] )
+    {
+        MAAdView *adView = [self retrieveAdViewForAdUnitIdentifier: ad.adUnitIdentifier adFormat: adFormat];
+        // An ad is now being shown, enable user interaction.
+        adView.userInteractionEnabled = YES;
+        
+        if ( MAAdFormat.mrec == adFormat )
         {
-            MAAdView *adView = [self retrieveAdViewForAdUnitIdentifier: ad.adUnitIdentifier adFormat: adFormat];
-            // An ad is now being shown, enable user interaction.
-            adView.userInteractionEnabled = YES;
-            
-            if ( MAAdFormat.mrec == adFormat )
-            {
-                name = @"OnMRecAdLoadedEvent";
-            }
-            else
-            {
-                name = @"OnBannerAdLoadedEvent";
-            }
-            [self positionAdViewForAd: ad];
-            
-            // Do not auto-refresh by default if the ad view is not showing yet (e.g. first load during app launch and publisher does not automatically show banner upon load success)
-            // We will resume auto-refresh in -[MAUnityAdManager showBannerWithAdUnitIdentifier:].
-            if ( adView && [adView isHidden] )
-            {
-                [adView stopAutoRefresh];
-            }
-        }
-        else if ( MAAdFormat.interstitial == adFormat )
-        {
-            name = @"OnInterstitialLoadedEvent";
-        }
-        else if ( MAAdFormat.appOpen == adFormat )
-        {
-            name = @"OnAppOpenAdLoadedEvent";
-        }
-        else if ( MAAdFormat.rewarded == adFormat )
-        {
-            name = @"OnRewardedAdLoadedEvent";
-        }
-        else if ( MAAdFormat.rewardedInterstitial == adFormat )
-        {
-            name = @"OnRewardedInterstitialAdLoadedEvent";
+            name = @"OnMRecAdLoadedEvent";
         }
         else
         {
-            [self logInvalidAdFormat: adFormat];
-            return;
+            name = @"OnBannerAdLoadedEvent";
         }
+        [self positionAdViewForAd: ad];
+        
+        // Do not auto-refresh by default if the ad view is not showing yet (e.g. first load during app launch and publisher does not automatically show banner upon load success)
+        // We will resume auto-refresh in -[MAUnityAdManager showBannerWithAdUnitIdentifier:].
+        if ( adView && [adView isHidden] )
+        {
+            [adView stopAutoRefresh];
+        }
+    }
+    else if ( MAAdFormat.interstitial == adFormat )
+    {
+        name = @"OnInterstitialLoadedEvent";
+    }
+    else if ( MAAdFormat.appOpen == adFormat )
+    {
+        name = @"OnAppOpenAdLoadedEvent";
+    }
+    else if ( MAAdFormat.rewarded == adFormat )
+    {
+        name = @"OnRewardedAdLoadedEvent";
+    }
+    else if ( MAAdFormat.rewardedInterstitial == adFormat )
+    {
+        name = @"OnRewardedInterstitialAdLoadedEvent";
+    }
+    else
+    {
+        [self logInvalidAdFormat: adFormat];
+        return;
+    }
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         @synchronized ( self.adInfoDictLock )
         {
@@ -776,6 +777,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 - (void)didClickAd:(MAAd *)ad
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
         NSString *name;
         MAAdFormat *adFormat = ad.format;
         if ( MAAdFormat.banner == adFormat || MAAdFormat.leader == adFormat )
@@ -852,6 +854,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 - (void)didFailToDisplayAd:(MAAd *)ad withError:(MAError *)error
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
         // BMLs do not support [DISPLAY] events in Unity
         MAAdFormat *adFormat = ad.format;
         if ( ![adFormat isFullscreenAd] ) return;
@@ -996,6 +999,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 - (void)didRewardUserForAd:(MAAd *)ad withReward:(MAReward *)reward
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
         MAAdFormat *adFormat = ad.format;
         if ( adFormat != MAAdFormat.rewarded && adFormat != MAAdFormat.rewardedInterstitial )
         {
@@ -1020,6 +1024,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 - (void)didPayRevenueForAd:(MAAd *)ad
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
         NSString *name;
         MAAdFormat *adFormat = ad.format;
         if ( MAAdFormat.banner == adFormat || MAAdFormat.leader == adFormat )
@@ -1061,6 +1066,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 - (void)didGenerateCreativeIdentifier:(NSString *)creativeIdentifier forAd:(MAAd *)ad
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
         NSString *name;
         MAAdFormat *adFormat = ad.format;
         if ( MAAdFormat.banner == adFormat || MAAdFormat.leader == adFormat )
@@ -1707,7 +1713,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         // All positions have constant height
         NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithObject: [adView.heightAnchor constraintEqualToConstant: adViewSize.height]];
         
-        UILayoutGuide *layoutGuide = KEY_WINDOW.safeAreaLayoutGuide;
+        UILayoutGuide *layoutGuide = superview.safeAreaLayoutGuide;
         
         if ( [adViewPosition isEqual: @"top_center"] || [adViewPosition isEqual: @"bottom_center"] )
         {

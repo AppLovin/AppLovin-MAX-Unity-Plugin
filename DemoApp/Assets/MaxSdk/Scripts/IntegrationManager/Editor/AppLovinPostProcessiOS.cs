@@ -35,10 +35,14 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     {
         private const string OutputFileName = "AppLovinQualityServiceSetup.rb";
 
-#if !UNITY_2019_3_OR_NEWER
+#if UNITY_2019_3_OR_NEWER
+        private const string TargetUnityIphonePodfileLine = "target 'Unity-iPhone' do";
+        private const string UseFrameworksPodfileLine = "use_frameworks!";
+        private const string UseFrameworksDynamicPodfileLine = "use_frameworks! :linkage => :dynamic";
+        private const string UseFrameworksStaticPodfileLine = "use_frameworks! :linkage => :static";
+#else
         private const string UnityMainTargetName = "Unity-iPhone";
 #endif
-        private const string TargetUnityIphonePodfileLine = "target 'Unity-iPhone' do";
         private const string LegacyResourcesDirectoryName = "Resources";
         private const string AppLovinMaxResourcesDirectoryName = "AppLovinMAXResources";
         private const string AppLovinAdvertisingAttributionEndpoint = "https://postbacks-app.com";
@@ -50,26 +54,45 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string KeyConsentFlowPrivacyPolicy = "ConsentFlowPrivacyPolicy";
         private const string KeyConsentFlowDebugUserGeography = "ConsentFlowDebugUserGeography";
 
-        private static readonly List<string> DynamicLibrariesToEmbed = new List<string>
+        private static List<string> DynamicLibrariesToEmbed
         {
-            "AppLovinSDK.xcframework",
-            "DTBiOSSDK.xcframework",
-            "FBAEMKit.xcframework",
-            "FBSDKCoreKit_Basics.xcframework",
-            "FBSDKCoreKit.xcframework",
-            "FBSDKGamingServicesKit.xcframework",
-            "FBSDKLoginKit.xcframework",
-            "FBSDKShareKit.xcframework",
-            "HyprMX.xcframework",
-            "LinkedinAudienceNetwork.xcframework",
-            "IASDKCore.xcframework",
-            "Maio.xcframework",
-            "MobileFuseSDK.xcframework",
-            "OMSDK_Appodeal.xcframework",
-            "OMSDK_Ogury.xcframework",
-            "OMSDK_Pubnativenet.xcframework",
-            "OMSDK_Smaato.xcframework"
-        };
+            get
+            {
+                var dynamicLibrariesToEmbed = new List<string>
+                {
+                    "AppLovinSDK.xcframework",
+                    "DTBiOSSDK.xcframework",
+                    "FBAEMKit.xcframework",
+                    "FBSDKCoreKit_Basics.xcframework",
+                    "FBSDKCoreKit.xcframework",
+                    "FBSDKGamingServicesKit.xcframework",
+                    "FBSDKLoginKit.xcframework",
+                    "FBSDKShareKit.xcframework",
+                    "HyprMX.xcframework",
+                    "Maio.xcframework",
+                    "MobileFuseSDK.xcframework",
+                    "MolocoSDK.xcframework",
+                    "OMSDK_Appodeal.xcframework",
+                    "OMSDK_Ogury.xcframework",
+                    "OMSDK_Pubnativenet.xcframework",
+                    "OMSDK_Smaato.xcframework"
+                };
+
+                // LinkedIn Audience Network SDK is distributed as a static library starting version 1.2.0
+                if (AppLovinIntegrationManager.IsAdapterOlderThanMinVersionInstalled("LinkedIn", "1.2.0.0"))
+                {
+                    dynamicLibrariesToEmbed.Add("LinkedinAudienceNetwork.xcframework");
+                }
+
+                // Fyber/IA SDK is distributed as a static library starting version 8.2.7
+                if (AppLovinIntegrationManager.IsAdapterOlderThanMinVersionInstalled("Fyber", "8.2.7.0"))
+                {
+                    dynamicLibrariesToEmbed.Add("IASDKCore.xcframework");
+                }
+
+                return dynamicLibrariesToEmbed;
+            }
+        }
 
         private static string PluginMediationDirectory
         {
@@ -214,8 +237,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             if (dynamicLibraryPathsPresentInProject.Count <= 0) return;
 
 #if UNITY_2019_3_OR_NEWER
-            // Embed framework only if the podfile does not contain target `Unity-iPhone`.
-            if (!ContainsUnityIphoneTargetInPodfile(buildPath))
+            if (ShouldEmbedDynamicLibraries(buildPath))
             {
                 foreach (var dynamicLibraryPath in dynamicLibraryPathsPresentInProject)
                 {
@@ -651,13 +673,36 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         }
 
 #if UNITY_2019_3_OR_NEWER
-        private static bool ContainsUnityIphoneTargetInPodfile(string buildPath)
+        /// <summary>
+        /// |-----------------------------------------------------------------------------------------------------------------------------------------------------|
+        /// |         embed             |  use_frameworks! (:linkage => :dynamic)  |  use_frameworks! :linkage => :static  |  `use_frameworks!` line not present  |
+        /// |---------------------------|------------------------------------------|---------------------------------------|--------------------------------------|
+        /// | Unity-iPhone present      | Do not embed dynamic libraries           | Embed dynamic libraries               | Do not embed dynamic libraries       |
+        /// | Unity-iPhone not present  | Embed dynamic libraries                  | Embed dynamic libraries               | Embed dynamic libraries              |
+        /// |-----------------------------------------------------------------------------------------------------------------------------------------------------|
+        /// </summary>
+        /// <param name="buildPath">An iOS build path</param>
+        /// <returns>Whether or not the dynamic libraries should be embedded.</returns>
+        private static bool ShouldEmbedDynamicLibraries(string buildPath)
         {
             var podfilePath = Path.Combine(buildPath, "Podfile");
             if (!File.Exists(podfilePath)) return false;
 
+            // If the Podfile doesn't have a `Unity-iPhone` target, we should embed the dynamic libraries.
             var lines = File.ReadAllLines(podfilePath);
-            return lines.Any(line => line.Contains(TargetUnityIphonePodfileLine));
+            var containsUnityIphoneTarget = lines.Any(line => line.Contains(TargetUnityIphonePodfileLine));
+            if (!containsUnityIphoneTarget) return true;
+
+            // If the Podfile does not have a `use_frameworks! :linkage => static` line, we should not embed the dynamic libraries.
+            var useFrameworksStaticLineIndex = Array.FindIndex(lines, line => line.Contains(UseFrameworksStaticPodfileLine));
+            if (useFrameworksStaticLineIndex == -1) return false;
+
+            // If more than one of the `use_frameworks!` lines are present, CocoaPods will use the last one.
+            var useFrameworksLineIndex = Array.FindIndex(lines, line => line.Trim() == UseFrameworksPodfileLine); // Check for exact line to avoid matching `use_frameworks! :linkage => static/dynamic`
+            var useFrameworksDynamicLineIndex = Array.FindIndex(lines, line => line.Contains(UseFrameworksDynamicPodfileLine));
+
+            // Check if `use_frameworks! :linkage => :static` is the last line of the three. If it is, we should embed the dynamic libraries.
+            return useFrameworksLineIndex < useFrameworksStaticLineIndex && useFrameworksDynamicLineIndex < useFrameworksStaticLineIndex;
         }
 #endif
     }

@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using AppLovinMax.Internal;
 using AppLovinMax.ThirdParty.MiniJson;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -314,7 +315,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnBannerAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -366,7 +367,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnBannerAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -563,7 +564,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnMRecAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -595,7 +596,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         ExecuteWithDelay(1f, () =>
         {
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnMRecAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -745,7 +746,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
             AddReadyAdUnit(adUnitIdentifier);
 
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnInterstitialLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -813,12 +814,12 @@ public class MaxSdkUnityEditor : MaxSdkBase
         closeButton.onClick.AddListener(() =>
         {
             var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnInterstitialHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.ForwardEvent(adHiddenEventProps);
             Object.Destroy(stubInterstitial);
         });
 
         var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnInterstitialDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.ForwardEvent(adDisplayedEventProps);
 #endif
     }
 
@@ -862,7 +863,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
             AddReadyAdUnit(adUnitIdentifier);
 
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnAppOpenAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -930,12 +931,12 @@ public class MaxSdkUnityEditor : MaxSdkBase
         closeButton.onClick.AddListener(() =>
         {
             var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnAppOpenAdHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.ForwardEvent(adHiddenEventProps);
             Object.Destroy(stubAppOpenAd);
         });
 
         var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnAppOpenAdDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.ForwardEvent(adDisplayedEventProps);
 #endif
     }
 
@@ -978,7 +979,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         {
             AddReadyAdUnit(adUnitIdentifier);
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -1054,11 +1055,11 @@ public class MaxSdkUnityEditor : MaxSdkBase
                 rewardEventPropsDict["rewardLabel"] = "coins";
                 rewardEventPropsDict["rewardAmount"] = "5";
                 var rewardEventProps = Json.Serialize(rewardEventPropsDict);
-                MaxSdkCallbacks.Instance.ForwardEvent(rewardEventProps);
+                MaxSdkCallbacks.ForwardEvent(rewardEventProps);
             }
 
             var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.ForwardEvent(adHiddenEventProps);
             Object.Destroy(stubRewardedAd);
         });
         rewardButton.onClick.AddListener(() =>
@@ -1068,7 +1069,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         });
 
         var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.ForwardEvent(adDisplayedEventProps);
 #endif
     }
 
@@ -1111,7 +1112,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         {
             AddReadyAdUnit(adUnitIdentifier);
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedInterstitialAdLoadedEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(eventProps);
+            MaxSdkCallbacks.ForwardEvent(eventProps);
         });
     }
 
@@ -1187,11 +1188,11 @@ public class MaxSdkUnityEditor : MaxSdkBase
                 rewardEventPropsDict["rewardLabel"] = "coins";
                 rewardEventPropsDict["rewardAmount"] = "5";
                 var rewardEventProps = Json.Serialize(rewardEventPropsDict);
-                MaxSdkCallbacks.Instance.ForwardEvent(rewardEventProps);
+                MaxSdkCallbacks.ForwardEvent(rewardEventProps);
             }
 
             var adHiddenEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedInterstitialAdHiddenEvent", adUnitIdentifier));
-            MaxSdkCallbacks.Instance.ForwardEvent(adHiddenEventProps);
+            MaxSdkCallbacks.ForwardEvent(adHiddenEventProps);
             Object.Destroy(stubRewardedAd);
         });
         rewardButton.onClick.AddListener(() =>
@@ -1201,7 +1202,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
         });
 
         var adDisplayedEventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnRewardedAdDisplayedEvent", adUnitIdentifier));
-        MaxSdkCallbacks.Instance.ForwardEvent(adDisplayedEventProps);
+        MaxSdkCallbacks.ForwardEvent(adDisplayedEventProps);
 #endif
     }
 
@@ -1397,7 +1398,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
 
     private static void ExecuteWithDelay(float seconds, Action action)
     {
-        MaxSdkCallbacks.Instance.StartCoroutine(ExecuteAction(seconds, action));
+        MaxEventExecutor.Instance.StartCoroutine(ExecuteAction(seconds, action));
     }
 
     private static IEnumerator ExecuteAction(float seconds, Action action)

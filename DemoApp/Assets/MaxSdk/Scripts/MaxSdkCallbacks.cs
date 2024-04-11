@@ -7,31 +7,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using AppLovinMax.ThirdParty.MiniJson;
-using AppLovinUserEngagement.Internal;
+using AppLovinMax.Internal;
 
-public class MaxSdkCallbacks : MonoBehaviour
+public static class MaxSdkCallbacks
 {
-#if UNITY_EDITOR
-    private static MaxSdkCallbacks instance;
-#endif
-
-    public static MaxSdkCallbacks Instance
-    {
-#if UNITY_EDITOR
-        get
-        {
-            if (instance != null) return instance;
-
-            instance = new GameObject("MaxSdkCallbacks", typeof(MaxSdkCallbacks)).GetComponent<MaxSdkCallbacks>();
-            DontDestroyOnLoad(instance);
-
-            return instance;
-        }
-#else
-        get; private set;
-#endif
-    }
-
     // Fired when the SDK has finished initializing
     private static Action<MaxSdkBase.SdkConfiguration> _onSdkInitializedEvent;
     public static event Action<MaxSdkBase.SdkConfiguration> OnSdkInitializedEvent
@@ -1219,20 +1198,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         }
     }
 
-#if !UNITY_EDITOR
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-
-        MaxEventExecutor.InitializeIfNeeded();
-    }
-#endif
-
-    public void ForwardEvent(string eventPropsStr)
+    public static void ForwardEvent(string eventPropsStr)
     {
         var eventProps = Json.Deserialize(eventPropsStr) as Dictionary<string, object>;
         if (eventProps == null)
@@ -1711,7 +1677,7 @@ public class MaxSdkCallbacks : MonoBehaviour
         _onMRecAdReviewCreativeIdGeneratedEvent = null;
         _onMRecAdExpandedEventV2 = null;
         _onMRecAdCollapsedEventV2 = null;
-        
+
         _onBannerAdLoadedEvent = null;
         _onBannerAdLoadFailedEvent = null;
         _onBannerAdClickedEvent = null;

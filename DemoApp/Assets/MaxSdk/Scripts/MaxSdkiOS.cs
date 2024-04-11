@@ -15,7 +15,7 @@ public class MaxSdkiOS : MaxSdkBase
 
     static MaxSdkiOS()
     {
-        InitCallbacks();
+        InitializeEventExecutor();
     }
 
 #if UNITY_IOS

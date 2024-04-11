@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace AppLovinUserEngagement.Internal
+namespace AppLovinMax.Internal
 {
     public class MaxEventExecutor : MonoBehaviour
     {
@@ -34,7 +34,7 @@ namespace AppLovinUserEngagement.Internal
 
         public static void InitializeIfNeeded()
         {
-            if (IsActive()) return;
+            if (instance != null) return;
 
             var executor = new GameObject("MaxEventExecutor");
             executor.hideFlags = HideFlags.HideAndDontSave;
@@ -44,15 +44,16 @@ namespace AppLovinUserEngagement.Internal
 
         #region Public API
 
+#if UNITY_EDITOR
         public static MaxEventExecutor Instance
         {
-            get { return instance; }
+            get
+            {
+                InitializeIfNeeded();
+                return instance;
+            }
         }
-
-        public static bool IsActive()
-        {
-            return instance != null;
-        }
+#endif
 
         public static void ExecuteOnMainThread(Action action, string eventName)
         {
@@ -69,11 +70,6 @@ namespace AppLovinUserEngagement.Internal
         }
 
         #endregion
-
-        public void Awake()
-        {
-            DontDestroyOnLoad(gameObject);
-        }
 
         public void Update()
         {

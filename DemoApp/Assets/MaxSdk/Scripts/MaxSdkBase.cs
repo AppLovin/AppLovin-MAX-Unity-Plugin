@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using AppLovinMax.ThirdParty.MiniJson;
+using AppLovinMax.Internal;
 using UnityEngine;
 
 #if UNITY_IOS && !UNITY_EDITOR
@@ -547,16 +548,10 @@ public abstract class MaxSdkBase
         }
     }
 
-    // Allocate the MaxSdkCallbacks singleton, which receives all callback events from the native SDKs.
-    protected static void InitCallbacks()
+    // Allocate the MaxEventExecutor singleton which handles pushing callbacks from the background to the main thread.
+    protected static void InitializeEventExecutor()
     {
-        var type = typeof(MaxSdkCallbacks);
-        var mgr = new GameObject("MaxSdkCallbacks", type)
-            .GetComponent<MaxSdkCallbacks>(); // Its Awake() method sets Instance.
-        if (MaxSdkCallbacks.Instance != mgr)
-        {
-            MaxSdkLogger.UserWarning("It looks like you have the " + type.Name + " on a GameObject in your scene. Please remove the script from your scene.");
-        }
+        MaxEventExecutor.InitializeIfNeeded();
     }
 
     /// <summary>
@@ -598,7 +593,7 @@ public abstract class MaxSdkBase
     {
         try
         {
-            MaxSdkCallbacks.Instance.ForwardEvent(propsStr);
+            MaxSdkCallbacks.ForwardEvent(propsStr);
         }
         catch (Exception exception)
         {
