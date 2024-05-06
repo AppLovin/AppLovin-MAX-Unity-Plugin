@@ -1505,7 +1505,7 @@ public static class MaxSdkCallbacks
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName);
-        if (keepInBackground)
+        if (ShouldInvokeInBackground(keepInBackground))
         {
             try
             {
@@ -1528,7 +1528,7 @@ public static class MaxSdkCallbacks
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName + ". Param: " + param);
-        if (keepInBackground)
+        if (ShouldInvokeInBackground(keepInBackground))
         {
             try
             {
@@ -1551,7 +1551,7 @@ public static class MaxSdkCallbacks
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName + ". Params: " + param1 + ", " + param2);
-        if (keepInBackground)
+        if (ShouldInvokeInBackground(keepInBackground))
         {
             try
             {
@@ -1574,7 +1574,7 @@ public static class MaxSdkCallbacks
         if (!CanInvokeEvent(evt)) return;
 
         MaxSdkLogger.UserDebug("Invoking event: " + eventName + ". Params: " + param1 + ", " + param2 + ", " + param3);
-        if (keepInBackground)
+        if (ShouldInvokeInBackground(keepInBackground))
         {
             try
             {
@@ -1603,6 +1603,11 @@ public static class MaxSdkCallbacks
         }
 
         return true;
+    }
+
+    private static bool ShouldInvokeInBackground(bool keepInBackground)
+    {
+        return MaxSdkBase.InvokeEventsOnUnityMainThread == null ? keepInBackground : !MaxSdkBase.InvokeEventsOnUnityMainThread.Value;
     }
 
     private static void LogSubscribedToEvent(string eventName)

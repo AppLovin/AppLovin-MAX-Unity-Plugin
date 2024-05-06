@@ -5,7 +5,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"6.4.3"
+#define VERSION @"6.4.4"
 
 #define KEY_WINDOW [UIApplication sharedApplication].keyWindow
 #define DEVICE_SPECIFIC_ADVIEW_AD_FORMAT ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? MAAdFormat.leader : MAAdFormat.banner
@@ -23,12 +23,6 @@ extern "C" {
     // life cycle management
     void UnityPause(int pause);
     void UnitySendMessage(const char* obj, const char* method, const char* msg);
-    
-    static const char * cStringCopy(NSString *string)
-    {
-        const char *value = string.UTF8String;
-        return value ? strdup(value) : NULL;
-    }
     
     void max_unity_dispatch_on_main_thread(dispatch_block_t block)
     {
@@ -1713,7 +1707,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         // All positions have constant height
         NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithObject: [adView.heightAnchor constraintEqualToConstant: adViewSize.height]];
         
-        UILayoutGuide *layoutGuide = superview.safeAreaLayoutGuide;
+        UILayoutGuide *layoutGuide = superview.window.safeAreaLayoutGuide ?: superview.safeAreaLayoutGuide;
         
         if ( [adViewPosition isEqual: @"top_center"] || [adViewPosition isEqual: @"bottom_center"] )
         {
@@ -1942,20 +1936,8 @@ static ALUnityBackgroundCallback backgroundCallback;
 + (void)forwardUnityEventWithArgs:(NSDictionary<NSString *, id> *)args
 {
 #if !IS_TEST_APP
-    void (^runnable)(void) = ^{
-        const char *serializedParameters = cStringCopy([self serializeParameters: args]);
-        backgroundCallback(serializedParameters);
-    };
-    
-    // Always forward in background - we push it back to the main thread in Unity
-    if ( [NSThread isMainThread] )
-    {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), runnable);
-    }
-    else
-    {
-        runnable();
-    }
+    NSString *serializedParameters = [self serializeParameters: args];
+    backgroundCallback(serializedParameters.UTF8String);
 #endif
 }
 

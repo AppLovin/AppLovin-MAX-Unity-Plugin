@@ -533,6 +533,11 @@ public abstract class MaxSdkBase
     }
 
     /// <summary>
+    /// Determines whether ad events raised by the AppLovin's Unity plugin should be invoked on the Unity main thread.
+    /// </summary>
+    public static bool? InvokeEventsOnUnityMainThread { get; set; }
+
+    /// <summary>
     /// The CMP service, which provides direct APIs for interfacing with the Google-certified CMP installed, if any.
     /// </summary>
     public static MaxCmpService CmpService

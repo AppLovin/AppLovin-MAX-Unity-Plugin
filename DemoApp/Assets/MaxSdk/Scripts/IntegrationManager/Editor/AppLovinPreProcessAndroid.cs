@@ -38,6 +38,10 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string KeyConsentFlowTermsOfService = "consent_flow_terms_of_service";
         private const string KeyConsentFlowPrivacyPolicy = "consent_flow_privacy_policy";
         private const string KeyConsentFlowDebugUserGeography = "consent_flow_debug_user_geography";
+        
+        private const string UmpLegacyDependencyLine = "<androidPackage spec=\"com.google.android.ump:user-messaging-platform:2.1.0\" />";
+        private const string UmpDependencyLine = "<androidPackage spec=\"com.google.android.ump:user-messaging-platform:2.+\" />";
+        private const string AndroidPackagesContainerElementString = "androidPackages";
 
         public void OnPreprocessBuild(BuildReport report)
         {
@@ -181,16 +185,16 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static void AddGoogleCmpDependencyIfNeeded()
         {
-            const string umpDependencyLine = "<androidPackage spec=\"com.google.android.ump:user-messaging-platform:2.1.0\" />";
-            const string containerElementString = "androidPackages";
+            // Remove the legacy fixed UMP version if it exists, we'll add the dependency with a dynamic version below.
+            TryRemoveStringFromDependencyFile(UmpLegacyDependencyLine, AndroidPackagesContainerElementString);
 
             if (AppLovinInternalSettings.Instance.ConsentFlowEnabled)
             {
-                TryAddStringToDependencyFile(umpDependencyLine, containerElementString);
+                TryAddStringToDependencyFile(UmpDependencyLine, AndroidPackagesContainerElementString);
             }
             else
             {
-                TryRemoveStringFromDependencyFile(umpDependencyLine, containerElementString);
+                TryRemoveStringFromDependencyFile(UmpDependencyLine, AndroidPackagesContainerElementString);
             }
         }
 
