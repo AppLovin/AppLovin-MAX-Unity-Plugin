@@ -1,12 +1,12 @@
 # AppLovin MAX Unity Plugin Demo App
-**⚠️ Note:** This repository contains the Unity demo app for MAX. The Releases tab only hosts release notes. To download and install the MAX Unity Plugin, follow the instructions at [AppLovin's Unity integration documentation](https://dash.applovin.com/documentation/mediation/unity/getting-started/integration).
+**⚠️ Note:** This repository contains the Unity demo app for MAX. The Releases tab only hosts release notes. To download and install the MAX Unity Plugin, follow the instructions at [AppLovin's Unity integration documentation](https://developers.applovin.com/en/unity/overview/integration).
 
 ## Overview
 MAX is AppLovin's in-app monetization solution.
 
 Move beyond the traditional monetization solution and integrate MAX. MAX is a single unbiased auction where advertisers get equal access to all ad inventory and bid simultaneously, which drives more competition and higher CPMs for you. You can read more about it [here](https://www.applovin.com/max-header-bidding).
 
-Please check out our [documentation](https://dash.applovin.com/documentation/mediation/unity/getting-started) to get started on integrating and enabling mediated networks using our guides.
+Please check out our [documentation](https://developers.applovin.com/en/unity/overview/integration) to get started on integrating and enabling mediated networks using our guides.
 
 ## Demo Apps
 To get started with the demo apps, follow the instructions below:

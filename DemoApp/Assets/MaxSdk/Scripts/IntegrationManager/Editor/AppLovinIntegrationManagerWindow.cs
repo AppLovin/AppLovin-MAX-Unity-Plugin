@@ -25,8 +25,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string appLovinSdkKeyLink = "https://dash.applovin.com/o/account#keys";
 
         private const string userTrackingUsageDescriptionDocsLink = "https://developer.apple.com/documentation/bundleresources/information_property_list/nsusertrackingusagedescription";
-        private const string documentationTermsAndPrivacyPolicyFlow = "https://dash.applovin.com/documentation/mediation/ios/getting-started/terms-and-privacy-policy-flow";
-        private const string documentationAdaptersLink = "https://dash.applovin.com/documentation/mediation/unity/mediation-adapters";
+        private const string documentationTermsAndPrivacyPolicyFlow = "https://developers.applovin.com/en/unity/overview/terms-and-privacy-policy-flow";
+        private const string documentationAdaptersLink = "https://developers.applovin.com/en/unity/preparing-mediated-networks";
         private const string documentationNote = "Please ensure that integration instructions (e.g. permissions, ATS settings, etc) specific to each network are implemented as well. Click the link below for more info:";
         private const string uninstallIconExportPath = "MaxSdk/Resources/Images/uninstall_icon.png";
         private const string alertIconExportPath = "MaxSdk/Resources/Images/alert_icon.png";
