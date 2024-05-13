@@ -31,7 +31,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         [MenuItem("AppLovin/Documentation")]
         private static void Documentation()
         {
-            Application.OpenURL("https://dash.applovin.com/documentation/mediation/unity/getting-started");
+            Application.OpenURL("https://developers.applovin.com/en/unity/overview/integration");
         }
 
         [MenuItem("AppLovin/Contact Us")]
