@@ -112,6 +112,11 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                     });
                 }
 
+                if (AppLovinIntegrationManager.IsAdapterInstalled("Verve", "3.0.0.0"))
+                {
+                    dynamicLibrariesToEmbed.Add("ATOM.xcframework");
+                }
+
                 return dynamicLibrariesToEmbed;
             }
         }

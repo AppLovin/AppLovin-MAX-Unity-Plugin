@@ -1,3 +1,15 @@
+# Version 1.2.179 - Feb 12, 2024
+* Android Resolver - Added logic to automatically turn on `mainTemplate.gradle`
+  for new projects, and prompt users to enable it on projects that have previously
+  had the resolver run.
+
+# Version 1.2.178 - Dec 20, 2023
+* Added [OpenUPM support](https://openupm.com/packages/com.google.external-dependency-manager/).
+
+# Version 1.2.177 - Aug 14, 2023
+* iOS Resolver - Added `/opt/homebrew/bin` to Cocoapod executable search path.
+  Fixes #627
+
 # Version 1.2.176 - Apr 27, 2023
 * Android Resolver - Added two Android Resolver settings to determine whether
   EDM4U injects custom local Maven repo path as a relative path or full path.
