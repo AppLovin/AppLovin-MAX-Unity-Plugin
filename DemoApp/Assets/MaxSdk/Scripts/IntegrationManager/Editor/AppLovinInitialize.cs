@@ -70,11 +70,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             "MaxSdk/Scripts/MaxVariableServiceUnityEditor.cs",
             "MaxSdk/Scripts/MaxVariableServiceUnityEditor.cs.meta",
 
-            // Targeting data and user segments have been removed.
-            "MaxSdk/Scripts/MaxTargetingData.cs",
-            "MaxSdk/Scripts/MaxTargetingData.cs.meta",
-            "MaxSdk/Scripts/MaxUserSegment.cs",
-            "MaxSdk/Scripts/MaxUserSegment.cs.meta",
+            // TODO: Add MaxTargetingData and MaxUserSegment when the plugin has enough traction.
         };
 
         static AppLovinInitialize()
