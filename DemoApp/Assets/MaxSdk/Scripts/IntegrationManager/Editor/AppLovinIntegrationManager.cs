@@ -25,6 +25,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public Network AppLovinMax;
         public Network[] MediatedNetworks;
         public Network[] PartnerMicroSdks;
+        public DynamicLibraryToEmbed[] ThirdPartyDynamicLibrariesToEmbed;
     }
 
     [Serializable]
@@ -56,6 +57,26 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         [NonSerialized] public Versions CurrentVersions;
         [NonSerialized] public VersionComparisonResult CurrentToLatestVersionComparisonResult = VersionComparisonResult.Lesser;
         [NonSerialized] public bool RequiresUpdate;
+        public DynamicLibraryToEmbed[] DynamicLibrariesToEmbed;
+    }
+
+    [Serializable]
+    public class DynamicLibraryToEmbed
+    {
+        public string PodName;
+        public string[] FrameworkNames;
+
+        // Min and max versions are inclusive, so if the adapter is the min or max version, the xcframework will get embedded.
+        public string MinVersion;
+        public string MaxVersion;
+
+        public DynamicLibraryToEmbed(string podName, string[] frameworkNames, string minVersion, string maxVersion)
+        {
+            PodName = podName;
+            FrameworkNames = frameworkNames;
+            MinVersion = minVersion;
+            MaxVersion = maxVersion;
+        }
     }
 
     /// <summary>
@@ -123,6 +144,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public static readonly string GradleTemplatePath = Path.Combine("Assets/Plugins/Android", "mainTemplate.gradle");
         public static readonly string DefaultPluginExportPath = Path.Combine("Assets", "MaxSdk");
         private const string MaxSdkAssetExportPath = "MaxSdk/Scripts/MaxSdk.cs";
+
+        internal static readonly string PluginDataEndpoint = "https://unity.applovin.com/max/1.0/integration_manager_info?plugin_version={0}";
 
         /// <summary>
         /// Some publishers might re-export our plugin via Unity Package Manager and the plugin will not be under the Assets folder. This means that the mediation adapters, settings files should not be moved to the packages folder,
@@ -248,7 +271,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 var pluginParentDir = PluginParentDirectory;
                 var isPluginOutsideAssetsDir = IsPluginOutsideAssetsDirectory;
                 MovePluginFilesIfNeeded(pluginParentDir, isPluginOutsideAssetsDir);
-                AddLabelsToAssetsIfNeeded(pluginParentDir, isPluginOutsideAssetsDir);
                 AssetDatabase.Refresh();
 
                 CallImportPackageCompletedCallback(importingNetwork);
@@ -274,62 +296,81 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         static AppLovinIntegrationManager() { }
 
+        public static PluginData LoadPluginDataSync()
+        {
+            var url = string.Format(PluginDataEndpoint, MaxSdk.Version);
+            using (var unityWebRequest = UnityWebRequest.Get(url))
+            {
+                var operation = unityWebRequest.SendWebRequest();
+
+                // Just wait till www is done
+                while (!operation.isDone) { }
+
+                return CreatePluginDataFromWebResponse(unityWebRequest);
+            }
+        }
+
         /// <summary>
         /// Loads the plugin data to be display by integration manager window.
         /// </summary>
         /// <param name="callback">Callback to be called once the plugin data download completes.</param>
         public IEnumerator LoadPluginData(Action<PluginData> callback)
         {
-            var url = string.Format("https://unity.applovin.com/max/1.0/integration_manager_info?plugin_version={0}", MaxSdk.Version);
-            using (var www = UnityWebRequest.Get(url))
+            var url = string.Format(PluginDataEndpoint, MaxSdk.Version);
+            using (var unityWebRequest = UnityWebRequest.Get(url))
             {
-                var operation = www.SendWebRequest();
+                var operation = unityWebRequest.SendWebRequest();
 
                 while (!operation.isDone) yield return new WaitForSeconds(0.1f); // Just wait till www is done. Our coroutine is pretty rudimentary.
 
-#if UNITY_2020_1_OR_NEWER
-                if (www.result != UnityWebRequest.Result.Success)
-#else
-                if (www.isNetworkError || www.isHttpError)
-#endif
-                {
-                    callback(null);
-                }
-                else
-                {
-                    PluginData pluginData;
-                    try
-                    {
-                        pluginData = JsonUtility.FromJson<PluginData>(www.downloadHandler.text);
-                    }
-                    catch (Exception exception)
-                    {
-                        Console.WriteLine(exception);
-                        pluginData = null;
-                    }
+                var pluginData = CreatePluginDataFromWebResponse(unityWebRequest);
 
-                    if (pluginData != null)
-                    {
-                        // Get current version of the plugin
-                        var appLovinMax = pluginData.AppLovinMax;
-                        UpdateCurrentVersions(appLovinMax, PluginParentDirectory);
-
-                        // Get current versions for all the mediation networks.
-                        var mediationPluginParentDirectory = MediationSpecificPluginParentDirectory;
-                        foreach (var network in pluginData.MediatedNetworks)
-                        {
-                            UpdateCurrentVersions(network, mediationPluginParentDirectory);
-                        }
-
-                        foreach (var partnerMicroSdk in pluginData.PartnerMicroSdks)
-                        {
-                            UpdateCurrentVersions(partnerMicroSdk, mediationPluginParentDirectory);
-                        }
-                    }
-
-                    callback(pluginData);
-                }
+                callback(pluginData);
             }
+        }
+
+        private static PluginData CreatePluginDataFromWebResponse(UnityWebRequest unityWebRequest)
+        {
+#if UNITY_2020_1_OR_NEWER
+            if (unityWebRequest.result != UnityWebRequest.Result.Success)
+#else
+            if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
+#endif
+            {
+                MaxSdkLogger.E("Failed to load plugin data. Please check your internet connection.");
+                return null;
+            }
+
+            PluginData pluginData;
+            try
+            {
+                pluginData = JsonUtility.FromJson<PluginData>(unityWebRequest.downloadHandler.text);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+                pluginData = null;
+            }
+
+            if (pluginData == null) return null;
+
+            // Get current version of the plugin
+            var appLovinMax = pluginData.AppLovinMax;
+            UpdateCurrentVersions(appLovinMax, PluginParentDirectory);
+
+            // Get current versions for all the mediation networks.
+            var mediationPluginParentDirectory = MediationSpecificPluginParentDirectory;
+            foreach (var network in pluginData.MediatedNetworks)
+            {
+                UpdateCurrentVersions(network, mediationPluginParentDirectory);
+            }
+
+            foreach (var partnerMicroSdk in pluginData.PartnerMicroSdks)
+            {
+                UpdateCurrentVersions(partnerMicroSdk, mediationPluginParentDirectory);
+            }
+
+            return pluginData;
         }
 
         /// <summary>
@@ -339,8 +380,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// <param name="mediationPluginParentDirectory">The parent directory of where the mediation adapter plugins are imported to.</param>
         public static void UpdateCurrentVersions(Network network, string mediationPluginParentDirectory)
         {
-            var dependencyFilePath = Path.Combine(mediationPluginParentDirectory, network.DependenciesFilePath);
-            var currentVersions = GetCurrentVersions(dependencyFilePath);
+            var currentVersions = GetCurrentVersions(MaxSdkUtils.GetAssetPathForExportPath(network.DependenciesFilePath));
 
             network.CurrentVersions = currentVersions;
 
@@ -482,24 +522,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             return iosVersionComparison != VersionComparisonResult.Lesser;
         }
 
-        /// <summary>
-        /// Checks whether or not an adapter older than the given version exists.
-        ///
-        /// TODO: Consolidate this method with <see cref="IsAdapterInstalled"/> and return a state enum.
-        /// </summary>
-        /// <param name="adapterName">The name of the network (the root adapter folder name in "MaxSdk/Mediation/" folder.</param>
-        /// <param name="iosVersion">The adapter version to check for.</param>
-        /// <returns><c>true</c> if an adapter older than the provided version is installed.</returns>
-        public static bool IsAdapterOlderThanMinVersionInstalled(string adapterName, string iosVersion) // TODO: Add Android version check.
-        {
-            var dependencyFilePath = MaxSdkUtils.GetAssetPathForExportPath("MaxSdk/Mediation/" + adapterName + "/Editor/Dependencies.xml");
-            if (!File.Exists(dependencyFilePath)) return false;
-
-            var currentVersion = GetCurrentVersions(dependencyFilePath);
-            var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, iosVersion);
-            return iosVersionComparison == VersionComparisonResult.Lesser;
-        }
-
         #region Utility Methods
 
         /// <summary>
@@ -595,73 +617,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             // Note: The pluginName doesn't have the '.unitypacakge' extension included in its name but the pluginFileName does. So using Contains instead of Equals.
             return importingNetwork != null && GetPluginFileName(importingNetwork).Contains(packageName);
-        }
-
-        /// <summary>
-        /// Adds labels to assets so that they can be easily found.
-        /// </summary>
-        /// <param name="pluginParentDir">The MAX Unity plugin's parent directory.</param>
-        /// <param name="isPluginOutsideAssetsDirectory">Whether or not the plugin is outside the Assets directory.</param>
-        public static void AddLabelsToAssetsIfNeeded(string pluginParentDir, bool isPluginOutsideAssetsDirectory)
-        {
-            if (isPluginOutsideAssetsDirectory)
-            {
-                var defaultPluginLocation = Path.Combine("Assets", "MaxSdk");
-                if (Directory.Exists(defaultPluginLocation))
-                {
-                    AddLabelsToAssets(defaultPluginLocation, "Assets");
-                }
-            }
-
-            var pluginDir = Path.Combine(pluginParentDir, "MaxSdk");
-            AddLabelsToAssets(pluginDir, pluginParentDir);
-        }
-
-        private static void AddLabelsToAssets(string directoryPath, string pluginParentDir)
-        {
-            var files = Directory.GetFiles(directoryPath);
-            foreach (var file in files)
-            {
-                if (file.EndsWith(".meta")) continue;
-
-                UpdateAssetLabelsIfNeeded(file, pluginParentDir);
-            }
-
-            var directories = Directory.GetDirectories(directoryPath);
-            foreach (var directory in directories)
-            {
-                // Add labels to this directory asset.
-                UpdateAssetLabelsIfNeeded(directory, pluginParentDir);
-
-                // Recursively add labels to all files under this directory.
-                AddLabelsToAssets(directory, pluginParentDir);
-            }
-        }
-
-        private static void UpdateAssetLabelsIfNeeded(string assetPath, string pluginParentDir)
-        {
-            var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
-            var labels = AssetDatabase.GetLabels(asset);
-
-            var labelsToAdd = labels.ToList();
-            var didAddLabels = false;
-            if (!labels.Contains("al_max"))
-            {
-                labelsToAdd.Add("al_max");
-                didAddLabels = true;
-            }
-
-            var exportPathLabel = "al_max_export_path-" + assetPath.Replace(pluginParentDir, "").Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (!labels.Contains(exportPathLabel))
-            {
-                labelsToAdd.Add(exportPathLabel);
-                didAddLabels = true;
-            }
-
-            // We only need to set the labels if they changed.
-            if (!didAddLabels) return;
-
-            AssetDatabase.SetLabels(asset, labelsToAdd.ToArray());
         }
 
         /// <summary>

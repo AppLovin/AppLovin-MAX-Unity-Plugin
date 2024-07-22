@@ -1,8 +1,5 @@
 fileFormatVersion: 2
-guid: 8315dff900cc742cda75c9da2b3b33ac
-labels:
-- al_max
-- al_max_export_path-MaxSdk/Resources
+guid: ebb4a8564e8074807876237c023d7ef7
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

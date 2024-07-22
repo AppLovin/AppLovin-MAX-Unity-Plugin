@@ -42,7 +42,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                 if (containerElement == null)
                 {
-                    Debug.LogError(containerElementString + " not found in Dependencies.xml file");
+                    MaxSdkLogger.E(containerElementString + " not found in Dependencies.xml file");
                     return;
                 }
 
@@ -61,7 +61,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
             catch (Exception exception)
             {
-                Debug.LogError("Google CMP will not function. Unable to add string to dependency file due to exception: " + exception.Message);
+                MaxSdkLogger.UserWarning("Google CMP will not function. Unable to add string to dependency file due to exception: " + exception.Message);
             }
         }
 
@@ -80,7 +80,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                 if (containerElement == null)
                 {
-                    Debug.LogError(containerElementString + " not found in Dependencies.xml file");
+                    MaxSdkLogger.E(containerElementString + " not found in Dependencies.xml file");
                     return;
                 }
 
@@ -98,7 +98,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
             catch (Exception exception)
             {
-                Debug.LogError("Unable to remove string from dependency file due to exception: " + exception.Message);
+                MaxSdkLogger.UserWarning("Unable to remove string from dependency file due to exception: " + exception.Message);
             }
         }
     }

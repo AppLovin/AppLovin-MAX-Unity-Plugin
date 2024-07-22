@@ -16,6 +16,10 @@ public class MaxSdkiOS : MaxSdkBase
     static MaxSdkiOS()
     {
         InitializeEventExecutor();
+
+#if UNITY_IOS
+        _MaxSetBackgroundCallback(BackgroundCallback);
+#endif
     }
 
 #if UNITY_IOS
@@ -27,21 +31,10 @@ public class MaxSdkiOS : MaxSdkBase
     #region Initialization
 
     [DllImport("__Internal")]
-    private static extern void _MaxSetSdkKey(string sdkKey);
-
-    /// <summary>
-    /// Set AppLovin SDK Key.
-    ///
-    /// This method must be called before any other SDK operation
-    /// </summary>
-    /// <param name="sdkKey">AppLovin SDK key. Must not be null.</param>
-    public static void SetSdkKey(string sdkKey)
-    {
-        _MaxSetSdkKey(sdkKey);
-    }
+    private static extern void _MaxSetBackgroundCallback(ALUnityBackgroundCallback backgroundCallback);
 
     [DllImport("__Internal")]
-    private static extern void _MaxInitializeSdk(string serializedAdUnitIds, string serializedMetaData, ALUnityBackgroundCallback backgroundCallback);
+    private static extern void _MaxInitializeSdk(string serializedAdUnitIds, string serializedMetaData);
 
     /// <summary>
     /// Initialize the default instance of AppLovin SDK.
@@ -54,7 +47,7 @@ public class MaxSdkiOS : MaxSdkBase
     public static void InitializeSdk(string[] adUnitIds = null)
     {
         var serializedAdUnitIds = (adUnitIds != null) ? string.Join(",", adUnitIds) : "";
-        _MaxInitializeSdk(serializedAdUnitIds, GenerateMetaData(), BackgroundCallback);
+        _MaxInitializeSdk(serializedAdUnitIds, GenerateMetaData());
     }
 
     [DllImport("__Internal")]
@@ -89,21 +82,18 @@ public class MaxSdkiOS : MaxSdkBase
         _MaxSetUserId(userId);
     }
 
-    /// <summary>
-    /// User segments allow us to serve ads using custom-defined rules based on which segment the user is in. For now, we only support a custom string 32 alphanumeric characters or less as the user segment.
-    /// </summary>
-    public static MaxUserSegment UserSegment
-    {
-        get { return SharedUserSegment; }
-    }
+    [DllImport("__Internal")]
+    private static extern bool _MaxSetSegmentCollection(string segmentCollectionsJson);
 
     /// <summary>
-    /// This class allows you to provide user or app data that will improve how we target ads.
+    /// Set the <see cref="MaxSegmentCollection"/>.
     /// </summary>
-    public static MaxTargetingData TargetingData
+    /// <param name="segmentCollection"> The segment collection to be set. Must not be {@code null}</param>
+    public static void SetSegmentCollection(MaxSegmentCollection segmentCollection)
     {
-        get { return SharedTargetingData; }
+        _MaxSetSegmentCollection(JsonUtility.ToJson(segmentCollection));
     }
+
 
     #endregion
 
@@ -1293,18 +1283,6 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
-    private static extern bool _MaxSetLocationCollectionEnabled(bool enabled);
-
-    /// <summary>
-    /// Whether or not AppLovin SDK will collect the device location if available. Defaults to <c>true</c>.
-    /// </summary>
-    /// <param name="enabled"><c>true</c> if AppLovin SDK should collect the device location if available.</param>
-    public static void SetLocationCollectionEnabled(bool enabled)
-    {
-        _MaxSetLocationCollectionEnabled(enabled);
-    }
-
-    [DllImport("__Internal")]
     private static extern void _MaxSetExtraParameter(string key, string value);
 
     /// <summary>
@@ -1345,78 +1323,6 @@ public class MaxSdkiOS : MaxSdkBase
 
     #region Private
 
-    [DllImport("__Internal")]
-    private static extern bool _MaxSetUserSegmentField(string name, string value);
-
-    internal static void SetUserSegmentField(string name, string value)
-    {
-        _MaxSetUserSegmentField(name, value);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataYearOfBirth(int yearOfBirth);
-
-    internal static void SetTargetingDataYearOfBirth(int yearOfBirth)
-    {
-        _MaxSetTargetingDataYearOfBirth(yearOfBirth);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataGender(String gender);
-
-    internal static void SetTargetingDataGender(String gender)
-    {
-        _MaxSetTargetingDataGender(gender);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataMaximumAdContentRating(int maximumAdContentRating);
-
-    internal static void SetTargetingDataMaximumAdContentRating(int maximumAdContentRating)
-    {
-        _MaxSetTargetingDataMaximumAdContentRating(maximumAdContentRating);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataEmail(string email);
-
-    internal static void SetTargetingDataEmail(string email)
-    {
-        _MaxSetTargetingDataEmail(email);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataPhoneNumber(string phoneNumber);
-
-    internal static void SetTargetingDataPhoneNumber(string phoneNumber)
-    {
-        _MaxSetTargetingDataPhoneNumber(phoneNumber);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataKeywords(string[] keywords, int size);
-
-    internal static void SetTargetingDataKeywords(string[] keywords)
-    {
-        _MaxSetTargetingDataKeywords(keywords, keywords == null ? 0 : keywords.Length);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxSetTargetingDataInterests(string[] interests, int size);
-
-    internal static void SetTargetingDataInterests(string[] interests)
-    {
-        _MaxSetTargetingDataInterests(interests, interests == null ? 0 : interests.Length);
-    }
-
-    [DllImport("__Internal")]
-    private static extern void _MaxClearAllTargetingData();
-
-    internal static void ClearAllTargetingData()
-    {
-        _MaxClearAllTargetingData();
-    }
-
     [MonoPInvokeCallback(typeof(ALUnityBackgroundCallback))]
     internal static void BackgroundCallback(string propsStr)
     {
@@ -1426,6 +1332,16 @@ public class MaxSdkiOS : MaxSdkBase
     #endregion
 
     #region Obsolete
+
+    [DllImport("__Internal")]
+    private static extern void _MaxSetSdkKey(string sdkKey);
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.")]
+    public static void SetSdkKey(string sdkKey)
+    {
+        _MaxSetSdkKey(sdkKey);
+        Debug.LogWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
+    }
 
     [DllImport("__Internal")]
     private static extern int _MaxConsentDialogState();

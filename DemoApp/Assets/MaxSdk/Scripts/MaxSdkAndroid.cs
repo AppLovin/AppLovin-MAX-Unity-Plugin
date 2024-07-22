@@ -21,20 +21,11 @@ public class MaxSdkAndroid : MaxSdkBase
     static MaxSdkAndroid()
     {
         InitializeEventExecutor();
+        
+        MaxUnityPluginClass.CallStatic("setBackgroundCallback", BackgroundCallback);
     }
 
     #region Initialization
-
-    /// <summary>
-    /// Set AppLovin SDK Key.
-    ///
-    /// This method must be called before any other SDK operation
-    /// </summary>
-    /// <param name="sdkKey">AppLovin SDK Key. Must not be null.</param>
-    public static void SetSdkKey(string sdkKey)
-    {
-        MaxUnityPluginClass.CallStatic("setSdkKey", sdkKey);
-    }
 
     /// <summary>
     /// Initialize the default instance of AppLovin SDK.
@@ -47,7 +38,7 @@ public class MaxSdkAndroid : MaxSdkBase
     public static void InitializeSdk(string[] adUnitIds = null)
     {
         var serializedAdUnitIds = (adUnitIds != null) ? string.Join(",", adUnitIds) : "";
-        MaxUnityPluginClass.CallStatic("initializeSdk", serializedAdUnitIds, GenerateMetaData(), BackgroundCallback);
+        MaxUnityPluginClass.CallStatic("initializeSdk", serializedAdUnitIds, GenerateMetaData());
     }
 
     /// <summary>
@@ -77,19 +68,12 @@ public class MaxSdkAndroid : MaxSdkBase
     }
 
     /// <summary>
-    /// User segments allow us to serve ads using custom-defined rules based on which segment the user is in. For now, we only support a custom string 32 alphanumeric characters or less as the user segment.
+    /// Set the <see cref="MaxSegmentCollection"/>.
     /// </summary>
-    public static MaxUserSegment UserSegment
+    /// <param name="segmentCollection"> The segment collection to be set. Must not be {@code null}</param>
+    public static void SetSegmentCollection(MaxSegmentCollection segmentCollection)
     {
-        get { return SharedUserSegment; }
-    }
-
-    /// <summary>
-    /// This class allows you to provide user or app data that will improve how we target ads.
-    /// </summary>
-    public static MaxTargetingData TargetingData
-    {
-        get { return SharedTargetingData; }
+        MaxUnityPluginClass.CallStatic("setSegmentCollection", JsonUtility.ToJson(segmentCollection));
     }
 
     #endregion
@@ -1036,15 +1020,6 @@ public class MaxSdkAndroid : MaxSdkBase
     }
 
     /// <summary>
-    /// Whether or not AppLovin SDK will collect the device location if available. Defaults to <c>true</c>.
-    /// </summary>
-    /// <param name="enabled"><c>true</c> if AppLovin SDK should collect the device location if available.</param>
-    public static void SetLocationCollectionEnabled(bool enabled)
-    {
-        MaxUnityPluginClass.CallStatic("setLocationCollectionEnabled", enabled);
-    }
-
-    /// <summary>
     /// Set an extra parameter to pass to the AppLovin server.
     /// </summary>
     /// <param name="key">The key for the extra parameter. Must not be null.</param>
@@ -1075,60 +1050,14 @@ public class MaxSdkAndroid : MaxSdkBase
 
     #endregion
 
-    #region Private
-
-    internal static void SetUserSegmentField(string name, string value)
-    {
-        MaxUnityPluginClass.CallStatic("setUserSegmentField", name, value);
-    }
-
-    internal static void SetTargetingDataYearOfBirth(int yearOfBirth)
-    {
-        MaxUnityPluginClass.CallStatic("setTargetingDataYearOfBirth", yearOfBirth);
-    }
-
-    internal static void SetTargetingDataGender(String gender)
-    {
-        MaxUnityPluginClass.CallStatic("setTargetingDataGender", gender);
-    }
-
-    internal static void SetTargetingDataMaximumAdContentRating(int maximumAdContentRating)
-    {
-        MaxUnityPluginClass.CallStatic("setTargetingDataMaximumAdContentRating", maximumAdContentRating);
-    }
-
-    internal static void SetTargetingDataEmail(string email)
-    {
-        MaxUnityPluginClass.CallStatic("setTargetingDataEmail", email);
-    }
-
-    internal static void SetTargetingDataPhoneNumber(string phoneNumber)
-    {
-        MaxUnityPluginClass.CallStatic("setTargetingDataPhoneNumber", phoneNumber);
-    }
-
-    internal static void SetTargetingDataKeywords(string[] keywords)
-    {
-        // Wrap the string array in an object array, so the compiler does not split into multiple strings.
-        object[] arguments = {keywords};
-        MaxUnityPluginClass.CallStatic("setTargetingDataKeywords", arguments);
-    }
-
-    internal static void SetTargetingDataInterests(string[] interests)
-    {
-        // Wrap the string array in an object array, so the compiler does not split into multiple strings.
-        object[] arguments = {interests};
-        MaxUnityPluginClass.CallStatic("setTargetingDataInterests", arguments);
-    }
-
-    internal static void ClearAllTargetingData()
-    {
-        MaxUnityPluginClass.CallStatic("clearAllTargetingData");
-    }
-
-    #endregion
-
     #region Obsolete
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.")]
+    public static void SetSdkKey(string sdkKey)
+    {
+        MaxUnityPluginClass.CallStatic("setSdkKey", sdkKey);
+        Debug.LogWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
+    }
 
     [Obsolete("This method has been deprecated. Please use `GetSdkConfiguration().ConsentDialogState`")]
     public static ConsentDialogState GetConsentDialogState()

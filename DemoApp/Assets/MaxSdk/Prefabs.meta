@@ -1,8 +1,5 @@
 fileFormatVersion: 2
-guid: c6b1dd2e4604b4f9187912bf3aff2afd
-labels:
-- al_max
-- al_max_export_path-MaxSdk/Prefabs
+guid: b1ef42d076f894359b53ec57a427a224
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
