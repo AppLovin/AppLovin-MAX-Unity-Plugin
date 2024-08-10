@@ -39,6 +39,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 #if !UNITY_2019_3_OR_NEWER
         private const string UnityMainTargetName = "Unity-iPhone";
 #endif
+        // Use a priority of 90 to have AppLovin embed frameworks after Pods are installed (EDM finishes installing Pods at priority 60) and before Firebase Crashlytics runs their scripts (at priority 100).
+        private const int AppLovinEmbedFrameworksPriority = 90;
 
         private const string TargetUnityIphonePodfileLine = "target 'Unity-iPhone' do";
         private const string UseFrameworksPodfileLine = "use_frameworks!";
@@ -146,7 +148,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
         }
 
-        [PostProcessBuild(int.MaxValue)]
+        [PostProcessBuild(AppLovinEmbedFrameworksPriority)]
         public static void MaxPostProcessPbxProject(BuildTarget buildTarget, string buildPath)
         {
             var projectPath = PBXProject.GetPBXProjectPath(buildPath);

@@ -1,3 +1,15 @@
+# Version 1.2.182 - Aug 2, 2024
+* General - Check for gradle version instead of Unity version when determining
+  the template files to modify.
+
+# Version 1.2.181 - Jun 26, 2024
+* General - Disable `EditorMeasurement` reporting that relied on the
+  Measurement Protocol for Universal Analytics.
+
+# Version 1.2.180 - Jun 4, 2024
+* General - Fix project settings resetting on domain reload.
+  Fixes #524
+
 # Version 1.2.179 - Feb 12, 2024
 * Android Resolver - Added logic to automatically turn on `mainTemplate.gradle`
   for new projects, and prompt users to enable it on projects that have previously

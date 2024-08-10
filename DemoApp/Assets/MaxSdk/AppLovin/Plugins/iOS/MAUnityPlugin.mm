@@ -8,7 +8,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"6.6.1"
+#define VERSION @"6.6.2"
 #define NSSTRING(_X) ( (_X != NULL) ? [NSString stringWithCString: _X encoding: NSStringEncodingConversionAllowLossy].al_stringByTrimmingWhitespace : nil)
 
 @interface NSString (ALUtils)
@@ -28,7 +28,6 @@ extern "C"
     static NSString *const KeySdkKey = @"SdkKey";
     
     UIView* UnityGetGLView();
-    NSString *getSdkKeyFromAppLovinSettingsPlist();
     
     static ALSdkInitializationConfigurationBuilder *_initConfigurationBuilder;
     static ALSdk *_sdk;
@@ -41,16 +40,6 @@ extern "C"
     static const char * cStringCopy(NSString *string);
     // Helper method to log errors
     void logUninitializedAccessError(const char *callingMethod);
-
-    ALSdkInitializationConfigurationBuilder *getInitConfigurationBuilder()
-    {
-        if ( !_initConfigurationBuilder )
-        {
-            _initConfigurationBuilder = [ALSdkInitializationConfiguration builderWithSdkKey: getSdkKeyFromAppLovinSettingsPlist()];
-        }
-        
-        return _initConfigurationBuilder;
-    }
 
     ALSdk *getSdk()
     {
@@ -70,6 +59,17 @@ extern "C"
         }
         
         return _adManager;
+    }
+
+    ALSdkInitializationConfigurationBuilder *getInitConfigurationBuilder()
+    {
+        if ( !_initConfigurationBuilder )
+        {
+            NSString *sdkKey = [getSdk().settings.extraParameters al_stringForKey: KeySdkKey];
+            _initConfigurationBuilder = [ALSdkInitializationConfiguration builderWithSdkKey: sdkKey];
+        }
+        
+        return _initConfigurationBuilder;
     }
 
     int getConsentStatusValue(NSNumber *consentStatus)
@@ -115,14 +115,6 @@ extern "C"
         }
         
         return array;
-    }
-
-    NSString *getSdkKeyFromAppLovinSettingsPlist()
-    {
-        NSString *settingsPlistResourceURL = [NSBundle.mainBundle pathForResource: @"AppLovin-Settings" ofType: @"plist"];
-        NSDictionary<NSString *, id> *sdkSettingsFromPlist = settingsPlistResourceURL ? [[NSDictionary alloc] initWithContentsOfFile: settingsPlistResourceURL] : @{};
-        
-        return [sdkSettingsFromPlist al_stringForKey: KeySdkKey];
     }
 
     MASegmentCollection *getSegmentCollection(const char *collectionJson)

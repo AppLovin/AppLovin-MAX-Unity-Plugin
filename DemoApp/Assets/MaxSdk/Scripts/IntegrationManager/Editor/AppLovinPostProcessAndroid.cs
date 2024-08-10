@@ -56,6 +56,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string KeyConsentFlowPrivacyPolicy = "consent_flow_privacy_policy";
         private const string KeyConsentFlowDebugUserGeography = "consent_flow_debug_user_geography";
 
+        private const string KeyRenderOutsideSafeArea = "render_outside_safe_area";
+
 #if UNITY_2022_3_OR_NEWER
         // To match "'com.android.library' version '7.3.1'" line in build.gradle
         private static readonly Regex TokenGradleVersionLibrary = new Regex(".*id ['\"]com\\.android\\.library['\"] version");
@@ -354,6 +356,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             // Add the SDK key to the SDK settings.
             appLovinSdkSettings[KeySdkKey] = AppLovinSettings.Instance.SdkKey;
+            appLovinSdkSettings[KeyRenderOutsideSafeArea] = PlayerSettings.Android.renderOutsideSafeArea;
 
             // Add the Consent/Terms flow settings if needed.
             if (AppLovinInternalSettings.Instance.ConsentFlowEnabled)

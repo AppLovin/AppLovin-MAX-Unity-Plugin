@@ -37,11 +37,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private static readonly Regex TokenApiKey = new Regex(".*apiKey.*");
         private static readonly Regex TokenAppLovinPlugin = new Regex(".*apply plugin:.+?(?=applovin-quality-service).*");
 
-#if UNITY_2022_2_OR_NEWER
         private const string PluginsMatcher = "plugins";
         private const string PluginManagementMatcher = "pluginManagement";
         private const string QualityServicePluginRoot = "    id 'com.applovin.quality' version '+' apply false // NOTE: Requires version 4.8.3+ for Gradle version 7.2+";
-#endif
 
         private const string BuildScriptMatcher = "buildscript";
         private const string QualityServiceMavenRepo = "maven { url 'https://artifacts.applovin.com/android'; content { includeGroupByRegex 'com.applovin.*' } }";
@@ -108,9 +106,19 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 Console.WriteLine(exception);
             }
         }
-#if UNITY_2022_2_OR_NEWER
+
         /// <summary>
-        /// Adds AppLovin Quality Service plugin DSL element to the project's root build.gradle file. 
+        /// Adds AppLovin Quality Service plugin DSL element to the project's root build.gradle file.
+        /// Sample build.gradle file after adding quality service:
+        /// plugins {
+        ///     id 'com.android.application' version '7.4.2' apply false
+        ///     id 'com.android.library' version '7.4.2' apply false
+        ///     id 'com.applovin.quality' version '+' apply false
+        /// }
+        /// tasks.register('clean', Delete) {
+        ///     delete rootProject.layout.buildDirectory
+        /// }
+        ///
         /// </summary>
         /// <param name="rootGradleBuildFile">The path to project's root build.gradle file.</param>
         /// <returns><c>true</c> when the plugin was added successfully.</returns>
@@ -141,11 +149,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 outputLines.Add(line);
             }
 
-            if (!pluginAdded)
-            {
-                MaxSdkLogger.UserError("Failed to add AppLovin Quality Service plugin to root gradle file.");
-                return false;
-            }
+            if (!pluginAdded) return false;
 
             try
             {
@@ -163,6 +167,18 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         /// <summary>
         /// Adds the AppLovin maven repository to the project's settings.gradle file.
+        /// Sample settings.gradle file after adding AppLovin Repository:
+        /// pluginManagement {
+        ///     repositories {
+        ///         maven { url 'https://artifacts.applovin.com/android'; content { includeGroupByRegex 'com.applovin.*' } }
+        ///
+        ///         gradlePluginPortal()
+        ///         google()
+        ///         mavenCentral()
+        ///     }
+        /// }
+        /// ...
+        ///
         /// </summary>
         /// <param name="settingsGradleFile">The path to the project's settings.gradle file.</param>
         /// <returns><c>true</c> if the repository was added successfully.</returns>
@@ -212,11 +228,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 }
             }
 
-            if (!mavenRepoAdded)
-            {
-                MaxSdkLogger.UserError("Failed to add AppLovin Quality Service plugin maven repo to settings gradle file.");
-                return false;
-            }
+            if (!mavenRepoAdded) return false;
 
             try
             {
@@ -231,11 +243,25 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             return true;
         }
-#endif
 
 #if UNITY_2019_3_OR_NEWER
         /// <summary>
         /// Adds the necessary AppLovin Quality Service dependency and maven repo lines to the provided root build.gradle file.
+        /// Sample build.gradle file after adding quality service:
+        /// allprojects {
+        ///     buildscript {
+        ///         repositories {
+        ///             maven { url 'https://artifacts.applovin.com/android'; content { includeGroupByRegex 'com.applovin.*' } }
+        ///             google()
+        ///             jcenter()
+        ///         }
+        ///
+        ///         dependencies {
+        ///             classpath 'com.android.tools.build:gradle:4.0.1'
+        ///             classpath 'com.applovin.quality:AppLovinQualityServiceGradlePlugin:+'
+        ///         }
+        ///     ...
+        ///
         /// </summary>
         /// <param name="rootGradleBuildFile">The root build.gradle file path</param>
         /// <returns><c>true</c> if the build script lines were applied correctly.</returns>
@@ -536,7 +562,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                 if ((addBuildScriptLines && (!qualityServiceRepositoryAdded || !qualityServiceDependencyClassPathAdded)) || (addPlugin && !qualityServicePluginAdded))
                 {
-                    MaxSdkLogger.UserError("Failed to add AppLovin Quality Service plugin. Quality Service Plugin Added?: " + qualityServicePluginAdded + ", Quality Service Repo added?: " + qualityServiceRepositoryAdded + ", Quality Service dependency added?: " + qualityServiceDependencyClassPathAdded);
                     return null;
                 }
             }
