@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Documentation
-    url: https://dash.applovin.com/documentation/mediation/unity/getting-started/integration
+    url: https://developers.applovin.com/en/max/unity/overview/integration
     about: Documentation for the AppLovin MAX Unity Plugin
   - name: Support
-    url: https://monetization-support.applovin.com/hc/en-us
+    url: https://developers.applovin.com
     about: Answers to common questions and support for AppLovin MAX

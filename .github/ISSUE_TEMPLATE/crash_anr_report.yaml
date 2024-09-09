@@ -1,4 +1,4 @@
-name: Bug Report
+name: Crash/ANR Report
 description: Report a problem
 labels: [bug]
 body:
@@ -25,18 +25,23 @@ body:
       placeholder: "e.g., Android 8.1, iOS 15, Google Pixel 5a, etc."
     validations:
       required: true
-  - type: textarea
+  - type: input
     attributes:
-      label: "Current Behavior"
-      description: "A concise description of what you're experiencing."
+      label: "Crashes/ANRs per Day"
+      description: "What is the number of crashes/ANRs per day?"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Percentage of Users Affected"
+      description: "What percentage of the total number of users is experiencing the crash/ANR?"
     validations:
       required: true
   - type: textarea
     attributes:
-      label: "Expected Behavior"
-      description: "A concise description of what you expected to happen."
+      label: "Exception and Stack Trace"
     validations:
-      required: false
+      required: true
   - type: textarea
     attributes:
       label: "How to Reproduce"
