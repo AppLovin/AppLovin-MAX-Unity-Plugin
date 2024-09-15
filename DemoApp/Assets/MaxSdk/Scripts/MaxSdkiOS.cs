@@ -215,42 +215,6 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
     [DllImport("__Internal")]
-    private static extern void _MaxSetIsAgeRestrictedUser(bool isAgeRestrictedUser);
-
-    /// <summary>
-    /// Mark user as age restricted (i.e. under 16).
-    /// </summary>
-    /// <param name="isAgeRestrictedUser"><c>true</c> if the user is age restricted (i.e. under 16).</param>
-    public static void SetIsAgeRestrictedUser(bool isAgeRestrictedUser)
-    {
-        _MaxSetIsAgeRestrictedUser(isAgeRestrictedUser);
-    }
-
-    [DllImport("__Internal")]
-    private static extern bool _MaxIsAgeRestrictedUser();
-
-    /// <summary>
-    /// Check if user is age restricted.
-    /// </summary>
-    /// <returns><c>true</c> if the user is age-restricted. <c>false</c> if the user is not age-restricted or the age-restriction has not been set<see cref="IsAgeRestrictedUserSet">.</returns>
-    public static bool IsAgeRestrictedUser()
-    {
-        return _MaxIsAgeRestrictedUser();
-    }
-
-    [DllImport("__Internal")]
-    private static extern bool _MaxIsAgeRestrictedUserSet();
-
-    /// <summary>
-    /// Check if user set its age restricted settings.
-    /// </summary>
-    /// <returns><c>true</c> if user has set its age restricted settings.</returns>
-    public static bool IsAgeRestrictedUserSet()
-    {
-        return _MaxIsAgeRestrictedUserSet();
-    }
-
-    [DllImport("__Internal")]
     private static extern void _MaxSetDoNotSell(bool doNotSell);
 
     /// <summary>

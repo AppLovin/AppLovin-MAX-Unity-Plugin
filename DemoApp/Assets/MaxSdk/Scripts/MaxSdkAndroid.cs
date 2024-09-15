@@ -172,33 +172,6 @@ public class MaxSdkAndroid : MaxSdkBase
     }
 
     /// <summary>
-    /// Mark user as age restricted (i.e. under 16).
-    /// </summary>
-    /// <param name="isAgeRestrictedUser"><c>true</c> if the user is age restricted (i.e. under 16).</param>
-    public static void SetIsAgeRestrictedUser(bool isAgeRestrictedUser)
-    {
-        MaxUnityPluginClass.CallStatic("setIsAgeRestrictedUser", isAgeRestrictedUser);
-    }
-
-    /// <summary>
-    /// Check if user is age restricted.
-    /// </summary>
-    /// <returns><c>true</c> if the user is age-restricted. <c>false</c> if the user is not age-restricted or the age-restriction has not been set<see cref="IsAgeRestrictedUserSet">.</returns>
-    public static bool IsAgeRestrictedUser()
-    {
-        return MaxUnityPluginClass.CallStatic<bool>("isAgeRestrictedUser");
-    }
-
-    /// <summary>
-    /// Check if the user has set its age restricted settings. 
-    /// </summary>
-    /// <returns><c>true</c> if the user has set its age restricted settings.</returns>
-    public static bool IsAgeRestrictedUserSet()
-    {
-        return MaxUnityPluginClass.CallStatic<bool>("isAgeRestrictedUserSet");
-    }
-
-    /// <summary>
     /// Set whether or not user has opted out of the sale of their personal information.
     /// </summary>
     /// <param name="doNotSell"><c>true</c> if the user has opted out of the sale of their personal information.</param>

@@ -8,7 +8,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"6.6.3"
+#define VERSION @"7.0.0"
 #define NSSTRING(_X) ( (_X != NULL) ? [NSString stringWithCString: _X encoding: NSStringEncodingConversionAllowLossy].al_stringByTrimmingWhitespace : nil)
 
 @interface NSString (ALUtils)
@@ -281,21 +281,6 @@ extern "C"
         return [ALPrivacySettings isUserConsentSet];
     }
 
-    void _MaxSetIsAgeRestrictedUser(bool isAgeRestrictedUser)
-    {
-        [ALPrivacySettings setIsAgeRestrictedUser: isAgeRestrictedUser];
-    }
-    
-    bool _MaxIsAgeRestrictedUser()
-    {
-        return [ALPrivacySettings isAgeRestrictedUser];
-    }
-
-    bool _MaxIsAgeRestrictedUserSet()
-    {
-        return [ALPrivacySettings isAgeRestrictedUserSet];
-    }
-    
     void _MaxSetDoNotSell(bool doNotSell)
     {
         [ALPrivacySettings setDoNotSell: doNotSell];

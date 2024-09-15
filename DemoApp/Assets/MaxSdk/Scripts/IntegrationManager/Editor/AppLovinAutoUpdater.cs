@@ -26,19 +26,27 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         // TODO: Make this list dynamic.
         public static readonly Dictionary<string, string> MinAdapterVersions = new Dictionary<string, string>()
         {
-            {"ADMOB_NETWORK", "android_19.3.0.3_ios_7.65.0.0"},
-            {"CHARTBOOST_NETWORK", "android_8.1.0.7_ios_8.2.1.3"},
-            {"FACEBOOK_MEDIATE", "android_6.0.0.1_ios_6.0.0.3"},
-            {"FYBER_NETWORK", "android_7.7.0.1_ios_7.6.4.1"},
-            {"GOOGLE_AD_MANAGER_NETWORK", "android_19.3.0.3_ios_7.65.0.0"},
-            {"INMOBI_NETWORK", "android_9.0.9.2_ios_9.0.7.9"},
-            {"IRONSOURCE_NETWORK", "android_7.0.1.1.1_ios_7.0.1.0.1"},
-            {"MYTARGET_NETWORK", "android_5.9.1.2_ios_5.7.5.1"},
-            {"SMAATO_NETWORK", "android_21.5.2.5_ios_21.5.2.3"},
-            {"TIKTOK_NETWORK", "android_3.1.0.1.6_ios_3.2.5.1.1"},
-            {"UNITY_NETWORK", "android_3.4.8.2_ios_3.4.8.2"},
-            {"VUNGLE_NETWORK", "android_6.7.1.2_ios_6.7.1.3"},
-            {"YANDEX_NETWORK", "android_2.170.2_ios_2.18.0.1"}
+            {"ADMOB_NETWORK", "android_23.3.0.1_ios_11.9.0.1"},
+            {"BIDMACHINE_NETWORK", "android_3.0.1.1_ios_3.0.0.0.1"},
+            {"CHARTBOOST_NETWORK", "android_9.7.0.3_ios_9.7.0.2"},
+            {"FACEBOOK_MEDIATE", "android_6.17.0.1_ios_6.15.2.1"},
+            {"FYBER_NETWORK", "android_8.3.1.1_ios_8.3.2.1"},
+            {"GOOGLE_AD_MANAGER_NETWORK", "android_23.3.0.1_ios_11.9.0.1"},
+            {"HYPRMX_NETWORK", "android_6.4.2.1_ios_6.4.1.0.1"},
+            {"INMOBI_NETWORK", "android_10.7.7.1_ios_10.7.5.1"},
+            {"IRONSOURCE_NETWORK", "android_8.3.0.0.2_ios_8.3.0.0.1"},
+            {"LINE_NETWORK", "android_2024.8.27.1_ios_2.8.20240827.1"},
+            {"MINTEGRAL_NETWORK", "android_16.8.51.1_ios_7.7.2.0.1"},
+            {"MOBILEFUSE_NETWORK", "android_1.7.6.1_ios_1.7.6.1"},
+            {"MOLOCO_NETWORK", "android_3.1.0.1_ios_3.1.3.1"},
+            {"MYTARGET_NETWORK", "android_5.22.1.1_ios_5.21.7.1"},
+            {"PUBMATIC_NETWORK", "android_3.9.0.2_ios_3.9.0.2"},
+            {"SMAATO_NETWORK", "android_22.7.0.1_ios_22.8.4.1"},
+            {"TIKTOK_NETWORK", "android_6.2.0.5.2_ios_6.2.0.7.2"},
+            {"UNITY_NETWORK", "android_4.12.2.1_ios_4.12.2.1"},
+            {"VERVE_NETWORK", "android_3.0.4.1_ios_3.0.4.1"},
+            {"VUNGLE_NETWORK", "android_7.4.1.1_ios_7.4.1.1"},
+            {"YANDEX_NETWORK", "android_7.4.0.1_ios_2.18.0.1"},
         };
 
         /// <summary>

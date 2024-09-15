@@ -23,8 +23,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     private static bool _isInitialized;
     private static bool _hasUserConsent = false;
     private static bool _isUserConsentSet = false;
-    private static bool _isAgeRestrictedUser = false;
-    private static bool _isAgeRestrictedUserSet = false;
     private static bool _doNotSell = false;
     private static bool _isDoNotSellSet = false;
     private static bool _showStubAds = true;
@@ -220,34 +218,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     public static bool IsUserConsentSet()
     {
         return _isUserConsentSet;
-    }
-
-    /// <summary>
-    /// Mark user as age restricted (i.e. under 16).
-    /// </summary>
-    /// <param name="isAgeRestrictedUser"><c>true</c> if the user is age restricted (i.e. under 16).</param>
-    public static void SetIsAgeRestrictedUser(bool isAgeRestrictedUser)
-    {
-        _isAgeRestrictedUser = isAgeRestrictedUser;
-        _isAgeRestrictedUserSet = true;
-    }
-
-    /// <summary>
-    /// Check if user is age restricted.
-    /// </summary>
-    /// <returns><c>true</c> if the user is age-restricted. <c>false</c> if the user is not age-restricted or the age-restriction has not been set<see cref="IsAgeRestrictedUserSet"/>.</returns>
-    public static bool IsAgeRestrictedUser()
-    {
-        return _isAgeRestrictedUser;
-    }
-
-    /// <summary>
-    /// Check if user set its age restricted settings.
-    /// </summary>
-    /// <returns><c>true</c> if user has set its age restricted settings.</returns>
-    public static bool IsAgeRestrictedUserSet()
-    {
-        return _isAgeRestrictedUserSet;
     }
 
     /// <summary>
