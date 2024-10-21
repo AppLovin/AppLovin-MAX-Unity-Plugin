@@ -9,6 +9,7 @@
 #if UNITY_IOS || UNITY_IPHONE
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,10 +20,10 @@ using UnityEditor.Callbacks;
 using UnityEditor.iOS.Xcode.Extensions;
 #endif
 using UnityEditor.iOS.Xcode;
+using UnityEditor.PackageManager;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 using UnityEngine.Networking;
-using VersionComparisonResult = MaxSdkUtils.VersionComparisonResult;
+using VersionComparisonResult = AppLovinMax.Scripts.IntegrationManager.Editor.Versions.VersionComparisonResult;
 
 namespace AppLovinMax.Scripts.IntegrationManager.Editor
 {
@@ -66,15 +67,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string KeyAppLovinSdkKeyToRemove = "AppLovinSdkKey";
 
         private static readonly Regex PodfilePodLineRegex = new Regex("pod \'([^\']*)\'");
-
-        private static string PluginMediationDirectory
-        {
-            get
-            {
-                var pluginParentDir = AppLovinIntegrationManager.MediationSpecificPluginParentDirectory;
-                return Path.Combine(pluginParentDir, "MaxSdk/Mediation/");
-            }
-        }
 
         /// <summary>
         /// Adds AppLovin Quality Service to the iOS project once the project has been exported.
@@ -336,8 +328,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             var minIosVersion = libraryToEmbed.MinVersion;
             var maxIosVersion = libraryToEmbed.MaxVersion;
 
-            var greaterThanOrEqualToMinVersion = string.IsNullOrEmpty(minIosVersion) || MaxSdkUtils.CompareVersions(currentIosVersion, minIosVersion) != VersionComparisonResult.Lesser;
-            var lessThanOrEqualToMaxVersion = string.IsNullOrEmpty(maxIosVersion) || MaxSdkUtils.CompareVersions(currentIosVersion, maxIosVersion) != VersionComparisonResult.Greater;
+            var greaterThanOrEqualToMinVersion = string.IsNullOrEmpty(minIosVersion) || AppLovinIntegrationManagerUtils.CompareVersions(currentIosVersion, minIosVersion) != VersionComparisonResult.Lesser;
+            var lessThanOrEqualToMaxVersion = string.IsNullOrEmpty(maxIosVersion) || AppLovinIntegrationManagerUtils.CompareVersions(currentIosVersion, maxIosVersion) != VersionComparisonResult.Greater;
 
             return greaterThanOrEqualToMinVersion && lessThanOrEqualToMaxVersion;
         }
@@ -543,7 +535,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static void AddGoogleApplicationIdIfNeeded(PlistDocument plist)
         {
-            if (!AppLovinIntegrationManager.IsAdapterInstalled("Google") && !AppLovinIntegrationManager.IsAdapterInstalled("GoogleAdManager")) return;
+            if (!AppLovinPackageManager.IsAdapterInstalled("Google") && !AppLovinPackageManager.IsAdapterInstalled("GoogleAdManager")) return;
 
             const string googleApplicationIdentifier = "GADApplicationIdentifier";
             var appId = AppLovinSettings.Instance.AdMobIosAppId;
@@ -559,9 +551,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static void AddYandexSettingsIfNeeded(PBXProject project, string unityMainTargetGuid)
         {
-            if (!AppLovinIntegrationManager.IsAdapterInstalled("Yandex")) return;
+            if (!AppLovinPackageManager.IsAdapterInstalled("Yandex")) return;
 
-            if (MaxSdkUtils.CompareVersions(PlayerSettings.iOS.targetOSVersionString, "12.0") == MaxSdkUtils.VersionComparisonResult.Lesser)
+            if (AppLovinIntegrationManagerUtils.CompareVersions(PlayerSettings.iOS.targetOSVersionString, "12.0") == VersionComparisonResult.Lesser)
             {
                 MaxSdkLogger.UserWarning("Your iOS target version is under the minimum required version by Yandex. Please update it to 12.0 or newer in your ProjectSettings and rebuild your project.");
                 return;
@@ -731,24 +723,13 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static SkAdNetworkData GetSkAdNetworkData()
         {
-            var uriBuilder = new UriBuilder("https://unity.applovin.com/max/1.0/skadnetwork_ids");
-
             // Get the list of installed ad networks to be passed up
-            var maxMediationDirectory = PluginMediationDirectory;
-            if (Directory.Exists(maxMediationDirectory))
+            var installedNetworks = AppLovinPackageManager.GetInstalledMediationNetworks();
+            var uriBuilder = new UriBuilder("https://unity.applovin.com/max/1.0/skadnetwork_ids");
+            var adNetworks = string.Join(",", installedNetworks.ToArray());
+            if (!string.IsNullOrEmpty(adNetworks))
             {
-                var mediationNetworkDirectories = Directory.GetDirectories(maxMediationDirectory);
-                var installedNetworks = mediationNetworkDirectories.Select(Path.GetFileName).ToList();
-                if (AppLovinSettings.Instance.AddApsSkAdNetworkIds)
-                {
-                    installedNetworks.Add("AmazonAdMarketplace");
-                }
-
-                var adNetworks = string.Join(",", installedNetworks.ToArray());
-                if (!string.IsNullOrEmpty(adNetworks))
-                {
-                    uriBuilder.Query += string.Format("ad_networks={0}", adNetworks);
-                }
+                uriBuilder.Query += string.Format("ad_networks={0}", adNetworks);
             }
 
             using (var unityWebRequest = UnityWebRequest.Get(uriBuilder.ToString()))

@@ -439,25 +439,30 @@ namespace AppLovinMax.ThirdParty.MiniJson
         /// <summary>
         /// Converts a IDictionary / IList object or a simple type (string, int, etc.) into a JSON string
         /// </summary>
-        /// <param name="json">A Dictionary&lt;string, object&gt; / List&lt;object&gt;</param>
+        /// <param name="obj">A Dictionary&lt;string, object&gt; / List&lt;object&gt;</param>
+        /// <param name="prettyPrint">Whether to pretty print the json string</param>
         /// <returns>A JSON encoded string, or null if object 'json' is not serializable</returns>
-        public static string Serialize(object obj)
+        public static string Serialize(object obj, bool prettyPrint = false)
         {
-            return Serializer.Serialize(obj);
+            return Serializer.Serialize(obj, prettyPrint);
         }
 
         sealed class Serializer
         {
             StringBuilder builder;
+            bool prettyPrint;
+            int indentLevel;
 
-            Serializer()
+            Serializer(bool prettyPrint)
             {
                 builder = new StringBuilder();
+                this.prettyPrint = prettyPrint;
+                indentLevel = 0;
             }
 
-            public static string Serialize(object obj)
+            public static string Serialize(object obj, bool prettyPrint)
             {
-                var instance = new Serializer();
+                var instance = new Serializer(prettyPrint);
 
                 instance.SerializeValue(obj);
 
@@ -506,19 +511,46 @@ namespace AppLovinMax.ThirdParty.MiniJson
 
                 builder.Append('{');
 
+                indentLevel++;
+                if (prettyPrint)
+                {
+                    builder.AppendLine();
+                }
+
                 foreach (object e in obj.Keys)
                 {
                     if (!first)
                     {
                         builder.Append(',');
+                        if (prettyPrint)
+                        {
+                            builder.AppendLine();
+                        }
+                    }
+
+                    if (prettyPrint)
+                    {
+                        builder.Append(new string(' ', indentLevel * 4));
                     }
 
                     SerializeString(e.ToString());
                     builder.Append(':');
+                    if (prettyPrint)
+                    {
+                        builder.Append(' ');
+                    }
 
                     SerializeValue(obj[e]);
 
                     first = false;
+                }
+
+                indentLevel--;
+
+                if (prettyPrint)
+                {
+                    builder.AppendLine();
+                    builder.Append(new string(' ', indentLevel * 4));
                 }
 
                 builder.Append('}');
@@ -528,6 +560,12 @@ namespace AppLovinMax.ThirdParty.MiniJson
             {
                 builder.Append('[');
 
+                indentLevel++;
+                if (prettyPrint)
+                {
+                    builder.AppendLine();
+                }
+
                 bool first = true;
 
                 foreach (object obj in anArray)
@@ -535,11 +573,27 @@ namespace AppLovinMax.ThirdParty.MiniJson
                     if (!first)
                     {
                         builder.Append(',');
+                        if (prettyPrint)
+                        {
+                            builder.AppendLine();
+                        }
+                    }
+
+                    if (prettyPrint)
+                    {
+                        builder.Append(new string(' ', indentLevel * 4));
                     }
 
                     SerializeValue(obj);
 
                     first = false;
+                }
+
+                indentLevel--;
+                if (prettyPrint)
+                {
+                    builder.AppendLine();
+                    builder.Append(new string(' ', indentLevel * 4));
                 }
 
                 builder.Append(']');

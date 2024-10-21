@@ -135,11 +135,26 @@ public abstract class MaxSdkBase
 #if UNITY_EDITOR
             sdkConfiguration.AppTrackingStatus = AppTrackingStatus.Authorized;
 #endif
-            var currentRegion = RegionInfo.CurrentRegion;
-            sdkConfiguration.CountryCode = currentRegion != null ? currentRegion.TwoLetterISORegionName : "US";
+            sdkConfiguration.CountryCode = TryGetCountryCode();
             sdkConfiguration.IsTestModeEnabled = false;
 
             return sdkConfiguration;
+        }
+
+        private static string TryGetCountryCode()
+        {
+            try
+            {
+                return RegionInfo.CurrentRegion.TwoLetterISORegionName;
+            }
+#pragma warning disable 0168
+            catch (Exception ignored)
+#pragma warning restore 0168
+            {
+                // Ignored
+            }
+
+            return "US";
         }
 #endif
 

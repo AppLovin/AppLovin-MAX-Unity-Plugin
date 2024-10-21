@@ -109,7 +109,7 @@ public class AppLovinSettings : ScriptableObject
                 string settingsFilePath;
                 // The settings file should be under the Assets/ folder so that it can be version controlled and cannot be overriden when updating.
                 // If the plugin is outside the Assets folder, create the settings asset at the default location.
-                if (AppLovinIntegrationManager.IsPluginOutsideAssetsDirectory)
+                if (AppLovinIntegrationManager.IsPluginInPackageManager)
                 {
                     // Note: Can't use absolute path when calling `CreateAsset`. Should use relative path to Assets/ directory.
                     settingsFilePath = Path.Combine("Assets", SettingsExportPath);

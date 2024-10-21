@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 40e2ad4a252104688b8627f82e806b2e
+labels:
+- al_max
+- al_max_export_path-MaxSdk/Scripts/AppLovinUpmManifest.cs
+- al_max_export_path-MaxSdk/Scripts/IntegrationManager/Editor/AppLovinUpmManifest.cs
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

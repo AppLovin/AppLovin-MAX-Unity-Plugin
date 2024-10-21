@@ -11,11 +11,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
-using VersionComparisonResult = MaxSdkUtils.VersionComparisonResult;
 
 namespace AppLovinMax.Scripts.IntegrationManager.Editor
 {
@@ -52,10 +50,11 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public string DisplayName;
         public string DownloadUrl;
         public string DependenciesFilePath;
+        public PackageInfo[] Packages;
         public string[] PluginFilePaths;
         public Versions LatestVersions;
         [NonSerialized] public Versions CurrentVersions;
-        [NonSerialized] public VersionComparisonResult CurrentToLatestVersionComparisonResult = VersionComparisonResult.Lesser;
+        [NonSerialized] public Versions.VersionComparisonResult CurrentToLatestVersionComparisonResult = Versions.VersionComparisonResult.Lesser;
         [NonSerialized] public bool RequiresUpdate;
         public DynamicLibraryToEmbed[] DynamicLibrariesToEmbed;
     }
@@ -88,6 +87,21 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public string Unity;
         public string Android;
         public string Ios;
+
+        /// <summary>
+        /// An Enum to be used when comparing two versions.
+        ///
+        /// If:
+        ///     A &lt; B    return <see cref="Lesser"/>
+        ///     A == B      return <see cref="Equal"/>
+        ///     A &gt; B    return <see cref="Greater"/>
+        /// </summary>
+        public enum VersionComparisonResult
+        {
+            Lesser = -1,
+            Equal = 0,
+            Greater = 1
+        }
 
         public override bool Equals(object value)
         {
@@ -153,7 +167,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// 
         /// Note: When we distribute the plugin via Unity Package Manager, we need to distribute the adapters as separate packages, and the adapters won't be in the MaxSdk folder. So we need to take that into account.
         /// </summary>
-        private static readonly List<string> PluginPathsToIgnoreMoveWhenPluginOutsideAssetsDirectory = new List<string>
+        private static readonly List<string> PluginPathsToIgnoreMoveWhenPluginInPackageManager = new List<string>
         {
             "MaxSdk/Mediation",
             "MaxSdk/Mediation.meta",
@@ -196,20 +210,11 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         }
 
         /// <summary>
-        /// When the base plugin is outside the <c>Assets/</c> directory, the mediation plugin files are still imported to the default location under <c>Assets/</c>.
-        /// Returns the parent directory where the mediation adapter plugins are imported.
+        /// Whether or not the plugin is in the Unity Package Manager.
         /// </summary>
-        public static string MediationSpecificPluginParentDirectory
+        public static bool IsPluginInPackageManager
         {
-            get { return IsPluginOutsideAssetsDirectory ? "Assets" : PluginParentDirectory; }
-        }
-
-        /// <summary>
-        /// Whether or not the plugin is under the Assets/ folder.
-        /// </summary>
-        public static bool IsPluginOutsideAssetsDirectory
-        {
-            get { return !PluginParentDirectory.StartsWith("Assets"); }
+            get { return PluginParentDirectory.StartsWith("Packages"); }
         }
 
         /// <summary>
@@ -268,9 +273,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 if (!IsImportingNetwork(packageName)) return;
 
-                var pluginParentDir = PluginParentDirectory;
-                var isPluginOutsideAssetsDir = IsPluginOutsideAssetsDirectory;
-                MovePluginFilesIfNeeded(pluginParentDir, isPluginOutsideAssetsDir);
+                MovePluginFilesIfNeeded(PluginParentDirectory, IsPluginInPackageManager);
                 AssetDatabase.Refresh();
 
                 CallImportPackageCompletedCallback(importingNetwork);
@@ -345,6 +348,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             try
             {
                 pluginData = JsonUtility.FromJson<PluginData>(unityWebRequest.downloadHandler.text);
+                AppLovinPackageManager.PluginData = pluginData;
             }
             catch (Exception exception)
             {
@@ -356,85 +360,20 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             // Get current version of the plugin
             var appLovinMax = pluginData.AppLovinMax;
-            UpdateCurrentVersions(appLovinMax, PluginParentDirectory);
+            AppLovinPackageManager.UpdateCurrentVersions(appLovinMax);
 
             // Get current versions for all the mediation networks.
-            var mediationPluginParentDirectory = MediationSpecificPluginParentDirectory;
             foreach (var network in pluginData.MediatedNetworks)
             {
-                UpdateCurrentVersions(network, mediationPluginParentDirectory);
+                AppLovinPackageManager.UpdateCurrentVersions(network);
             }
 
             foreach (var partnerMicroSdk in pluginData.PartnerMicroSdks)
             {
-                UpdateCurrentVersions(partnerMicroSdk, mediationPluginParentDirectory);
+                AppLovinPackageManager.UpdateCurrentVersions(partnerMicroSdk);
             }
 
             return pluginData;
-        }
-
-        /// <summary>
-        /// Updates the CurrentVersion fields for a given network data object.
-        /// </summary>
-        /// <param name="network">Network for which to update the current versions.</param>
-        /// <param name="mediationPluginParentDirectory">The parent directory of where the mediation adapter plugins are imported to.</param>
-        public static void UpdateCurrentVersions(Network network, string mediationPluginParentDirectory)
-        {
-            var currentVersions = GetCurrentVersions(MaxSdkUtils.GetAssetPathForExportPath(network.DependenciesFilePath));
-
-            network.CurrentVersions = currentVersions;
-
-            // If AppLovin mediation plugin, get the version from MaxSdk and the latest and current version comparison.
-            if (network.Name.Equals("APPLOVIN_NETWORK"))
-            {
-                network.CurrentVersions.Unity = MaxSdk.Version;
-
-                var unityVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Unity, network.LatestVersions.Unity);
-                var androidVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Android, network.LatestVersions.Android);
-                var iosVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Ios, network.LatestVersions.Ios);
-
-                // Overall version is same if all the current and latest (from db) versions are same.
-                if (unityVersionComparison == VersionComparisonResult.Equal &&
-                    androidVersionComparison == VersionComparisonResult.Equal &&
-                    iosVersionComparison == VersionComparisonResult.Equal)
-                {
-                    network.CurrentToLatestVersionComparisonResult = VersionComparisonResult.Equal;
-                }
-                // One of the installed versions is newer than the latest versions which means that the publisher is on a beta version.
-                else if (unityVersionComparison == VersionComparisonResult.Greater ||
-                         androidVersionComparison == VersionComparisonResult.Greater ||
-                         iosVersionComparison == VersionComparisonResult.Greater)
-                {
-                    network.CurrentToLatestVersionComparisonResult = VersionComparisonResult.Greater;
-                }
-                // We have a new version available if all Android, iOS and Unity has a newer version available in db.
-                else
-                {
-                    network.CurrentToLatestVersionComparisonResult = VersionComparisonResult.Lesser;
-                }
-            }
-            // For all other mediation adapters, get the version comparison using their Unity versions.
-            else
-            {
-                // If adapter is indeed installed, compare the current (installed) and the latest (from db) versions, so that we can determine if the publisher is on an older, current or a newer version of the adapter.
-                // If the publisher is on a newer version of the adapter than the db version, that means they are on a beta version.
-                if (!string.IsNullOrEmpty(currentVersions.Unity))
-                {
-                    network.CurrentToLatestVersionComparisonResult = MaxSdkUtils.CompareUnityMediationVersions(currentVersions.Unity, network.LatestVersions.Unity);
-                }
-
-                if (!string.IsNullOrEmpty(network.CurrentVersions.Unity) && AppLovinAutoUpdater.MinAdapterVersions.ContainsKey(network.Name))
-                {
-                    var comparisonResult = MaxSdkUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, AppLovinAutoUpdater.MinAdapterVersions[network.Name]);
-                    // Requires update if current version is lower than the min required version.
-                    network.RequiresUpdate = comparisonResult < 0;
-                }
-                else
-                {
-                    // Reset value so that the Integration manager can hide the alert icon once adapter is updated.
-                    network.RequiresUpdate = false;
-                }
-            }
         }
 
         /// <summary>
@@ -503,110 +442,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             MaxSdkLogger.UserError(message);
         }
 
-        /// <summary>
-        /// Checks whether or not an adapter with the given version or newer exists.
-        /// </summary>
-        /// <param name="adapterName">The name of the network (the root adapter folder name in "MaxSdk/Mediation/" folder.</param>
-        /// <param name="iosVersion">The min adapter version to check for. Can be <c>null</c> if we want to check for any version.</param>
-        /// <returns><c>true</c> if an adapter with the min version is installed.</returns>
-        public static bool IsAdapterInstalled(string adapterName, string iosVersion = null) // TODO: Add Android version check.
-        {
-            var dependencyFilePath = MaxSdkUtils.GetAssetPathForExportPath("MaxSdk/Mediation/" + adapterName + "/Editor/Dependencies.xml");
-            if (!File.Exists(dependencyFilePath)) return false;
-
-            // If version is null, we just need the adapter installed. We don't have to check for a specific version.
-            if (iosVersion == null) return true;
-
-            var currentVersion = GetCurrentVersions(dependencyFilePath);
-            var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, iosVersion);
-            return iosVersionComparison != VersionComparisonResult.Lesser;
-        }
-
         #region Utility Methods
-
-        /// <summary>
-        /// Gets the current versions for a given network's dependency file path.
-        /// </summary>
-        /// <param name="dependencyPath">A dependency file path that from which to extract current versions.</param>
-        /// <returns>Current versions of a given network's dependency file.</returns>
-        public static Versions GetCurrentVersions(string dependencyPath)
-        {
-            XDocument dependency;
-            try
-            {
-                dependency = XDocument.Load(dependencyPath);
-            }
-#pragma warning disable 0168
-            catch (IOException exception)
-#pragma warning restore 0168
-            {
-                // Couldn't find the dependencies file. The plugin is not installed.
-                return new Versions();
-            }
-
-            // <dependencies>
-            //  <androidPackages>
-            //      <androidPackage spec="com.applovin.mediation:network_name-adapter:1.2.3.4" />
-            //  </androidPackages>
-            //  <iosPods>
-            //      <iosPod name="AppLovinMediationNetworkNameAdapter" version="2.3.4.5" />
-            //  </iosPods>
-            // </dependencies>
-            string androidVersion = null;
-            string iosVersion = null;
-            var dependenciesElement = dependency.Element("dependencies");
-            if (dependenciesElement != null)
-            {
-                var androidPackages = dependenciesElement.Element("androidPackages");
-                if (androidPackages != null)
-                {
-                    var adapterPackage = androidPackages.Descendants().FirstOrDefault(element => element.Name.LocalName.Equals("androidPackage")
-                                                                                                 && element.FirstAttribute.Name.LocalName.Equals("spec")
-                                                                                                 && element.FirstAttribute.Value.StartsWith("com.applovin"));
-                    if (adapterPackage != null)
-                    {
-                        androidVersion = adapterPackage.FirstAttribute.Value.Split(':').Last();
-                        // Hack alert: Some Android versions might have square brackets to force a specific version. Remove them if they are detected.
-                        if (androidVersion.StartsWith("["))
-                        {
-                            androidVersion = androidVersion.Trim('[', ']');
-                        }
-                    }
-                }
-
-                var iosPods = dependenciesElement.Element("iosPods");
-                if (iosPods != null)
-                {
-                    var adapterPod = iosPods.Descendants().FirstOrDefault(element => element.Name.LocalName.Equals("iosPod")
-                                                                                     && element.FirstAttribute.Name.LocalName.Equals("name")
-                                                                                     && element.FirstAttribute.Value.StartsWith("AppLovin"));
-                    if (adapterPod != null)
-                    {
-                        iosVersion = adapterPod.Attributes().First(attribute => attribute.Name.LocalName.Equals("version")).Value;
-                    }
-                }
-            }
-
-            var currentVersions = new Versions();
-            if (androidVersion != null && iosVersion != null)
-            {
-                currentVersions.Unity = string.Format("android_{0}_ios_{1}", androidVersion, iosVersion);
-                currentVersions.Android = androidVersion;
-                currentVersions.Ios = iosVersion;
-            }
-            else if (androidVersion != null)
-            {
-                currentVersions.Unity = string.Format("android_{0}", androidVersion);
-                currentVersions.Android = androidVersion;
-            }
-            else if (iosVersion != null)
-            {
-                currentVersions.Unity = string.Format("ios_{0}", iosVersion);
-                currentVersions.Ios = iosVersion;
-            }
-
-            return currentVersions;
-        }
 
         /// <summary>
         /// Checks whether or not the given package name is the currently importing package.
@@ -615,7 +451,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// <returns>true if the importing package matches the given package name.</returns>
         private bool IsImportingNetwork(string packageName)
         {
-            // Note: The pluginName doesn't have the '.unitypacakge' extension included in its name but the pluginFileName does. So using Contains instead of Equals.
+            // Note: The pluginName doesn't have the '.unitypackage' extension included in its name but the pluginFileName does. So using Contains instead of Equals.
             return importingNetwork != null && GetPluginFileName(importingNetwork).Contains(packageName);
         }
 
@@ -623,15 +459,15 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// Moves the imported plugin files to the MaxSdk directory if the publisher has moved the plugin to a different directory. This is a failsafe for when some plugin files are not imported to the new location.
         /// </summary>
         /// <returns>True if the adapters have been moved.</returns>
-        public static bool MovePluginFilesIfNeeded(string pluginParentDirectory, bool isPluginOutsideAssetsDirectory)
+        public static bool MovePluginFilesIfNeeded(string pluginParentDirectory, bool isPluginInPackageManager)
         {
             var pluginDir = Path.Combine(pluginParentDirectory, "MaxSdk");
 
             // Check if the user has moved the Plugin and if new assets have been imported to the default directory.
             if (DefaultPluginExportPath.Equals(pluginDir) || !Directory.Exists(DefaultPluginExportPath)) return false;
 
-            MovePluginFiles(DefaultPluginExportPath, pluginDir, isPluginOutsideAssetsDirectory);
-            if (!isPluginOutsideAssetsDirectory)
+            MovePluginFiles(DefaultPluginExportPath, pluginDir, isPluginInPackageManager);
+            if (!isPluginInPackageManager)
             {
                 FileUtil.DeleteFileOrDirectory(DefaultPluginExportPath + ".meta");
             }
@@ -643,13 +479,13 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// <summary>
         /// A helper function to move all the files recursively from the default plugin dir to a custom location the publisher moved the plugin to.
         /// </summary>
-        private static void MovePluginFiles(string fromDirectory, string pluginRoot, bool isPluginOutsideAssetsDirectory)
+        private static void MovePluginFiles(string fromDirectory, string pluginRoot, bool isPluginInPackageManager)
         {
             var files = Directory.GetFiles(fromDirectory);
             foreach (var file in files)
             {
                 // We have to ignore some files, if the plugin is outside the Assets/ directory.
-                if (isPluginOutsideAssetsDirectory && PluginPathsToIgnoreMoveWhenPluginOutsideAssetsDirectory.Any(pluginPathsToIgnore => file.Contains(pluginPathsToIgnore))) continue;
+                if (isPluginInPackageManager && PluginPathsToIgnoreMoveWhenPluginInPackageManager.Any(pluginPathsToIgnore => file.Contains(pluginPathsToIgnore))) continue;
 
                 // Check if the destination folder exists and create it if it doesn't exist
                 var parentDirectory = Path.GetDirectoryName(file);
@@ -681,12 +517,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             foreach (var directory in directories)
             {
                 // We might have to ignore some directories, if the plugin is outside the Assets/ directory.
-                if (isPluginOutsideAssetsDirectory && PluginPathsToIgnoreMoveWhenPluginOutsideAssetsDirectory.Any(pluginPathsToIgnore => directory.Contains(pluginPathsToIgnore))) continue;
+                if (isPluginInPackageManager && PluginPathsToIgnoreMoveWhenPluginInPackageManager.Any(pluginPathsToIgnore => directory.Contains(pluginPathsToIgnore))) continue;
 
-                MovePluginFiles(directory, pluginRoot, isPluginOutsideAssetsDirectory);
+                MovePluginFiles(directory, pluginRoot, isPluginInPackageManager);
             }
 
-            if (!isPluginOutsideAssetsDirectory)
+            if (!isPluginInPackageManager)
             {
                 FileUtil.DeleteFileOrDirectory(fromDirectory);
             }
@@ -713,7 +549,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 }
             }
 
-            // If it is a folder asset and doesn't have a label, the meta file is auto generated by 
+            // If it is a folder asset and doesn't have a label, the meta file is auto generated by
             return isFolderAsset && !hasLabels;
         }
 
