@@ -54,7 +54,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public string[] PluginFilePaths;
         public Versions LatestVersions;
         [NonSerialized] public Versions CurrentVersions;
-        [NonSerialized] public Versions.VersionComparisonResult CurrentToLatestVersionComparisonResult = Versions.VersionComparisonResult.Lesser;
+        [NonSerialized] public MaxSdkUtils.VersionComparisonResult CurrentToLatestVersionComparisonResult = MaxSdkUtils.VersionComparisonResult.Lesser;
         [NonSerialized] public bool RequiresUpdate;
         public DynamicLibraryToEmbed[] DynamicLibrariesToEmbed;
     }
@@ -88,21 +88,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public string Android;
         public string Ios;
 
-        /// <summary>
-        /// An Enum to be used when comparing two versions.
-        ///
-        /// If:
-        ///     A &lt; B    return <see cref="Lesser"/>
-        ///     A == B      return <see cref="Equal"/>
-        ///     A &gt; B    return <see cref="Greater"/>
-        /// </summary>
-        public enum VersionComparisonResult
-        {
-            Lesser = -1,
-            Equal = 0,
-            Greater = 1
-        }
-
         public override bool Equals(object value)
         {
             var versions = value as Versions;
@@ -134,8 +119,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
     /// <summary>
     /// A manager class for MAX integration manager window.
-    ///
-    /// TODO: Decide if we should namespace these classes.
     /// </summary>
     public class AppLovinIntegrationManager
     {
@@ -155,26 +138,10 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static readonly AppLovinIntegrationManager instance = new AppLovinIntegrationManager();
 
-        public static readonly string GradleTemplatePath = Path.Combine("Assets/Plugins/Android", "mainTemplate.gradle");
-        public static readonly string DefaultPluginExportPath = Path.Combine("Assets", "MaxSdk");
+        internal static readonly string GradleTemplatePath = Path.Combine("Assets/Plugins/Android", "mainTemplate.gradle");
         private const string MaxSdkAssetExportPath = "MaxSdk/Scripts/MaxSdk.cs";
 
-        internal static readonly string PluginDataEndpoint = "https://unity.applovin.com/max/1.0/integration_manager_info?plugin_version={0}";
-
-        /// <summary>
-        /// Some publishers might re-export our plugin via Unity Package Manager and the plugin will not be under the Assets folder. This means that the mediation adapters, settings files should not be moved to the packages folder,
-        /// since they get overridden when the package is updated. These are the files that should not be moved, if the plugin is not under the Assets/ folder.
-        /// 
-        /// Note: When we distribute the plugin via Unity Package Manager, we need to distribute the adapters as separate packages, and the adapters won't be in the MaxSdk folder. So we need to take that into account.
-        /// </summary>
-        private static readonly List<string> PluginPathsToIgnoreMoveWhenPluginInPackageManager = new List<string>
-        {
-            "MaxSdk/Mediation",
-            "MaxSdk/Mediation.meta",
-            "MaxSdk/Resources.meta",
-            AppLovinSettings.SettingsExportPath,
-            AppLovinSettings.SettingsExportPath + ".meta"
-        };
+        private static readonly string PluginDataEndpoint = "https://unity.applovin.com/max/1.0/integration_manager_info?plugin_version={0}";
 
         private static string externalDependencyManagerVersion;
 
@@ -273,7 +240,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 if (!IsImportingNetwork(packageName)) return;
 
-                MovePluginFilesIfNeeded(PluginParentDirectory, IsPluginInPackageManager);
                 AssetDatabase.Refresh();
 
                 CallImportPackageCompletedCallback(importingNetwork);
@@ -453,104 +419,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             // Note: The pluginName doesn't have the '.unitypackage' extension included in its name but the pluginFileName does. So using Contains instead of Equals.
             return importingNetwork != null && GetPluginFileName(importingNetwork).Contains(packageName);
-        }
-
-        /// <summary>
-        /// Moves the imported plugin files to the MaxSdk directory if the publisher has moved the plugin to a different directory. This is a failsafe for when some plugin files are not imported to the new location.
-        /// </summary>
-        /// <returns>True if the adapters have been moved.</returns>
-        public static bool MovePluginFilesIfNeeded(string pluginParentDirectory, bool isPluginInPackageManager)
-        {
-            var pluginDir = Path.Combine(pluginParentDirectory, "MaxSdk");
-
-            // Check if the user has moved the Plugin and if new assets have been imported to the default directory.
-            if (DefaultPluginExportPath.Equals(pluginDir) || !Directory.Exists(DefaultPluginExportPath)) return false;
-
-            MovePluginFiles(DefaultPluginExportPath, pluginDir, isPluginInPackageManager);
-            if (!isPluginInPackageManager)
-            {
-                FileUtil.DeleteFileOrDirectory(DefaultPluginExportPath + ".meta");
-            }
-
-            AssetDatabase.Refresh();
-            return true;
-        }
-
-        /// <summary>
-        /// A helper function to move all the files recursively from the default plugin dir to a custom location the publisher moved the plugin to.
-        /// </summary>
-        private static void MovePluginFiles(string fromDirectory, string pluginRoot, bool isPluginInPackageManager)
-        {
-            var files = Directory.GetFiles(fromDirectory);
-            foreach (var file in files)
-            {
-                // We have to ignore some files, if the plugin is outside the Assets/ directory.
-                if (isPluginInPackageManager && PluginPathsToIgnoreMoveWhenPluginInPackageManager.Any(pluginPathsToIgnore => file.Contains(pluginPathsToIgnore))) continue;
-
-                // Check if the destination folder exists and create it if it doesn't exist
-                var parentDirectory = Path.GetDirectoryName(file);
-                var destinationDirectoryPath = parentDirectory.Replace(DefaultPluginExportPath, pluginRoot);
-                if (!Directory.Exists(destinationDirectoryPath))
-                {
-                    Directory.CreateDirectory(destinationDirectoryPath);
-                }
-
-                // If the meta file is of a folder asset and doesn't have labels (it is auto generated by Unity), just delete it.
-                if (IsAutoGeneratedFolderMetaFile(file))
-                {
-                    FileUtil.DeleteFileOrDirectory(file);
-                    continue;
-                }
-
-                var destinationPath = file.Replace(DefaultPluginExportPath, pluginRoot);
-
-                // Check if the file is already present at the destination path and delete it.
-                if (File.Exists(destinationPath))
-                {
-                    FileUtil.DeleteFileOrDirectory(destinationPath);
-                }
-
-                FileUtil.MoveFileOrDirectory(file, destinationPath);
-            }
-
-            var directories = Directory.GetDirectories(fromDirectory);
-            foreach (var directory in directories)
-            {
-                // We might have to ignore some directories, if the plugin is outside the Assets/ directory.
-                if (isPluginInPackageManager && PluginPathsToIgnoreMoveWhenPluginInPackageManager.Any(pluginPathsToIgnore => directory.Contains(pluginPathsToIgnore))) continue;
-
-                MovePluginFiles(directory, pluginRoot, isPluginInPackageManager);
-            }
-
-            if (!isPluginInPackageManager)
-            {
-                FileUtil.DeleteFileOrDirectory(fromDirectory);
-            }
-        }
-
-        private static bool IsAutoGeneratedFolderMetaFile(string assetPath)
-        {
-            // Check if it is a meta file.
-            if (!assetPath.EndsWith(".meta")) return false;
-
-            var lines = File.ReadAllLines(assetPath);
-            var isFolderAsset = false;
-            var hasLabels = false;
-            foreach (var line in lines)
-            {
-                if (line.Contains("folderAsset: yes"))
-                {
-                    isFolderAsset = true;
-                }
-
-                if (line.Contains("labels:"))
-                {
-                    hasLabels = true;
-                }
-            }
-
-            // If it is a folder asset and doesn't have a label, the meta file is auto generated by
-            return isFolderAsset && !hasLabels;
         }
 
         private static void CallDownloadPluginProgressCallback(string pluginName, float progress, bool isDone)

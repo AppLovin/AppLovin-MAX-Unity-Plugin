@@ -35,11 +35,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
     private static readonly Dictionary<string, object> BannerPlacements = new Dictionary<string, object>();
     private static readonly Dictionary<string, object> MRecPlacements = new Dictionary<string, object>();
 
-    public static MaxUserServiceUnityEditor UserService
-    {
-        get { return MaxUserServiceUnityEditor.Instance; }
-    }
-
     [RuntimeInitializeOnLoadMethod]
     public static void InitializeMaxSdkUnityEditorOnLoad()
     {
@@ -112,7 +107,7 @@ public class MaxSdkUnityEditor : MaxSdkBase
     {
         if (_isInitialized)
         {
-            Debug.LogError("Segment collection must be set before MAX SDK is initialized ");
+            MaxSdkLogger.UserError("Segment collection must be set before MAX SDK is initialized ");
         }
     }
 
@@ -1282,7 +1277,10 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// </summary>
     /// <param name="key">The key for the extra parameter. Must not be null.</param>
     /// <param name="value">The value for the extra parameter. May be null.</param>
-    public static void SetExtraParameter(string key, string value) { }
+    public static void SetExtraParameter(string key, string value)
+    {
+        HandleExtraParameter(key, value);
+    }
 
     /// <summary>
     /// Get the native insets in pixels for the safe area.

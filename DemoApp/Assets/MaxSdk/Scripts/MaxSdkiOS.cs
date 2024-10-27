@@ -23,10 +23,6 @@ public class MaxSdkiOS : MaxSdkBase
     }
 
 #if UNITY_IOS
-    public static MaxUserServiceiOS UserService
-    {
-        get { return MaxUserServiceiOS.Instance; }
-    }
 
     #region Initialization
 
@@ -93,7 +89,6 @@ public class MaxSdkiOS : MaxSdkBase
     {
         _MaxSetSegmentCollection(JsonUtility.ToJson(segmentCollection));
     }
-
 
     #endregion
 
@@ -1256,6 +1251,8 @@ public class MaxSdkiOS : MaxSdkBase
     /// <param name="value">The value for the extra parameter. May be null.</param>
     public static void SetExtraParameter(string key, string value)
     {
+        HandleExtraParameter(key, value);
+
         _MaxSetExtraParameter(key, value);
     }
 

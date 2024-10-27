@@ -84,7 +84,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             // Check if the current and latest version are the same or if the publisher is on a newer version (on beta). If so, skip update.
             var comparison = data.AppLovinMax.CurrentToLatestVersionComparisonResult;
-            if (comparison == Versions.VersionComparisonResult.Equal || comparison == Versions.VersionComparisonResult.Greater) return;
+            if (comparison == MaxSdkUtils.VersionComparisonResult.Equal || comparison == MaxSdkUtils.VersionComparisonResult.Greater) return;
 
             // A new version of the plugin is available. Show a dialog to the publisher.
             var option = EditorUtility.DisplayDialogComplex(
@@ -156,15 +156,15 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static bool GoogleNetworkAdaptersCompatible(string googleVersion, string googleAdManagerVersion, string breakingVersion)
         {
-            var googleResult = AppLovinIntegrationManagerUtils.CompareVersions(googleVersion, breakingVersion);
-            var googleAdManagerResult = AppLovinIntegrationManagerUtils.CompareVersions(googleAdManagerVersion, breakingVersion);
+            var googleResult = MaxSdkUtils.CompareVersions(googleVersion, breakingVersion);
+            var googleAdManagerResult = MaxSdkUtils.CompareVersions(googleAdManagerVersion, breakingVersion);
 
             // If one is less than the breaking version and the other is not, they are not compatible.
-            if (googleResult == Versions.VersionComparisonResult.Lesser &&
-                googleAdManagerResult != Versions.VersionComparisonResult.Lesser) return false;
+            if (googleResult == MaxSdkUtils.VersionComparisonResult.Lesser &&
+                googleAdManagerResult != MaxSdkUtils.VersionComparisonResult.Lesser) return false;
 
-            if (googleAdManagerResult == Versions.VersionComparisonResult.Lesser &&
-                googleResult != Versions.VersionComparisonResult.Lesser) return false;
+            if (googleAdManagerResult == MaxSdkUtils.VersionComparisonResult.Lesser &&
+                googleResult != MaxSdkUtils.VersionComparisonResult.Lesser) return false;
 
             return true;
         }

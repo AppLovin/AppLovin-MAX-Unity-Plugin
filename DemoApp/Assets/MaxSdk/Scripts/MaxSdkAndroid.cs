@@ -13,15 +13,10 @@ public class MaxSdkAndroid : MaxSdkBase
 
     private static BackgroundCallbackProxy BackgroundCallback = new BackgroundCallbackProxy();
 
-    public static MaxUserServiceAndroid UserService
-    {
-        get { return MaxUserServiceAndroid.Instance; }
-    }
-
     static MaxSdkAndroid()
     {
         InitializeEventExecutor();
-        
+
         MaxUnityPluginClass.CallStatic("setBackgroundCallback", BackgroundCallback);
     }
 
@@ -999,6 +994,8 @@ public class MaxSdkAndroid : MaxSdkBase
     /// <param name="value">The value for the extra parameter. May be null.</param>
     public static void SetExtraParameter(string key, string value)
     {
+        HandleExtraParameter(key, value);
+
         MaxUnityPluginClass.CallStatic("setExtraParameter", key, value);
     }
 
@@ -1029,7 +1026,7 @@ public class MaxSdkAndroid : MaxSdkBase
     public static void SetSdkKey(string sdkKey)
     {
         MaxUnityPluginClass.CallStatic("setSdkKey", sdkKey);
-        Debug.LogWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
+        MaxSdkLogger.UserWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
     }
 
     [Obsolete("This method has been deprecated. Please use `GetSdkConfiguration().ConsentDialogState`")]
@@ -1037,8 +1034,7 @@ public class MaxSdkAndroid : MaxSdkBase
     {
         if (!IsInitialized())
         {
-            MaxSdkLogger.UserWarning(
-                "MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
+            MaxSdkLogger.UserWarning("MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
         }
 
         return (ConsentDialogState) MaxUnityPluginClass.CallStatic<int>("getConsentDialogState");

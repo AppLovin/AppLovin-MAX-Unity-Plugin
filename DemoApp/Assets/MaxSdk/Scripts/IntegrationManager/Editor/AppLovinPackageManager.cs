@@ -66,8 +66,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             var currentVersion = GetCurrentVersions(dependencyFilePathList);
             if (iosVersion != null)
             {
-                var iosVersionComparison = AppLovinIntegrationManagerUtils.CompareVersions(currentVersion.Ios, iosVersion);
-                if (iosVersionComparison == Versions.VersionComparisonResult.Lesser)
+                var iosVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Ios, iosVersion);
+                if (iosVersionComparison == MaxSdkUtils.VersionComparisonResult.Lesser)
                 {
                     return false;
                 }
@@ -75,8 +75,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             if (androidVersion != null)
             {
-                var androidVersionComparison = AppLovinIntegrationManagerUtils.CompareVersions(currentVersion.Android, androidVersion);
-                if (androidVersionComparison == Versions.VersionComparisonResult.Lesser)
+                var androidVersionComparison = MaxSdkUtils.CompareVersions(currentVersion.Android, androidVersion);
+                if (androidVersionComparison == MaxSdkUtils.VersionComparisonResult.Lesser)
                 {
                     return false;
                 }
@@ -175,28 +175,28 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 network.CurrentVersions.Unity = MaxSdk.Version;
 
-                var unityVersionComparison = AppLovinIntegrationManagerUtils.CompareVersions(network.CurrentVersions.Unity, network.LatestVersions.Unity);
-                var androidVersionComparison = AppLovinIntegrationManagerUtils.CompareVersions(network.CurrentVersions.Android, network.LatestVersions.Android);
-                var iosVersionComparison = AppLovinIntegrationManagerUtils.CompareVersions(network.CurrentVersions.Ios, network.LatestVersions.Ios);
+                var unityVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Unity, network.LatestVersions.Unity);
+                var androidVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Android, network.LatestVersions.Android);
+                var iosVersionComparison = MaxSdkUtils.CompareVersions(network.CurrentVersions.Ios, network.LatestVersions.Ios);
 
                 // Overall version is same if all the current and latest (from db) versions are same.
-                if (unityVersionComparison == Versions.VersionComparisonResult.Equal &&
-                    androidVersionComparison == Versions.VersionComparisonResult.Equal &&
-                    iosVersionComparison == Versions.VersionComparisonResult.Equal)
+                if (unityVersionComparison == MaxSdkUtils.VersionComparisonResult.Equal &&
+                    androidVersionComparison == MaxSdkUtils.VersionComparisonResult.Equal &&
+                    iosVersionComparison == MaxSdkUtils.VersionComparisonResult.Equal)
                 {
-                    network.CurrentToLatestVersionComparisonResult = Versions.VersionComparisonResult.Equal;
+                    network.CurrentToLatestVersionComparisonResult = MaxSdkUtils.VersionComparisonResult.Equal;
                 }
                 // One of the installed versions is newer than the latest versions which means that the publisher is on a beta version.
-                else if (unityVersionComparison == Versions.VersionComparisonResult.Greater ||
-                         androidVersionComparison == Versions.VersionComparisonResult.Greater ||
-                         iosVersionComparison == Versions.VersionComparisonResult.Greater)
+                else if (unityVersionComparison == MaxSdkUtils.VersionComparisonResult.Greater ||
+                         androidVersionComparison == MaxSdkUtils.VersionComparisonResult.Greater ||
+                         iosVersionComparison == MaxSdkUtils.VersionComparisonResult.Greater)
                 {
-                    network.CurrentToLatestVersionComparisonResult = Versions.VersionComparisonResult.Greater;
+                    network.CurrentToLatestVersionComparisonResult = MaxSdkUtils.VersionComparisonResult.Greater;
                 }
                 // We have a new version available if all Android, iOS and Unity has a newer version available in db.
                 else
                 {
-                    network.CurrentToLatestVersionComparisonResult = Versions.VersionComparisonResult.Lesser;
+                    network.CurrentToLatestVersionComparisonResult = MaxSdkUtils.VersionComparisonResult.Lesser;
                 }
             }
             // For all other mediation adapters, get the version comparison using their Unity versions.

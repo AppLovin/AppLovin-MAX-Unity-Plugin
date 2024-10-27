@@ -14,6 +14,21 @@ using UnityEditor;
 
 public class MaxSdkUtils
 {
+    /// <summary>
+    /// An Enum to be used when comparing two versions.
+    ///
+    /// If:
+    ///     A &lt; B    return <see cref="Lesser"/>
+    ///     A == B      return <see cref="Equal"/>
+    ///     A &gt; B    return <see cref="Greater"/>
+    /// </summary>
+    public enum VersionComparisonResult
+    {
+        Lesser = -1,
+        Equal = 0,
+        Greater = 1
+    }
+
 #if UNITY_ANDROID && !UNITY_EDITOR
     private static readonly AndroidJavaClass MaxUnityPluginClass = new AndroidJavaClass("com.applovin.mediation.unity.MaxUnityPlugin");
 #endif
@@ -471,6 +486,81 @@ public class MaxSdkUtils
         {
             return consentStatus == 1;
         }
+    }
+
+    /// <summary>
+    /// Compares its two arguments for order.  Returns <see cref="VersionComparisonResult.Lesser"/>, <see cref="VersionComparisonResult.Equal"/>,
+    /// or <see cref="VersionComparisonResult.Greater"/> as the first version is less than, equal to, or greater than the second.
+    /// </summary>
+    /// <param name="versionA">The first version to be compared.</param>
+    /// <param name="versionB">The second version to be compared.</param>
+    /// <returns>
+    /// <see cref="VersionComparisonResult.Lesser"/> if versionA is less than versionB.
+    /// <see cref="VersionComparisonResult.Equal"/> if versionA and versionB are equal.
+    /// <see cref="VersionComparisonResult.Greater"/> if versionA is greater than versionB.
+    /// </returns>
+    public static VersionComparisonResult CompareVersions(string versionA, string versionB)
+    {
+        if (versionA.Equals(versionB)) return VersionComparisonResult.Equal;
+
+        // Check if either of the versions are beta versions. Beta versions could be of format x.y.z-beta or x.y.z-betaX.
+        // Split the version string into beta component and the underlying version.
+        int piece;
+        var isVersionABeta = versionA.Contains("-beta");
+        var versionABetaNumber = 0;
+        if (isVersionABeta)
+        {
+            var components = versionA.Split(new[] {"-beta"}, StringSplitOptions.None);
+            versionA = components[0];
+            versionABetaNumber = int.TryParse(components[1], out piece) ? piece : 0;
+        }
+
+        var isVersionBBeta = versionB.Contains("-beta");
+        var versionBBetaNumber = 0;
+        if (isVersionBBeta)
+        {
+            var components = versionB.Split(new[] {"-beta"}, StringSplitOptions.None);
+            versionB = components[0];
+            versionBBetaNumber = int.TryParse(components[1], out piece) ? piece : 0;
+        }
+
+        // Now that we have separated the beta component, check if the underlying versions are the same.
+        if (versionA.Equals(versionB))
+        {
+            // The versions are the same, compare the beta components.
+            if (isVersionABeta && isVersionBBeta)
+            {
+                if (versionABetaNumber < versionBBetaNumber) return VersionComparisonResult.Lesser;
+
+                if (versionABetaNumber > versionBBetaNumber) return VersionComparisonResult.Greater;
+            }
+            // Only VersionA is beta, so A is older.
+            else if (isVersionABeta)
+            {
+                return VersionComparisonResult.Lesser;
+            }
+            // Only VersionB is beta, A is newer.
+            else
+            {
+                return VersionComparisonResult.Greater;
+            }
+        }
+
+        // Compare the non beta component of the version string.
+        var versionAComponents = versionA.Split('.').Select(version => int.TryParse(version, out piece) ? piece : 0).ToArray();
+        var versionBComponents = versionB.Split('.').Select(version => int.TryParse(version, out piece) ? piece : 0).ToArray();
+        var length = Mathf.Max(versionAComponents.Length, versionBComponents.Length);
+        for (var i = 0; i < length; i++)
+        {
+            var aComponent = i < versionAComponents.Length ? versionAComponents[i] : 0;
+            var bComponent = i < versionBComponents.Length ? versionBComponents[i] : 0;
+
+            if (aComponent < bComponent) return VersionComparisonResult.Lesser;
+
+            if (aComponent > bComponent) return VersionComparisonResult.Greater;
+        }
+
+        return VersionComparisonResult.Equal;
     }
 
     /// <summary>

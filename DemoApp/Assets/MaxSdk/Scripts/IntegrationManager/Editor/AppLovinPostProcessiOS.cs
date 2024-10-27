@@ -23,7 +23,6 @@ using UnityEditor.iOS.Xcode;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Networking;
-using VersionComparisonResult = AppLovinMax.Scripts.IntegrationManager.Editor.Versions.VersionComparisonResult;
 
 namespace AppLovinMax.Scripts.IntegrationManager.Editor
 {
@@ -156,23 +155,14 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 #endif
             EmbedDynamicLibrariesIfNeeded(buildPath, project, unityMainTargetGuid);
 
-            var internalSettingsEnabled = AppLovinInternalSettings.Instance.ConsentFlowEnabled;
-            var userTrackingUsageDescriptionDe = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionDe : AppLovinSettings.Instance.UserTrackingUsageDescriptionDe;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionDe, "de", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionEn = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionEn : AppLovinSettings.Instance.UserTrackingUsageDescriptionEn;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionEn, "en", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionEs = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionEs : AppLovinSettings.Instance.UserTrackingUsageDescriptionEs;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionEs, "es", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionFr = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionFr : AppLovinSettings.Instance.UserTrackingUsageDescriptionFr;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionFr, "fr", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionJa = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionJa : AppLovinSettings.Instance.UserTrackingUsageDescriptionJa;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionJa, "ja", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionKo = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionKo : AppLovinSettings.Instance.UserTrackingUsageDescriptionKo;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionKo, "ko", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionZhHans = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionZhHans : AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHans;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionZhHans, "zh-Hans", buildPath, project, unityMainTargetGuid);
-            var userTrackingUsageDescriptionZhHant = internalSettingsEnabled ? AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionZhHant : AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHant;
-            LocalizeUserTrackingDescriptionIfNeeded(userTrackingUsageDescriptionZhHant, "zh-Hant", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionDe, "de", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionEn, "en", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionEs, "es", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionFr, "fr", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionJa, "ja", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionKo, "ko", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionZhHans, "zh-Hans", buildPath, project, unityMainTargetGuid);
+            LocalizeUserTrackingDescriptionIfNeeded(AppLovinInternalSettings.Instance.UserTrackingUsageDescriptionZhHant, "zh-Hant", buildPath, project, unityMainTargetGuid);
 
             AddSwiftSupport(buildPath, project, unityFrameworkTargetGuid, unityMainTargetGuid);
             AddYandexSettingsIfNeeded(project, unityMainTargetGuid);
@@ -328,8 +318,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             var minIosVersion = libraryToEmbed.MinVersion;
             var maxIosVersion = libraryToEmbed.MaxVersion;
 
-            var greaterThanOrEqualToMinVersion = string.IsNullOrEmpty(minIosVersion) || AppLovinIntegrationManagerUtils.CompareVersions(currentIosVersion, minIosVersion) != VersionComparisonResult.Lesser;
-            var lessThanOrEqualToMaxVersion = string.IsNullOrEmpty(maxIosVersion) || AppLovinIntegrationManagerUtils.CompareVersions(currentIosVersion, maxIosVersion) != VersionComparisonResult.Greater;
+            var greaterThanOrEqualToMinVersion = string.IsNullOrEmpty(minIosVersion) || MaxSdkUtils.CompareVersions(currentIosVersion, minIosVersion) != MaxSdkUtils.VersionComparisonResult.Lesser;
+            var lessThanOrEqualToMaxVersion = string.IsNullOrEmpty(maxIosVersion) || MaxSdkUtils.CompareVersions(currentIosVersion, maxIosVersion) != MaxSdkUtils.VersionComparisonResult.Greater;
 
             return greaterThanOrEqualToMinVersion && lessThanOrEqualToMaxVersion;
         }
@@ -435,11 +425,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             if (string.IsNullOrEmpty(localizedUserTrackingDescription)) return true;
 
-            var settings = AppLovinSettings.Instance;
             var internalSettings = AppLovinInternalSettings.Instance;
-
-            return (!internalSettings.ConsentFlowEnabled || !internalSettings.UserTrackingUsageLocalizationEnabled)
-                   && (!settings.ConsentFlowEnabled || !settings.UserTrackingUsageLocalizationEnabled);
+            return !internalSettings.ConsentFlowEnabled || !internalSettings.UserTrackingUsageLocalizationEnabled;
         }
 
         private static void AddSwiftSupport(string buildPath, PBXProject project, string unityFrameworkTargetGuid, string unityMainTargetGuid)
@@ -492,7 +479,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             AddGoogleApplicationIdIfNeeded(plist);
 
             AddSdkSettings(plist, path);
-            EnableTermsFlowIfNeeded(plist);
             AddSkAdNetworksInfoIfNeeded(plist);
             RemoveSdkKeyIfNeeded(plist);
 
@@ -553,7 +539,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             if (!AppLovinPackageManager.IsAdapterInstalled("Yandex")) return;
 
-            if (AppLovinIntegrationManagerUtils.CompareVersions(PlayerSettings.iOS.targetOSVersionString, "12.0") == VersionComparisonResult.Lesser)
+            if (MaxSdkUtils.CompareVersions(PlayerSettings.iOS.targetOSVersionString, "12.0") == MaxSdkUtils.VersionComparisonResult.Lesser)
             {
                 MaxSdkLogger.UserWarning("Your iOS target version is under the minimum required version by Yandex. Please update it to 12.0 or newer in your ProjectSettings and rebuild your project.");
                 return;
@@ -627,40 +613,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
 
             infoPlist.root.SetString("NSUserTrackingUsageDescription", userTrackingUsageDescription);
-        }
-
-        private static void EnableTermsFlowIfNeeded(PlistDocument plist)
-        {
-            // Check if terms flow is enabled. No need to update info.plist if consent flow is disabled.
-            var consentFlowEnabled = AppLovinSettings.Instance.ConsentFlowEnabled;
-            if (!consentFlowEnabled) return;
-
-            // Check if terms flow is enabled for this format.
-            var consentFlowPlatform = AppLovinSettings.Instance.ConsentFlowPlatform;
-            if (consentFlowPlatform != Platform.All && consentFlowPlatform != Platform.iOS) return;
-
-            var userTrackingUsageDescription = AppLovinSettings.Instance.UserTrackingUsageDescriptionEn;
-            var privacyPolicyUrl = AppLovinSettings.Instance.ConsentFlowPrivacyPolicyUrl;
-            if (string.IsNullOrEmpty(userTrackingUsageDescription) || string.IsNullOrEmpty(privacyPolicyUrl))
-            {
-                AppLovinIntegrationManager.ShowBuildFailureDialog("You cannot use the AppLovin SDK's consent flow without defining a Privacy Policy URL and the `User Tracking Usage Description` in the AppLovin Integration Manager. \n\n" +
-                                                                  "Both values must be included to enable the SDK's consent flow.");
-
-                // No need to update the info.plist here. Default consent flow state will be determined on the SDK side.
-                return;
-            }
-
-            var consentFlowInfoRoot = plist.root.CreateDict("AppLovinConsentFlowInfo");
-            consentFlowInfoRoot.SetBoolean("AppLovinConsentFlowEnabled", true);
-            consentFlowInfoRoot.SetString("AppLovinConsentFlowPrivacyPolicy", privacyPolicyUrl);
-
-            var termsOfServiceUrl = AppLovinSettings.Instance.ConsentFlowTermsOfServiceUrl;
-            if (!string.IsNullOrEmpty(termsOfServiceUrl))
-            {
-                consentFlowInfoRoot.SetString("AppLovinConsentFlowTermsOfService", termsOfServiceUrl);
-            }
-
-            plist.root.SetString("NSUserTrackingUsageDescription", userTrackingUsageDescription);
         }
 
         private static void AddSkAdNetworksInfoIfNeeded(PlistDocument plist)

@@ -578,6 +578,11 @@ public abstract class MaxSdkBase
         get { return MaxCmpService.Instance; }
     }
 
+    internal static bool DisableAllLogs
+    {
+        get; private set;
+    }
+
     protected static void ValidateAdUnitIdentifier(string adUnitIdentifier, string debugPurpose)
     {
         if (string.IsNullOrEmpty(adUnitIdentifier))
@@ -620,6 +625,15 @@ public abstract class MaxSdkBase
         return new Rect(originX, originY, width, height);
     }
 
+    protected static void HandleExtraParameter(string key, string value)
+    {
+        bool disableAllLogs;
+        if ("disable_all_logs".Equals(key) && bool.TryParse(value, out disableAllLogs))
+        {
+            DisableAllLogs = disableAllLogs;
+        }
+    }
+
     /// <summary>
     /// Handles forwarding callbacks from native to C#.
     /// </summary>
@@ -637,7 +651,7 @@ public abstract class MaxSdkBase
 
             var eventName = MaxSdkUtils.GetStringFromDictionary(eventProps, "name", "");
             MaxSdkLogger.UserError("Unable to notify ad delegate due to an error in the publisher callback '" + eventName + "' due to exception: " + exception.Message);
-            Debug.LogException(exception);
+            MaxSdkLogger.LogException(exception);
         }
     }
 
@@ -748,76 +762,6 @@ internal static class AdPositionExtenstion
         else // position == MaxSdkBase.AdViewPosition.BottomRight
         {
             return "bottom_right";
-        }
-    }
-}
-
-namespace AppLovinMax.Internal.API
-{
-    [Obsolete("This class has been deprecated and will be removed in a future SDK release.")]
-    public class CFError
-    {
-        public int Code { get; private set; }
-
-        public string Message { get; private set; }
-
-        public static CFError Create(int code = -1, string message = "")
-        {
-            return new CFError(code, message);
-        }
-
-        private CFError(int code, string message)
-        {
-            Code = code;
-            Message = message;
-        }
-
-        public override string ToString()
-        {
-            return "[CFError Code: " + Code +
-                   ", Message: " + Message + "]";
-        }
-    }
-
-    [Obsolete("This enum has been deprecated. Please use `MaxSdk.GetSdkConfiguration().ConsentFlowUserGeography` instead.")]
-    public enum CFType
-    {
-        Unknown,
-        Standard,
-        Detailed
-    }
-
-    public class CFService
-    {
-        [Obsolete("This property has been deprecated. Please use `MaxSdk.GetSdkConfiguration().ConsentFlowUserGeography` instead.")]
-        public static CFType CFType
-        {
-            get
-            {
-                switch (MaxSdk.GetSdkConfiguration().ConsentFlowUserGeography)
-                {
-                    case MaxSdkBase.ConsentFlowUserGeography.Unknown:
-                        return CFType.Unknown;
-                    case MaxSdkBase.ConsentFlowUserGeography.Gdpr:
-                        return CFType.Detailed;
-                    case MaxSdkBase.ConsentFlowUserGeography.Other:
-                        return CFType.Standard;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
-        [Obsolete("This method has been deprecated. Please use `MaxSdk.CmpService.ShowCmpForExistingUser` instead.")]
-        public static void SCF(Action<CFError> onFlowCompletedAction)
-        {
-            MaxSdkBase.CmpService.ShowCmpForExistingUser(error =>
-            {
-                if (onFlowCompletedAction == null) return;
-
-                var cfError = error == null ? null : CFError.Create((int) error.Code, error.Message);
-                onFlowCompletedAction(cfError);
-            });
         }
     }
 }

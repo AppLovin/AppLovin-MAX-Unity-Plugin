@@ -309,7 +309,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
 #if UNITY_2022_3_OR_NEWER
                 // Unity 2022.3+ requires Gradle Plugin version 7.1.2+.
-                if (AppLovinIntegrationManagerUtils.CompareVersions(customGradleToolsVersion, "7.1.2") == Versions.VersionComparisonResult.Lesser)
+                if (MaxSdkUtils.CompareVersions(customGradleToolsVersion, "7.1.2") == MaxSdkUtils.VersionComparisonResult.Lesser)
                 {
                     MaxSdkLogger.E("Failed to set gradle plugin version. Unity 2022.3+ requires gradle plugin version 7.1.2+");
                     return;
@@ -349,15 +349,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             appLovinSdkSettings[KeySdkKey] = AppLovinSettings.Instance.SdkKey;
             appLovinSdkSettings[KeyRenderOutsideSafeArea] = PlayerSettings.Android.renderOutsideSafeArea;
 
-            // Add the Consent/Terms flow settings if needed.
-            if (AppLovinInternalSettings.Instance.ConsentFlowEnabled)
-            {
-                EnableConsentFlowIfNeeded(rawResourceDirectory, appLovinSdkSettings);
-            }
-            else
-            {
-                EnableTermsFlowIfNeeded(rawResourceDirectory, appLovinSdkSettings);
-            }
+            // Add the Terms and Privacy Policy flow settings if needed.
+            EnableConsentFlowIfNeeded(rawResourceDirectory, appLovinSdkSettings);
 
             WriteAppLovinSettings(rawResourceDirectory, appLovinSdkSettings);
         }
@@ -398,41 +391,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
 
             applovinSdkSettings[KeyConsentFlowSettings] = consentFlowSettings;
-        }
-
-        private static void EnableTermsFlowIfNeeded(string rawResourceDirectory, Dictionary<string, object> applovinSdkSettings)
-        {
-            if (AppLovinInternalSettings.Instance.ConsentFlowEnabled) return;
-
-            // Check if terms flow is enabled for this format. No need to create the applovin_consent_flow_settings.json if consent flow is disabled.
-            var consentFlowEnabled = AppLovinSettings.Instance.ConsentFlowEnabled;
-            var consentFlowPlatform = AppLovinSettings.Instance.ConsentFlowPlatform;
-            if (!consentFlowEnabled || (consentFlowPlatform != Platform.All && consentFlowPlatform != Platform.Android))
-            {
-                RemoveAppLovinSettingsRawResourceFileIfNeeded(rawResourceDirectory);
-                return;
-            }
-
-            var privacyPolicyUrl = AppLovinSettings.Instance.ConsentFlowPrivacyPolicyUrl;
-            if (string.IsNullOrEmpty(privacyPolicyUrl))
-            {
-                AppLovinIntegrationManager.ShowBuildFailureDialog("You cannot use the AppLovin SDK's consent flow without defining a Privacy Policy URL in the AppLovin Integration Manager.");
-
-                // No need to update the applovin_consent_flow_settings.json here. Default consent flow state will be determined on the SDK side.
-                return;
-            }
-
-            var consentFlowSettings = new Dictionary<string, object>();
-            consentFlowSettings[KeyTermsFlowEnabled] = consentFlowEnabled;
-            consentFlowSettings[KeyTermsFlowPrivacyPolicy] = privacyPolicyUrl;
-
-            var termsOfServiceUrl = AppLovinSettings.Instance.ConsentFlowTermsOfServiceUrl;
-            if (MaxSdkUtils.IsValidString(termsOfServiceUrl))
-            {
-                consentFlowSettings[KeyTermsFlowTermsOfService] = termsOfServiceUrl;
-            }
-
-            applovinSdkSettings[KeyTermsFlowSettings] = consentFlowSettings;
         }
 
         private static void WriteAppLovinSettingsRawResourceFile(string applovinSdkSettingsJson, string rawResourceDirectory)

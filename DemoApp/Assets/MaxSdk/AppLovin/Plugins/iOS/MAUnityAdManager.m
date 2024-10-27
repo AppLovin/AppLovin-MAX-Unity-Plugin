@@ -14,6 +14,8 @@
 extern "C" {
 #endif
     
+    extern bool max_unity_should_disable_all_logs(void);  // Forward declaration
+
     // UnityAppController.mm
     UIViewController* UnityGetGLViewController(void);
     UIWindow* UnityGetMainWindow(void);
@@ -1544,6 +1546,8 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)log:(NSString *)format, ...
 {
+    if (max_unity_should_disable_all_logs()) return;
+    
     va_list valist;
     va_start(valist, format);
     NSString *message = [[NSString alloc] initWithFormat: format arguments: valist];
@@ -1554,6 +1558,8 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 + (void)log:(NSString *)format, ...
 {
+    if (max_unity_should_disable_all_logs()) return;
+
     va_list valist;
     va_start(valist, format);
     NSString *message = [[NSString alloc] initWithFormat: format arguments: valist];

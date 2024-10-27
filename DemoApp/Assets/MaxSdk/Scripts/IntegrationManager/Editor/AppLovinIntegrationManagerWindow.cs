@@ -176,13 +176,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             // Plugin downloaded and imported. Update current versions for the imported package.
             AppLovinIntegrationManager.importPackageCompletedCallback = OnImportPackageCompleted;
 
-            // Disable old consent flow if new flow is enabled.
-            if (AppLovinInternalSettings.Instance.ConsentFlowEnabled)
-            {
-                AppLovinSettings.Instance.ConsentFlowEnabled = false;
-                AppLovinSettings.Instance.SaveAsync();
-            }
-
             Load();
         }
 
@@ -336,7 +329,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 {
                     var appLovinMax = pluginData.AppLovinMax;
                     // Check if a newer version is available to enable the upgrade button.
-                    var upgradeButtonEnabled = appLovinMax.CurrentToLatestVersionComparisonResult == Versions.VersionComparisonResult.Lesser;
+                    var upgradeButtonEnabled = appLovinMax.CurrentToLatestVersionComparisonResult == MaxSdkUtils.VersionComparisonResult.Lesser;
                     DrawPluginDetailRow("Unity 3D", appLovinMax.CurrentVersions.Unity, appLovinMax.LatestVersions.Unity);
                     DrawPluginDetailRow("Android", appLovinMax.CurrentVersions.Android, appLovinMax.LatestVersions.Android);
                     DrawPluginDetailRow("iOS", appLovinMax.CurrentVersions.Ios, appLovinMax.LatestVersions.Ios);
@@ -483,13 +476,13 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                 var comparison = network.CurrentToLatestVersionComparisonResult;
                 // A newer version is available
-                if (comparison == Versions.VersionComparisonResult.Lesser)
+                if (comparison == MaxSdkUtils.VersionComparisonResult.Lesser)
                 {
                     action = "Upgrade";
                     isActionEnabled = true;
                 }
                 // Current installed version is newer than latest version from DB (beta version)
-                else if (comparison == Versions.VersionComparisonResult.Greater)
+                else if (comparison == MaxSdkUtils.VersionComparisonResult.Greater)
                 {
                     action = "Installed";
                     isActionEnabled = false;
@@ -728,104 +721,11 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             GUILayout.Space(10);
             using (new EditorGUILayout.VerticalScope("box"))
             {
-                if (AppLovinSettings.Instance.ConsentFlowEnabled)
-                {
-                    DrawTermsFlowSettings();
-                }
-                else
-                {
-                    DrawConsentFlowSettings();
-                }
+                DrawConsentFlowSettings();
             }
 
             GUILayout.Space(5);
             GUILayout.EndHorizontal();
-        }
-
-        private void DrawTermsFlowSettings()
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            EditorGUILayout.HelpBox("The Terms Flow has been deprecated; switch to the MAX Terms and Privacy Policy Flow instead.", MessageType.Warning); // TODO Refine
-            GUILayout.Space(4);
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Switch to MAX Terms and Privacy Policy Flow"))
-            {
-                AppLovinInternalSettings.Instance.ConsentFlowPrivacyPolicyUrl = AppLovinSettings.Instance.ConsentFlowPrivacyPolicyUrl;
-                AppLovinInternalSettings.Instance.ConsentFlowTermsOfServiceUrl = AppLovinSettings.Instance.ConsentFlowTermsOfServiceUrl;
-                AppLovinInternalSettings.Instance.ConsentFlowEnabled = true;
-                AppLovinSettings.Instance.ConsentFlowEnabled = false;
-            }
-
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            AppLovinSettings.Instance.ConsentFlowEnabled = GUILayout.Toggle(AppLovinSettings.Instance.ConsentFlowEnabled, "  Enable Terms Flow");
-            GUILayout.FlexibleSpace();
-            GUI.enabled = AppLovinSettings.Instance.ConsentFlowEnabled;
-            AppLovinSettings.Instance.ConsentFlowPlatform = (Platform) EditorGUILayout.Popup((int) AppLovinSettings.Instance.ConsentFlowPlatform, termsFlowPlatforms);
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
-
-            AppLovinSettings.Instance.ConsentFlowPrivacyPolicyUrl = DrawTextField("Privacy Policy URL", AppLovinSettings.Instance.ConsentFlowPrivacyPolicyUrl, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-            AppLovinSettings.Instance.ConsentFlowTermsOfServiceUrl = DrawTextField("Terms of Service URL (optional)", AppLovinSettings.Instance.ConsentFlowTermsOfServiceUrl, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-            AppLovinSettings.Instance.UserTrackingUsageDescriptionEn = DrawTextField("User Tracking Usage Description (iOS only)", AppLovinSettings.Instance.UserTrackingUsageDescriptionEn, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            AppLovinSettings.Instance.UserTrackingUsageLocalizationEnabled = GUILayout.Toggle(AppLovinSettings.Instance.UserTrackingUsageLocalizationEnabled, "  Localize User Tracking Usage Description (iOS only)");
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
-
-            if (AppLovinSettings.Instance.UserTrackingUsageLocalizationEnabled)
-            {
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHans = DrawTextField("Chinese, Simplified (zh-Hans)", AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHans, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHant = DrawTextField("Chinese, Traditional (zh-Hant)", AppLovinSettings.Instance.UserTrackingUsageDescriptionZhHant, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption); // TODO: Remove new mark for next release.
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionFr = DrawTextField("French (fr)", AppLovinSettings.Instance.UserTrackingUsageDescriptionFr, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionDe = DrawTextField("German (de)", AppLovinSettings.Instance.UserTrackingUsageDescriptionDe, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionJa = DrawTextField("Japanese (ja)", AppLovinSettings.Instance.UserTrackingUsageDescriptionJa, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionKo = DrawTextField("Korean (ko)", AppLovinSettings.Instance.UserTrackingUsageDescriptionKo, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-                AppLovinSettings.Instance.UserTrackingUsageDescriptionEs = DrawTextField("Spanish (es)", AppLovinSettings.Instance.UserTrackingUsageDescriptionEs, GUILayout.Width(privacySettingLabelWidth), privacySettingFieldWidthOption);
-
-                GUILayout.Space(4);
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(4);
-                EditorGUILayout.HelpBox("MAX may add more localized strings to this list in the future, which will set the default value of the User Tracking Usage Description string for more locales. If you are overriding these with your own custom translations, you may want to review this list whenever you upgrade the plugin to see if there are new entries you may want to customize.", MessageType.Info);
-                GUILayout.Space(4);
-                GUILayout.EndHorizontal();
-
-                GUILayout.Space(4);
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(4);
-                EditorGUILayout.HelpBox("If you have your own implementation of InfoPlist.strings localization implementation, please use that instead. Using both at the same time may cause conflicts.", MessageType.Info);
-                GUILayout.Space(4);
-                GUILayout.EndHorizontal();
-            }
-
-            GUI.enabled = true;
-
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            GUILayout.Button("Click the link below for more information about User Tracking Usage Description: ", wrapTextLabelStyle);
-            GUILayout.Space(4);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(4);
-            if (GUILayout.Button(new GUIContent(userTrackingUsageDescriptionDocsLink), linkLabelStyle))
-            {
-                Application.OpenURL(userTrackingUsageDescriptionDocsLink);
-            }
-
-            GUILayout.Space(4);
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
         }
 
         private void DrawConsentFlowSettings()
@@ -1142,7 +1042,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 var comparison = network.CurrentToLatestVersionComparisonResult;
                 // A newer version is available
-                if (!string.IsNullOrEmpty(network.CurrentVersions.Unity) && comparison == Versions.VersionComparisonResult.Lesser)
+                if (!string.IsNullOrEmpty(network.CurrentVersions.Unity) && comparison == MaxSdkUtils.VersionComparisonResult.Lesser)
                 {
                     yield return AppLovinPackageManager.AddNetwork(network, false);
                 }
@@ -1163,7 +1063,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             if (pluginData == null || pluginData.AppLovinMax.CurrentVersions == null) return false;
 
             var networks = pluginData.MediatedNetworks;
-            return networks.Any(network => !string.IsNullOrEmpty(network.CurrentVersions.Unity) && network.CurrentToLatestVersionComparisonResult == Versions.VersionComparisonResult.Lesser);
+            return networks.Any(network => !string.IsNullOrEmpty(network.CurrentVersions.Unity) && network.CurrentToLatestVersionComparisonResult == MaxSdkUtils.VersionComparisonResult.Lesser);
         }
 
         #endregion
