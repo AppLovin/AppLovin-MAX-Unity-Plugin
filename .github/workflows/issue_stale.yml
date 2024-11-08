@@ -1,0 +1,22 @@
+name: Stale and close inactive issues
+on:
+  schedule:
+    - cron: "0 1 * * *"
+    
+jobs:
+  close-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          operations-per-run: 250
+          exempt-issue-labels: "in progress"
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          days-before-issue-stale: 30
+          days-before-issue-close: 5
+          stale-issue-label: "stale"
+          stale-issue-message: "This issue is stale because it has been open for 30 days with no activity."
+          close-issue-message: "This issue was closed because it has been inactive for 5 days since being marked as stale."
