@@ -44,16 +44,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private const string AppLovinSettingsFileName = "applovin_settings.json";
 
-        private const string KeyTermsFlowSettings = "terms_flow_settings";
-        private const string KeyTermsFlowEnabled = "terms_flow_enabled";
-        private const string KeyTermsFlowTermsOfService = "terms_flow_terms_of_service";
-        private const string KeyTermsFlowPrivacyPolicy = "terms_flow_privacy_policy";
-
         private const string KeySdkKey = "sdk_key";
         private const string KeyConsentFlowSettings = "consent_flow_settings";
         private const string KeyConsentFlowEnabled = "consent_flow_enabled";
         private const string KeyConsentFlowTermsOfService = "consent_flow_terms_of_service";
         private const string KeyConsentFlowPrivacyPolicy = "consent_flow_privacy_policy";
+        private const string KeyConsentFlowShowTermsAndPrivacyPolicyAlertInGDPR = "consent_flow_show_terms_and_privacy_policy_alert_in_gdpr";
         private const string KeyConsentFlowDebugUserGeography = "consent_flow_debug_user_geography";
 
         private const string KeyRenderOutsideSafeArea = "render_outside_safe_area";
@@ -383,6 +379,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 consentFlowSettings[KeyConsentFlowTermsOfService] = termsOfServiceUrl;
             }
+            
+            consentFlowSettings[KeyConsentFlowShowTermsAndPrivacyPolicyAlertInGDPR] = AppLovinInternalSettings.Instance.ShouldShowTermsAndPrivacyPolicyAlertInGDPR;
 
             var debugUserGeography = AppLovinInternalSettings.Instance.DebugUserGeography;
             if (debugUserGeography == MaxSdkBase.ConsentFlowUserGeography.Gdpr)

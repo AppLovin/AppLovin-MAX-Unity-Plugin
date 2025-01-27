@@ -1,10 +1,6 @@
-/**
- * AppLovin MAX Unity Plugin C# Wrapper
- */
-
-using UnityEngine;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+//
+// AppLovin MAX Unity Plugin C# Wrapper
+//
 
 public class MaxSdk :
 #if UNITY_EDITOR
@@ -18,7 +14,7 @@ public class MaxSdk :
     MaxSdkUnityEditor
 #endif
 {
-    private const string _version = "8.0.1";
+    private const string _version = "8.1.0";
 
     /// <summary>
     /// Returns the current plugin version.

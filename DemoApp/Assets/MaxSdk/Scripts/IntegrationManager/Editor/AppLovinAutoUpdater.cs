@@ -16,7 +16,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     /// <summary>
     /// Handles auto updates for AppLovin MAX plugin.
     /// </summary>
-    public class AppLovinAutoUpdater
+    public static class AppLovinAutoUpdater
     {
         public const string KeyAutoUpdateEnabled = "com.applovin.auto_update_enabled";
         private const string KeyLastUpdateCheckTime = "com.applovin.last_update_check_time_v2"; // Updated to v2 to force adapter version checks in plugin version 3.1.10.
@@ -97,7 +97,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             if (option == 0) // Download
             {
                 MaxSdkLogger.UserDebug("Downloading plugin...");
-                AppLovinIntegrationManager.downloadPluginProgressCallback = AppLovinIntegrationManagerWindow.OnDownloadPluginProgress;
+                AppLovinIntegrationManager.OnDownloadPluginProgressCallback = AppLovinIntegrationManagerWindow.OnDownloadPluginProgress;
                 AppLovinEditorCoroutine.StartCoroutine(AppLovinIntegrationManager.Instance.DownloadPlugin(data.AppLovinMax));
             }
             else if (option == 1) // Not Now

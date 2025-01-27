@@ -30,6 +30,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
     public static class AppLovinPackageManager
     {
+        private const string AppLovinMediationAmazonAdapterDependenciesPath = "Amazon/Scripts/Mediations/AppLovinMediation/Editor/Dependencies.xml";
+
 #if UNITY_2019_2_OR_NEWER
         private static readonly IPackageManagerClient _upmPackageManager = new AppLovinUpmPackageManager();
 #endif
@@ -108,7 +110,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         internal static List<string> GetInstalledMediationNetworks()
         {
             var installedNetworks = PackageManagerClient.GetInstalledMediationNetworks();
-            if (AppLovinSettings.Instance.AddApsSkAdNetworkIds)
+            if (IsAmazonAppLovinAdapterInstalled())
             {
                 installedNetworks.Add("AmazonAdMarketplace");
             }
@@ -204,12 +206,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 // If adapter is indeed installed, compare the current (installed) and the latest (from db) versions, so that we can determine if the publisher is on an older, current or a newer version of the adapter.
                 // If the publisher is on a newer version of the adapter than the db version, that means they are on a beta version.
-                if (!string.IsNullOrEmpty(currentVersions.Unity))
+                if (MaxSdkUtils.IsValidString(currentVersions.Unity))
                 {
                     network.CurrentToLatestVersionComparisonResult = AppLovinIntegrationManagerUtils.CompareUnityMediationVersions(currentVersions.Unity, network.LatestVersions.Unity);
                 }
 
-                if (!string.IsNullOrEmpty(network.CurrentVersions.Unity) && AppLovinAutoUpdater.MinAdapterVersions.ContainsKey(network.Name))
+                if (MaxSdkUtils.IsValidString(network.CurrentVersions.Unity) && AppLovinAutoUpdater.MinAdapterVersions.ContainsKey(network.Name))
                 {
                     var comparisonResult = AppLovinIntegrationManagerUtils.CompareUnityMediationVersions(network.CurrentVersions.Unity, AppLovinAutoUpdater.MinAdapterVersions[network.Name]);
                     // Requires update if current version is lower than the min required version.
@@ -325,6 +327,20 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 currentVersions.Ios = iosVersion;
             }
+        }
+
+        /// <summary>
+        /// Check for the Amazon AppLovin adapter in the project.
+        /// </summary>
+        /// <returns>Whether the AppLovin Adapter is installed through the Amazon SDK.</returns>
+        private static bool IsAmazonAppLovinAdapterInstalled()
+        {
+            string[] dependenciesFiles = AssetDatabase.FindAssets("t:TextAsset Dependencies", new[] {"Assets"})
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .ToArray();
+
+            // Use regex to search for Amazon and then AppLovin in the file paths of the dependencies.xml files.
+            return dependenciesFiles.Any(filePath => filePath.Contains(AppLovinMediationAmazonAdapterDependenciesPath));
         }
 
 #if UNITY_2019_2_OR_NEWER

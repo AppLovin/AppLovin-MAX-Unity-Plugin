@@ -6,10 +6,8 @@
 //  Copyright © 2019 AppLovin. All rights reserved.
 //
 
-using AppLovinMax.Scripts.IntegrationManager.Editor;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 
 namespace AppLovinMax.Scripts.IntegrationManager.Editor
@@ -79,6 +77,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         static AppLovinInitialize()
         {
+            // Don't run obsolete file cleanup logic when entering play mode.
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+
 #if UNITY_IOS
             // Check that the publisher is targeting iOS 9.0+
             if (!PlayerSettings.iOS.targetOSVersionString.StartsWith("9.") && !PlayerSettings.iOS.targetOSVersionString.StartsWith("1"))

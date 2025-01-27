@@ -42,7 +42,7 @@ extern "C" {
 }
 #endif
 
-@interface MAUnityAdManager()<MAAdDelegate, MAAdViewAdDelegate, MARewardedAdDelegate, MAAdRevenueDelegate, MAAdReviewDelegate>
+@interface MAUnityAdManager()<MAAdDelegate, MAAdViewAdDelegate, MARewardedAdDelegate, MAAdRevenueDelegate, MAAdReviewDelegate, MAAdExpirationDelegate>
 
 // Parent Fields
 @property (nonatomic, weak) ALSdk *sdk;
@@ -51,7 +51,6 @@ extern "C" {
 @property (nonatomic, strong) NSMutableDictionary<NSString *, MAInterstitialAd *> *interstitials;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, MAAppOpenAd *> *appOpenAds;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, MARewardedAd *> *rewardedAds;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, MARewardedInterstitialAd *> *rewardedInterstitialAds;
 
 // AdView Fields
 @property (nonatomic, strong) NSMutableDictionary<NSString *, MAAdView *> *adViews;
@@ -112,7 +111,6 @@ static ALUnityBackgroundCallback backgroundCallback;
         self.interstitials = [NSMutableDictionary dictionaryWithCapacity: 2];
         self.appOpenAds = [NSMutableDictionary dictionaryWithCapacity: 2];
         self.rewardedAds = [NSMutableDictionary dictionaryWithCapacity: 2];
-        self.rewardedInterstitialAds = [NSMutableDictionary dictionaryWithCapacity: 2];
         self.adViews = [NSMutableDictionary dictionaryWithCapacity: 2];
         self.adViewAdFormats = [NSMutableDictionary dictionaryWithCapacity: 2];
         self.adViewPositions = [NSMutableDictionary dictionaryWithCapacity: 2];
@@ -518,44 +516,6 @@ static ALUnityBackgroundCallback backgroundCallback;
     [rewardedAd setLocalExtraParameterForKey: key value: value];
 }
 
-#pragma mark - Rewarded Interstitials
-
-- (void)loadRewardedInterstitialAdWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier
-{
-    MARewardedInterstitialAd *rewardedInterstitialAd = [self retrieveRewardedInterstitialAdForAdUnitIdentifier: adUnitIdentifier];
-    [rewardedInterstitialAd loadAd];
-}
-
-- (BOOL)isRewardedInterstitialAdReadyWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier
-{
-    MARewardedInterstitialAd *rewardedInterstitialAd = [self retrieveRewardedInterstitialAdForAdUnitIdentifier: adUnitIdentifier];
-    return [rewardedInterstitialAd isReady];
-}
-
-- (void)showRewardedInterstitialAdWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier placement:(nullable NSString *)placement customData:(nullable NSString *)customData
-{
-    MARewardedInterstitialAd *rewardedInterstitialAd = [self retrieveRewardedInterstitialAdForAdUnitIdentifier: adUnitIdentifier];
-    [rewardedInterstitialAd showAdForPlacement: placement customData: customData];
-}
-
-- (void)setRewardedInterstitialAdExtraParameterForAdUnitIdentifier:(nullable NSString *)adUnitIdentifier key:(nullable NSString *)key value:(nullable NSString *)value
-{
-    MARewardedInterstitialAd *rewardedInterstitialAd = [self retrieveRewardedInterstitialAdForAdUnitIdentifier: adUnitIdentifier];
-    [rewardedInterstitialAd setExtraParameterForKey: key value: value];
-}
-
-- (void)setRewardedInterstitialAdLocalExtraParameterForAdUnitIdentifier:(nullable NSString *)adUnitIdentifier key:(nullable NSString *)key value:(nullable id)value
-{
-    if ( !key )
-    {
-        [self log: @"Failed to set local extra parameter: No key specified"];
-        return;
-    }
-    
-    MARewardedInterstitialAd *rewardedInterstitialAd = [self retrieveRewardedInterstitialAdForAdUnitIdentifier: adUnitIdentifier];
-    [rewardedInterstitialAd setLocalExtraParameterForKey: key value: value];
-}
-
 #pragma mark - Event Tracking
 
 - (void)trackEvent:(nullable NSString *)event parameters:(nullable NSString *)parameters
@@ -627,6 +587,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         networkInfoObject[@"adapterClassName"] = response.mediatedNetwork.adapterClassName;
         networkInfoObject[@"adapterVersion"] = response.mediatedNetwork.adapterVersion;
         networkInfoObject[@"sdkVersion"] = response.mediatedNetwork.sdkVersion;
+        networkInfoObject[@"initializationStatus"] = @(response.mediatedNetwork.initializationStatus);
         
         networkResponseDict[@"mediatedNetwork"] = networkInfoObject;
     }
@@ -705,10 +666,6 @@ static ALUnityBackgroundCallback backgroundCallback;
     {
         name = @"OnRewardedAdLoadedEvent";
     }
-    else if ( MAAdFormat.rewardedInterstitial == adFormat )
-    {
-        name = @"OnRewardedInterstitialAdLoadedEvent";
-    }
     else
     {
         [self logInvalidAdFormat: adFormat];
@@ -762,10 +719,6 @@ static ALUnityBackgroundCallback backgroundCallback;
         {
             name = @"OnRewardedAdLoadFailedEvent";
         }
-        else if ( self.rewardedInterstitialAds[adUnitIdentifier] )
-        {
-            name = @"OnRewardedInterstitialAdLoadFailedEvent";
-        }
         else
         {
             [self log: @"invalid adUnitId from %@", [NSThread callStackSymbols]];
@@ -813,10 +766,6 @@ static ALUnityBackgroundCallback backgroundCallback;
         {
             name = @"OnRewardedAdClickedEvent";
         }
-        else if ( MAAdFormat.rewardedInterstitial == adFormat )
-        {
-            name = @"OnRewardedInterstitialAdClickedEvent";
-        }
         else
         {
             [self logInvalidAdFormat: adFormat];
@@ -850,13 +799,9 @@ static ALUnityBackgroundCallback backgroundCallback;
         {
             name = @"OnAppOpenAdDisplayedEvent";
         }
-        else if ( MAAdFormat.rewarded == adFormat )
+        else // rewarded
         {
             name = @"OnRewardedAdDisplayedEvent";
-        }
-        else // rewarded inters
-        {
-            name = @"OnRewardedInterstitialAdDisplayedEvent";
         }
         
         NSDictionary<NSString *, id> *args = [self defaultAdEventParametersForName: name withAd: ad];
@@ -881,13 +826,9 @@ static ALUnityBackgroundCallback backgroundCallback;
         {
             name = @"OnAppOpenAdFailedToDisplayEvent";
         }
-        else if ( MAAdFormat.rewarded == adFormat )
+        else // rewarded
         {
             name = @"OnRewardedAdFailedToDisplayEvent";
-        }
-        else // rewarded inters
-        {
-            name = @"OnRewardedInterstitialAdFailedToDisplayEvent";
         }
         
         NSMutableDictionary<NSString *, id> *args = [self defaultAdEventParametersForName: name withAd: ad];
@@ -932,13 +873,9 @@ static ALUnityBackgroundCallback backgroundCallback;
         {
             name = @"OnAppOpenAdHiddenEvent";
         }
-        else if ( MAAdFormat.rewarded == adFormat )
+        else // rewarded
         {
             name = @"OnRewardedAdHiddenEvent";
-        }
-        else // rewarded inters
-        {
-            name = @"OnRewardedInterstitialAdHiddenEvent";
         }
         
         NSDictionary<NSString *, id> *args = [self defaultAdEventParametersForName: name withAd: ad];
@@ -1022,7 +959,7 @@ static ALUnityBackgroundCallback backgroundCallback;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         MAAdFormat *adFormat = ad.format;
-        if ( adFormat != MAAdFormat.rewarded && adFormat != MAAdFormat.rewardedInterstitial )
+        if ( adFormat != MAAdFormat.rewarded )
         {
             [self logInvalidAdFormat: adFormat];
             return;
@@ -1031,10 +968,8 @@ static ALUnityBackgroundCallback backgroundCallback;
         NSString *rewardLabel = reward ? reward.label : @"";
         NSInteger rewardAmountInt = reward ? reward.amount : 0;
         NSString *rewardAmount = [@(rewardAmountInt) stringValue];
-        
-        NSString *name = (adFormat == MAAdFormat.rewarded) ? @"OnRewardedAdReceivedRewardEvent" : @"OnRewardedInterstitialAdReceivedRewardEvent";
-        
-        
+        NSString *name = @"OnRewardedAdReceivedRewardEvent";
+                
         NSMutableDictionary<NSString *, id> *args = [self defaultAdEventParametersForName: name withAd: ad];
         args[@"rewardLabel"] = rewardLabel;
         args[@"rewardAmount"] = rewardAmount;
@@ -1068,10 +1003,6 @@ static ALUnityBackgroundCallback backgroundCallback;
         {
             name = @"OnRewardedAdRevenuePaidEvent";
         }
-        else if ( MAAdFormat.rewardedInterstitial == adFormat )
-        {
-            name = @"OnRewardedInterstitialAdRevenuePaidEvent";
-        }
         else
         {
             [self logInvalidAdFormat: adFormat];
@@ -1080,6 +1011,43 @@ static ALUnityBackgroundCallback backgroundCallback;
         
         NSMutableDictionary<NSString *, id> *args = [self defaultAdEventParametersForName: name withAd: ad];
         args[@"keepInBackground"] = @([adFormat isFullscreenAd]);
+        [self forwardUnityEventWithArgs: args];
+    });
+}
+
+- (void)didReloadExpiredAd:(MAAd *)expiredAd withNewAd:(MAAd *)newAd;
+{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
+        NSString *name;
+        MAAdFormat *adFormat = newAd.format;
+        if ( MAAdFormat.interstitial == adFormat )
+        {
+            name = @"OnExpiredInterstitialAdReloadedEvent";
+        }
+        else if ( MAAdFormat.appOpen == adFormat )
+        {
+            name = @"OnExpiredAppOpenAdReloadedEvent";
+        }
+        else if ( MAAdFormat.rewarded == adFormat )
+        {
+            name = @"OnExpiredRewardedAdReloadedEvent ";
+        }
+        else
+        {
+            [self logInvalidAdFormat: adFormat];
+            return;
+        }
+    
+        @synchronized ( self.adInfoDictLock )
+        {
+            self.adInfoDict[newAd.adUnitIdentifier] = newAd;
+        }
+        
+        NSMutableDictionary<NSString *, NSObject *> *args = [NSMutableDictionary dictionary];
+        args[@"expiredAdInfo"] = [self adInfoForAd: expiredAd];
+        args[@"newAdInfo"] = [self adInfoForAd: newAd];
+        args[@"name"] = name;
         [self forwardUnityEventWithArgs: args];
     });
 }
@@ -1105,10 +1073,6 @@ static ALUnityBackgroundCallback backgroundCallback;
         else if ( MAAdFormat.rewarded == adFormat )
         {
             name = @"OnRewardedAdReviewCreativeIdGeneratedEvent";
-        }
-        else if ( MAAdFormat.rewardedInterstitial == adFormat )
-        {
-            name = @"OnRewardedInterstitialAdReviewCreativeIdGeneratedEvent";
         }
         else
         {
@@ -1577,6 +1541,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         result.delegate = self;
         result.revenueDelegate = self;
         result.adReviewDelegate = self;
+        result.expirationDelegate = self;
         
         self.interstitials[adUnitIdentifier] = result;
     }
@@ -1592,6 +1557,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         result = [[MAAppOpenAd alloc] initWithAdUnitIdentifier: adUnitIdentifier sdk: self.sdk];
         result.delegate = self;
         result.revenueDelegate = self;
+        result.expirationDelegate = self;
         
         self.appOpenAds[adUnitIdentifier] = result;
     }
@@ -1608,24 +1574,9 @@ static ALUnityBackgroundCallback backgroundCallback;
         result.delegate = self;
         result.revenueDelegate = self;
         result.adReviewDelegate = self;
+        result.expirationDelegate = self;
         
         self.rewardedAds[adUnitIdentifier] = result;
-    }
-    
-    return result;
-}
-
-- (MARewardedInterstitialAd *)retrieveRewardedInterstitialAdForAdUnitIdentifier:(NSString *)adUnitIdentifier
-{
-    MARewardedInterstitialAd *result = self.rewardedInterstitialAds[adUnitIdentifier];
-    if ( !result )
-    {
-        result = [[MARewardedInterstitialAd alloc] initWithAdUnitIdentifier: adUnitIdentifier sdk: self.sdk];
-        result.delegate = self;
-        result.revenueDelegate = self;
-        result.adReviewDelegate = self;
-        
-        self.rewardedInterstitialAds[adUnitIdentifier] = result;
     }
     
     return result;

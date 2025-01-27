@@ -61,6 +61,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string KeyConsentFlowEnabled = "ConsentFlowEnabled";
         private const string KeyConsentFlowTermsOfService = "ConsentFlowTermsOfService";
         private const string KeyConsentFlowPrivacyPolicy = "ConsentFlowPrivacyPolicy";
+        private const string KeyConsentFlowShowTermsAndPrivacyPolicyAlertInGDPR = "ConsentFlowShowTermsAndPrivacyPolicyAlertInGDPR";
         private const string KeyConsentFlowDebugUserGeography = "ConsentFlowDebugUserGeography";
 
         private const string KeyAppLovinSdkKeyToRemove = "AppLovinSdkKey";
@@ -575,7 +576,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             var unityMainTargetGuid = project.TargetGuidByName(UnityMainTargetName);
 #endif
 
-            var guid = project.AddFile(AppLovinSettingsPlistFileName, AppLovinSettingsPlistFileName, PBXSourceTree.Source);
+            var guid = project.AddFile(AppLovinSettingsPlistFileName, AppLovinSettingsPlistFileName);
             project.AddFileToBuild(unityMainTargetGuid, guid);
             project.WriteToFile(projectPath);
         }
@@ -605,6 +606,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {
                 consentFlowInfoRoot.SetString(KeyConsentFlowTermsOfService, termsOfServiceUrl);
             }
+
+            var shouldShowTermsAndPrivacyPolicyAlertInGdpr = AppLovinInternalSettings.Instance.ShouldShowTermsAndPrivacyPolicyAlertInGDPR;
+            consentFlowInfoRoot.SetBoolean(KeyConsentFlowShowTermsAndPrivacyPolicyAlertInGDPR, shouldShowTermsAndPrivacyPolicyAlertInGdpr);
 
             var debugUserGeography = AppLovinInternalSettings.Instance.DebugUserGeography;
             if (debugUserGeography == MaxSdkBase.ConsentFlowUserGeography.Gdpr)
@@ -679,7 +683,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             var installedNetworks = AppLovinPackageManager.GetInstalledMediationNetworks();
             var uriBuilder = new UriBuilder("https://unity.applovin.com/max/1.0/skadnetwork_ids");
             var adNetworks = string.Join(",", installedNetworks.ToArray());
-            if (!string.IsNullOrEmpty(adNetworks))
+            if (MaxSdkUtils.IsValidString(adNetworks))
             {
                 uriBuilder.Query += string.Format("ad_networks={0}", adNetworks);
             }
