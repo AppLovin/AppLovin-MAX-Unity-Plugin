@@ -156,12 +156,12 @@ PlayerSettings:
     Android: com.AppLovin.MaxDemoUnity
     Standalone: com.Company.ProductName
     iOS: com.AppLovin.MaxDemoUnity
-    iPhone: com.AppLovin.MaxDemoUnity
+    iPhone: com.kazoo.pool2
   buildNumber:
     Standalone: 0
     iPhone: 0
     tvOS: 0
-  overrideDefaultApplicationIdentifier: 0
+  overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 31
