@@ -269,14 +269,16 @@ public class HomeScreen : MonoBehaviour
     private void InitializeRewardedInterstitialAds()
     {
         // Attach callbacks
-        MaxSdkCallbacks.RewardedInterstitial.OnAdLoadedEvent += OnRewardedInterstitialAdLoadedEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdLoadFailedEvent += OnRewardedInterstitialAdFailedEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdDisplayFailedEvent += OnRewardedInterstitialAdFailedToDisplayEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdDisplayedEvent += OnRewardedInterstitialAdDisplayedEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdClickedEvent += OnRewardedInterstitialAdClickedEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdHiddenEvent += OnRewardedInterstitialAdDismissedEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdReceivedRewardEvent += OnRewardedInterstitialAdReceivedRewardEvent;
-        MaxSdkCallbacks.RewardedInterstitial.OnAdRevenuePaidEvent += OnRewardedInterstitialAdRevenuePaidEvent;
+        
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdLoadedEvent += OnRewardedInterstitialAdLoadedEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdLoadFailedEvent += OnRewardedInterstitialAdFailedEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdDisplayFailedEvent += OnRewardedInterstitialAdFailedToDisplayEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdDisplayedEvent += OnRewardedInterstitialAdDisplayedEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdClickedEvent += OnRewardedInterstitialAdClickedEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdHiddenEvent += OnRewardedInterstitialAdDismissedEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdReceivedRewardEvent += OnRewardedInterstitialAdReceivedRewardEvent;
+        //MaxSdkCallbacks.RewardedInterstitial.OnAdRevenuePaidEvent += OnRewardedInterstitialAdRevenuePaidEvent;
+        
 
         // Load the first RewardedInterstitialAd
         LoadRewardedInterstitialAd();
@@ -285,15 +287,16 @@ public class HomeScreen : MonoBehaviour
     private void LoadRewardedInterstitialAd()
     {
         rewardedInterstitialStatusText.text = "Loading...";
-        MaxSdk.LoadRewardedInterstitialAd(RewardedInterstitialAdUnitId);
+        //MaxSdk.LoadRewardedInterstitialAd(RewardedInterstitialAdUnitId);
     }
 
     private void ShowRewardedInterstitialAd()
     {
-        if (MaxSdk.IsRewardedInterstitialAdReady(RewardedInterstitialAdUnitId))
+        //if (MaxSdk.IsRewardedInterstitialAdReady(RewardedInterstitialAdUnitId))
+        if (false)
         {
             rewardedInterstitialStatusText.text = "Showing";
-            MaxSdk.ShowRewardedInterstitialAd(RewardedInterstitialAdUnitId);
+            //MaxSdk.ShowRewardedInterstitialAd(RewardedInterstitialAdUnitId);
         }
         else
         {
