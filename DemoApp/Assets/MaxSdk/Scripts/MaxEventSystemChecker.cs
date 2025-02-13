@@ -22,7 +22,7 @@ namespace AppLovinMax.Scripts
         {
             // Enable the EventSystem if there is no other EventSystem in the scene
             var eventSystem = GetComponent<EventSystem>();
-            var currentSystem = UnityEngine.EventSystems.EventSystem.current;
+            var currentSystem = EventSystem.current;
             if (currentSystem == null || currentSystem == eventSystem)
             {
                 eventSystem.enabled = true;

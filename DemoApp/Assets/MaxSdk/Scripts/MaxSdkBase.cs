@@ -42,7 +42,7 @@ public abstract class MaxSdkBase
     public enum AppTrackingStatus
     {
         /// <summary>
-        /// Device is on < iOS14, AppTrackingTransparency.framework is not available.
+        /// Device is on &lt; iOS14, AppTrackingTransparency.framework is not available.
         /// </summary>
         Unavailable,
 
@@ -67,6 +67,42 @@ public abstract class MaxSdkBase
         Authorized,
     }
 #endif
+
+    /// <summary>
+    /// An enum describing the adapter's initialization status.
+    /// </summary>
+    public enum InitializationStatus
+    {
+        /// <summary>
+        /// The adapter is not initialized. Note: networks need to be enabled for an ad unit id to be initialized.
+        /// </summary>
+        NotInitialized = -4,
+
+        /// <summary>
+        /// The 3rd-party SDK does not have an initialization callback with status.
+        /// </summary>
+        DoesNotApply = -3,
+
+        /// <summary>
+        /// The 3rd-party SDK is currently initializing.
+        /// </summary>
+        Initializing = -2,
+
+        /// <summary>
+        /// The 3rd-party SDK explicitly initialized, but without a status.
+        /// </summary>
+        InitializedUnknown = -1,
+
+        /// <summary>
+        /// The 3rd-party SDK initialization failed.
+        /// </summary>
+        InitializedFailure = 0,
+
+        /// <summary>
+        /// The 3rd-party SDK initialization was successful.
+        /// </summary>
+        InitializedSuccess = 1
+    }
 
     public enum AdViewPosition
     {
@@ -478,6 +514,7 @@ public abstract class MaxSdkBase
         public string AdapterClassName { get; private set; }
         public string AdapterVersion { get; private set; }
         public string SdkVersion { get; private set; }
+        public InitializationStatus InitializationStatus { get; private set; }
 
         public MediatedNetworkInfo(IDictionary<string, object> mediatedNetworkDictionary)
         {
@@ -486,6 +523,8 @@ public abstract class MaxSdkBase
             AdapterClassName = MaxSdkUtils.GetStringFromDictionary(mediatedNetworkDictionary, "adapterClassName", "");
             AdapterVersion = MaxSdkUtils.GetStringFromDictionary(mediatedNetworkDictionary, "adapterVersion", "");
             SdkVersion = MaxSdkUtils.GetStringFromDictionary(mediatedNetworkDictionary, "sdkVersion", "");
+            var initializationStatusInt = MaxSdkUtils.GetIntFromDictionary(mediatedNetworkDictionary, "initializationStatus", (int) InitializationStatus.NotInitialized);
+            InitializationStatus = InitializationStatusFromCode(initializationStatusInt);
         }
 
         public override string ToString()
@@ -493,7 +532,20 @@ public abstract class MaxSdkBase
             return "[MediatedNetworkInfo name: " + Name +
                    ", adapterClassName: " + AdapterClassName +
                    ", adapterVersion: " + AdapterVersion +
-                   ", sdkVersion: " + SdkVersion + "]";
+                   ", sdkVersion: " + SdkVersion +
+                   ", initializationStatus: " + InitializationStatus + "]";
+        }
+
+        private static InitializationStatus InitializationStatusFromCode(int code)
+        {
+            if (Enum.IsDefined(typeof(InitializationStatus), code))
+            {
+                return (InitializationStatus) code;
+            }
+            else
+            {
+                return InitializationStatus.NotInitialized;
+            }
         }
     }
 

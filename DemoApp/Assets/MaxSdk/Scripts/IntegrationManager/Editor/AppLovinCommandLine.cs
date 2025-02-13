@@ -18,7 +18,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     ///
     /// TODO: Currently only supports shell (Linux). Add support for Windows machines.
     /// </summary>
-    public class AppLovinCommandLine
+    public static class AppLovinCommandLine
     {
         /// <summary>
         /// Result obtained by running a command line command.

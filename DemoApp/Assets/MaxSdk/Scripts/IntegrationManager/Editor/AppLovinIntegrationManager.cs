@@ -8,9 +8,7 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -20,6 +18,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     [Serializable]
     public class PluginData
     {
+        // ReSharper disable InconsistentNaming - Consistent with JSON data.
         public Network AppLovinMax;
         public Network[] MediatedNetworks;
         public Network[] PartnerMicroSdks;
@@ -46,6 +45,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         // }
         //
 
+        // ReSharper disable InconsistentNaming - Consistent with JSON data.
         public string Name;
         public string DisplayName;
         public string DownloadUrl;
@@ -53,15 +53,17 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public PackageInfo[] Packages;
         public string[] PluginFilePaths;
         public Versions LatestVersions;
+        public DynamicLibraryToEmbed[] DynamicLibrariesToEmbed;
+
         [NonSerialized] public Versions CurrentVersions;
         [NonSerialized] public MaxSdkUtils.VersionComparisonResult CurrentToLatestVersionComparisonResult = MaxSdkUtils.VersionComparisonResult.Lesser;
         [NonSerialized] public bool RequiresUpdate;
-        public DynamicLibraryToEmbed[] DynamicLibrariesToEmbed;
     }
 
     [Serializable]
     public class DynamicLibraryToEmbed
     {
+        // ReSharper disable InconsistentNaming - Consistent with JSON data.
         public string PodName;
         public string[] FrameworkNames;
 
@@ -84,6 +86,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     [Serializable]
     public class Versions
     {
+        // ReSharper disable InconsistentNaming - Consistent with JSON data.
         public string Unity;
         public string Android;
         public string Ios;
@@ -107,12 +110,12 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         public override int GetHashCode()
         {
-            return new {Unity, Android, Ios}.GetHashCode();
+            return new {unity = Unity, android = Android, ios = Ios}.GetHashCode();
         }
 
         private static string AdapterSdkVersion(string adapterVersion)
         {
-            var index = adapterVersion.LastIndexOf(".");
+            var index = adapterVersion.LastIndexOf(".", StringComparison.Ordinal);
             return index > 0 ? adapterVersion.Substring(0, index) : adapterVersion;
         }
     }
@@ -143,10 +146,10 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static readonly string PluginDataEndpoint = "https://unity.applovin.com/max/1.0/integration_manager_info?plugin_version={0}";
 
-        private static string externalDependencyManagerVersion;
+        private static string _externalDependencyManagerVersion;
 
-        public static DownloadPluginProgressCallback downloadPluginProgressCallback;
-        public static ImportPackageCompletedCallback importPackageCompletedCallback;
+        public static DownloadPluginProgressCallback OnDownloadPluginProgressCallback;
+        public static ImportPackageCompletedCallback OnImportPackageCompletedCallback;
 
         private UnityWebRequest webRequest;
         private Network importingNetwork;
@@ -215,21 +218,21 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             get
             {
-                if (!string.IsNullOrEmpty(externalDependencyManagerVersion)) return externalDependencyManagerVersion;
+                if (MaxSdkUtils.IsValidString(_externalDependencyManagerVersion)) return _externalDependencyManagerVersion;
 
                 try
                 {
                     var versionHandlerVersionNumberType = Type.GetType("Google.VersionHandlerVersionNumber, Google.VersionHandlerImpl");
-                    externalDependencyManagerVersion = versionHandlerVersionNumberType.GetProperty("Value").GetValue(null, null).ToString();
+                    _externalDependencyManagerVersion = versionHandlerVersionNumberType.GetProperty("Value").GetValue(null, null).ToString();
                 }
 #pragma warning disable 0168
                 catch (Exception ignored)
 #pragma warning restore 0168
                 {
-                    externalDependencyManagerVersion = "Failed to get version.";
+                    _externalDependencyManagerVersion = "Failed to get version.";
                 }
 
-                return externalDependencyManagerVersion;
+                return _externalDependencyManagerVersion;
             }
         }
 
@@ -423,16 +426,16 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static void CallDownloadPluginProgressCallback(string pluginName, float progress, bool isDone)
         {
-            if (downloadPluginProgressCallback == null) return;
+            if (OnDownloadPluginProgressCallback == null) return;
 
-            downloadPluginProgressCallback(pluginName, progress, isDone);
+            OnDownloadPluginProgressCallback(pluginName, progress, isDone);
         }
 
         private static void CallImportPackageCompletedCallback(Network network)
         {
-            if (importPackageCompletedCallback == null) return;
+            if (OnImportPackageCompletedCallback == null) return;
 
-            importPackageCompletedCallback(network);
+            OnImportPackageCompletedCallback(network);
         }
 
         private static object GetEditorUserBuildSetting(string name, object defaultValue)
