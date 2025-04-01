@@ -143,6 +143,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         internal static readonly string GradleTemplatePath = Path.Combine("Assets/Plugins/Android", "mainTemplate.gradle");
         private const string MaxSdkAssetExportPath = "MaxSdk/Scripts/MaxSdk.cs";
+        private const string MaxSdkMediationExportPath = "MaxSdk/Mediation";
 
         private static readonly string PluginDataEndpoint = "https://unity.applovin.com/max/1.0/integration_manager_info?plugin_version={0}";
 
@@ -176,6 +177,15 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 // maxSdkScriptAssetPath will always have AltDirectorySeparatorChar (/) as the path separator. Convert to platform specific path.
                 return maxSdkScriptAssetPath.Replace(MaxSdkAssetExportPath, "")
                     .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            }
+        }
+
+        public static string MediationDirectory
+        {
+            get
+            {
+                var mediationAssetPath = MaxSdkUtils.GetAssetPathForExportPath(MaxSdkMediationExportPath);
+                return mediationAssetPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
             }
         }
 

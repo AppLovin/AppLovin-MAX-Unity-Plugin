@@ -1208,35 +1208,6 @@ public class MaxSdkiOS : MaxSdkBase
         Debug.LogWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
     }
 
-    [DllImport("__Internal")]
-    private static extern int _MaxConsentDialogState();
-
-    [Obsolete("This method has been deprecated. Please use `GetSdkConfiguration().ConsentDialogState`")]
-    public static ConsentDialogState GetConsentDialogState()
-    {
-        if (!IsInitialized())
-        {
-            MaxSdkLogger.UserWarning(
-                "MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
-        }
-
-        return (ConsentDialogState) _MaxConsentDialogState();
-    }
-
-    [DllImport("__Internal")]
-    private static extern string _MaxGetAdInfo(string adUnitIdentifier);
-
-    [Obsolete("This method has been deprecated. The AdInfo object is returned with ad callbacks.")]
-    public static AdInfo GetAdInfo(string adUnitIdentifier)
-    {
-        var adInfoString = _MaxGetAdInfo(adUnitIdentifier);
-
-        if (string.IsNullOrEmpty(adInfoString)) return null;
-
-        var adInfoDictionary = Json.Deserialize(adInfoString) as Dictionary<string, object>;
-        return new AdInfo(adInfoDictionary);
-    }
-
     #endregion
 
 #endif

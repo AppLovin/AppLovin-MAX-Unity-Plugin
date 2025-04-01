@@ -17,6 +17,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     public abstract class AppLovinPreProcess
     {
         private const string AppLovinDependenciesFileExportPath = "MaxSdk/AppLovin/Editor/Dependencies.xml";
+        private const string ElementNameDependencies = "dependencies";
 
         private static readonly XmlWriterSettings DependenciesFileXmlWriterSettings = new XmlWriterSettings
         {
@@ -26,115 +27,146 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             NewLineHandling = NewLineHandling.Replace
         };
 
-        private static string AppLovinDependenciesFilePath
+        protected static string AppLovinDependenciesFilePath
         {
             get { return AppLovinIntegrationManager.IsPluginInPackageManager ? Path.Combine("Assets", AppLovinDependenciesFileExportPath) : MaxSdkUtils.GetAssetPathForExportPath(AppLovinDependenciesFileExportPath); }
         }
 
         /// <summary>
-        /// Creates a Dependencies.xml file under Assets/MaxSdk/AppLovin/Editor/ directory if the plugin is in the package manager.
-        /// This is needed since the Dependencies.xml file in the package manager is immutable.
+        /// Gets the AppLovin Dependencies.xml file. If `createIfNotExists` is true, a new file will be created if one does not exist.
         /// </summary>
-        protected static void CreateAppLovinDependenciesFileIfNeeded()
-        {
-            if (!AppLovinIntegrationManager.IsPluginInPackageManager) return;
-
-            var dependenciesFilePath = AppLovinDependenciesFilePath;
-            if (File.Exists(dependenciesFilePath)) return;
-
-            var directory = Path.GetDirectoryName(dependenciesFilePath);
-            Directory.CreateDirectory(directory);
-
-            var dependencies = new XDocument(
-                new XDeclaration("1.0", "utf-8", "yes"),
-                new XElement("dependencies",
-                    new XElement("androidPackages", ""),
-                    new XElement("iosPods", "")
-                )
-            );
-
-            using (var xmlWriter = XmlWriter.Create(dependenciesFilePath, DependenciesFileXmlWriterSettings))
-            {
-                dependencies.Save(xmlWriter);
-            }
-        }
-
-        /// <summary>
-        /// Adds a string into AppLovin's Dependencies.xml file inside the containerElementString if it doesn't exist
-        /// </summary>
-        /// <param name="lineToAdd">The line you want to add into the xml file</param>
-        /// <param name="containerElementString">The root XML element under which to add the line. For example, to add a new dependency to Android, pass in "androidPackages"</param>
-        protected static void TryAddStringToDependencyFile(string lineToAdd, string containerElementString)
+        /// <param name="path">The path to the AppLovin Dependencies.xml file</param>
+        /// <param name="createIfNotExists">Whether to create a new Dependencies.xml file if one does not exist</param>
+        /// <returns></returns>
+        protected static XDocument GetAppLovinDependenciesFile(string path, bool createIfNotExists = false)
         {
             try
             {
-                var dependenciesFilePath = AppLovinDependenciesFilePath;
-                var dependencies = XDocument.Load(dependenciesFilePath);
-                // Get the container where we are going to insert the line
-                var containerElement = dependencies.Descendants(containerElementString).FirstOrDefault();
-
-                if (containerElement == null)
+                if (File.Exists(path))
                 {
-                    MaxSdkLogger.E(containerElementString + " not found in Dependencies.xml file");
-                    return;
+                    return XDocument.Load(path);
                 }
-
-                var elementToAdd = XElement.Parse(lineToAdd);
-
-                // Check if the xml file doesn't already contain the string.
-                if (containerElement.Elements().Any(element => XNode.DeepEquals(element, elementToAdd))) return;
-
-                // Append the new element to the container element
-                containerElement.Add(elementToAdd);
-
-                using (var xmlWriter = XmlWriter.Create(dependenciesFilePath, DependenciesFileXmlWriterSettings))
+                
+                if (createIfNotExists)
                 {
-                    dependencies.Save(xmlWriter);
+                    return new XDocument(new XDeclaration("1.0", "utf-8", "yes"),
+                        new XElement(ElementNameDependencies));
                 }
             }
             catch (Exception exception)
             {
-                MaxSdkLogger.UserWarning("Google CMP will not function. Unable to add string to dependency file due to exception: " + exception.Message);
+                MaxSdkLogger.E("Unable to load Dependencies file due to exception: " + exception.Message);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Updates a dependency if it exists, otherwise adds a new dependency.
+        /// </summary>
+        /// <param name="dependenciesDocument">The dependencies document we are writing to</param>
+        /// <param name="parentTag">The parent tag that we want to search for the dependency. For example, to add a new dependency to Android, pass in "androidPackages"</param>
+        /// <param name="elementTag">The element we are looking to update/add. For example, to add a new dependency to Android, pass in "androidPackage"</param>
+        /// <param name="matchAttribute">The attribute name we want in the dependency. For example, to add something to the spec attribute, pass in "spec" </param>
+        /// <param name="matchValuePrefix">The attribute value prefix we are looking to replace. For example, "com.google.android.ump:user-messaging-platform"</param>
+        /// <param name="newDependency">The new dependency we want to add.</param>
+        protected static void AddOrUpdateDependency(
+            XDocument dependenciesDocument,
+            string parentTag,
+            string elementTag,
+            string matchAttribute,
+            string matchValuePrefix,
+            XElement newDependency)
+        {
+            var parentElement = dependenciesDocument.Root.Element(parentTag);
+            if (parentElement == null)
+            {
+                parentElement = new XElement(parentTag);
+                dependenciesDocument.Root.Add(parentElement);
+            }
+
+            // Check if a dependency exists that matches the attributes name and value
+            var existingElement = parentElement.Elements(elementTag)
+                .FirstOrDefault(element =>
+                {
+                    var attr = element.Attribute(matchAttribute);
+                    return attr != null && attr.Value.StartsWith(matchValuePrefix, StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (existingElement != null)
+            {
+                foreach (var attr in newDependency.Attributes())
+                {
+                    existingElement.SetAttributeValue(attr.Name, attr.Value);
+                }
+            }
+            else
+            {
+                parentElement.Add(newDependency);
             }
         }
 
         /// <summary>
-        /// Removes a string from AppLovin's Dependencies.xml file inside the containerElementString if it exists
+        /// Removes a dependency from an xml file.
         /// </summary>
-        /// <param name="lineToRemove">The line you want to remove from the xml file</param>
-        /// <param name="containerElementString">The root XML element from which to remove the line. For example, to remove an Android dependency, pass in "androidPackages"</param>
-        protected static void TryRemoveStringFromDependencyFile(string lineToRemove, string containerElementString)
+        /// <param name="doc">The xml file to remove a dependency from</param>
+        /// <param name="parentTag">The parent tag that we want to search for the dependency to remove. For example: "androidPackages"</param>
+        /// <param name="elementTag">The element we are looking to remove. For example: "androidPackage"</param>
+        /// <param name="matchAttribute">The attribute name we want to remove. For example: "spec" </param>
+        /// <param name="matchValuePrefix">The attribute value prefix we are looking to replace. For example: "com.google.android.ump:user-messaging-platform"</param>
+        /// <returns>True if the dependency was removed successfully, otherwise return false.</returns>
+        protected static bool RemoveDependency(
+            XDocument doc,
+            string parentTag,
+            string elementTag,
+            string matchAttribute,
+            string matchValuePrefix)
+        {
+            var root = doc.Root;
+            if (root == null) return false;
+
+            var parentElement = root.Element(parentTag);
+            if (parentElement == null) return false;
+
+            XElement toRemove = null;
+            foreach (var e in parentElement.Elements(elementTag))
+            {
+                var attr = e.Attribute(matchAttribute);
+                if (attr != null && attr.Value.StartsWith(matchValuePrefix))
+                {
+                    toRemove = e;
+                    break;
+                }
+            }
+
+            if (toRemove == null) return false;
+
+            toRemove.Remove();
+            return true;
+        }
+
+        /// <summary>
+        /// Saves an xml file.
+        /// </summary>
+        /// <param name="doc">The document to save</param>
+        /// <param name="path">The path to the document to save</param>
+        /// <returns>Returns true if the file was saved successfully</returns>
+        protected static bool SaveDependenciesFile(XDocument doc, string path)
         {
             try
             {
-                var dependenciesFilePath = AppLovinDependenciesFilePath;
-                if (!File.Exists(dependenciesFilePath)) return;
-
-                var dependencies = XDocument.Load(dependenciesFilePath);
-                var containerElement = dependencies.Descendants(containerElementString).FirstOrDefault();
-
-                if (containerElement == null)
+                using (var xmlWriter = XmlWriter.Create(path, DependenciesFileXmlWriterSettings))
                 {
-                    MaxSdkLogger.E(containerElementString + " not found in Dependencies.xml file");
-                    return;
-                }
-
-                // Check if the dependency line exists.
-                var elementToFind = XElement.Parse(lineToRemove);
-                var existingElement = containerElement.Elements().FirstOrDefault(element => XNode.DeepEquals(element, elementToFind));
-                if (existingElement == null) return;
-
-                existingElement.Remove();
-
-                using (var xmlWriter = XmlWriter.Create(dependenciesFilePath, DependenciesFileXmlWriterSettings))
-                {
-                    dependencies.Save(xmlWriter);
+                    doc.Save(xmlWriter);
+                    return true;
                 }
             }
             catch (Exception exception)
             {
-                MaxSdkLogger.UserWarning("Unable to remove string from dependency file due to exception: " + exception.Message);
+                MaxSdkLogger.E("Unable to save Dependencies file due to exception: " + exception.Message);
             }
+
+            return false;
         }
     }
 }

@@ -8,7 +8,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"8.1.0"
+#define VERSION @"8.2.0"
 #define NSSTRING(_X) ( (_X != NULL) ? [NSString stringWithCString: _X encoding: NSStringEncodingConversionAllowLossy].al_stringByTrimmingWhitespace : nil)
 
 @interface NSString (ALUtils)
@@ -227,13 +227,6 @@ extern "C"
         [getSdk() showCreativeDebugger];
     }
 
-    int _MaxConsentDialogState()
-    {
-        if ( !_isSdkInitialized ) return ALConsentDialogStateUnknown;
-        
-        return (int) getSdk().configuration.consentDialogState;
-    }
-    
     void _MaxSetUserId(const char *userId)
     {
         getSdk().settings.userIdentifier = NSSTRING(userId);
@@ -971,11 +964,6 @@ extern "C"
     float _MaxScreenDensity()
     {
         return [UIScreen.mainScreen nativeScale];
-    }
-    
-    const char * _MaxGetAdInfo(const char *adUnitIdentifier)
-    {
-        return cStringCopy([getAdManager() adInfoForAdUnitIdentifier: NSSTRING(adUnitIdentifier)]);
     }
     
     const char * _MaxGetAdValue(const char *adUnitIdentifier, const char *key)

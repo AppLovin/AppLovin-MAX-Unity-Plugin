@@ -953,28 +953,6 @@ public class MaxSdkAndroid : MaxSdkBase
         MaxSdkLogger.UserWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
     }
 
-    [Obsolete("This method has been deprecated. Please use `GetSdkConfiguration().ConsentDialogState`")]
-    public static ConsentDialogState GetConsentDialogState()
-    {
-        if (!IsInitialized())
-        {
-            MaxSdkLogger.UserWarning("MAX Ads SDK has not been initialized yet. GetConsentDialogState() may return ConsentDialogState.Unknown");
-        }
-
-        return (ConsentDialogState) MaxUnityPluginClass.CallStatic<int>("getConsentDialogState");
-    }
-
-    [Obsolete("This method has been deprecated. The AdInfo object is returned with ad callbacks.")]
-    public static AdInfo GetAdInfo(string adUnitIdentifier)
-    {
-        var adInfoString = MaxUnityPluginClass.CallStatic<string>("getAdInfo", adUnitIdentifier);
-
-        if (string.IsNullOrEmpty(adInfoString)) return null;
-
-        var adInfoDictionary = Json.Deserialize(adInfoString) as Dictionary<string, object>;
-        return new AdInfo(adInfoDictionary);
-    }
-
     #endregion
 
     internal class BackgroundCallbackProxy : AndroidJavaProxy

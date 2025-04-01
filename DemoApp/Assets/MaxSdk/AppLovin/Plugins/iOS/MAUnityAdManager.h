@@ -70,9 +70,6 @@ typedef void (*ALUnityBackgroundCallback)(const char* args);
 // Event Tracking
 - (void)trackEvent:(nullable NSString *)event parameters:(nullable NSString *)parameters;
 
-// Ad Info
-- (NSString *)adInfoForAdUnitIdentifier:(nullable NSString *)adUnitIdentifier;
-
 // Ad Value
 - (NSString *)adValueForAdUnitIdentifier:(nullable NSString *)adUnitIdentifier withKey:(nullable NSString *)key;
 

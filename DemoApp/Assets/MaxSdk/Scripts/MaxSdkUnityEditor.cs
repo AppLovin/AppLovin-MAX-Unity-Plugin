@@ -1230,18 +1230,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
         Debug.LogWarning("MaxSdk.SetSdkKey() has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.");
     }
 
-    [Obsolete("This method has been deprecated. Please use `GetSdkConfiguration().ConsentDialogState`")]
-    public static ConsentDialogState GetConsentDialogState()
-    {
-        return ConsentDialogState.Unknown;
-    }
-
-    [Obsolete("This method has been deprecated. The AdInfo object is returned with ad callbacks.")]
-    public static AdInfo GetAdInfo(string adUnitIdentifier)
-    {
-        return new AdInfo(new Dictionary<string, object>());
-    }
-
     #endregion
 }
 

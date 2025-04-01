@@ -66,6 +66,7 @@ extern "C" {
 @property (nonatomic, strong) NSMutableArray<NSString *> *adUnitIdentifiersToShowAfterCreate;
 @property (nonatomic, strong) NSMutableSet<NSString *> *disabledAdaptiveBannerAdUnitIdentifiers;
 @property (nonatomic, strong) NSMutableSet<NSString *> *disabledAutoRefreshAdViewAdUnitIdentifiers;
+@property (nonatomic, strong) NSMutableSet<NSString *> *ignoreSafeAreaLandscapeAdUnitIdentifiers;
 @property (nonatomic, strong) UIView *safeAreaBackground;
 @property (nonatomic, strong, nullable) UIColor *publisherBannerBackgroundColor;
 
@@ -124,6 +125,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         self.adUnitIdentifiersToShowAfterCreate = [NSMutableArray arrayWithCapacity: 2];
         self.disabledAdaptiveBannerAdUnitIdentifiers = [NSMutableSet setWithCapacity: 2];
         self.disabledAutoRefreshAdViewAdUnitIdentifiers = [NSMutableSet setWithCapacity: 2];
+        self.ignoreSafeAreaLandscapeAdUnitIdentifiers = [NSMutableSet setWithCapacity: 2];
         self.adInfoDict = [NSMutableDictionary dictionary];
         self.adInfoDictLock = [[NSObject alloc] init];
         
@@ -525,16 +527,6 @@ static ALUnityBackgroundCallback backgroundCallback;
 }
 
 #pragma mark - Ad Info
-
-- (NSString *)adInfoForAdUnitIdentifier:(nullable NSString *)adUnitIdentifier
-{
-    if ( ![adUnitIdentifier al_isValidString] ) return @"";
-    
-    MAAd *ad = [self adWithAdUnitIdentifier: adUnitIdentifier];
-    if ( !ad ) return @"";
-    
-    return [MAUnityAdManager serializeParameters: [self adInfoForAd: ad]];
-}
 
 - (NSDictionary<NSString *, id> *)adInfoForAd:(MAAd *)ad
 {
@@ -1408,6 +1400,11 @@ static ALUnityBackgroundCallback backgroundCallback;
             
             [self positionAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat];
         }
+        else if ( [@"ignore_safe_area_landscape" isEqualToString: key] && [NSNumber al_numberWithString: value].boolValue )
+        {
+            [self.ignoreSafeAreaLandscapeAdUnitIdentifiers addObject: adUnitIdentifier];
+            [self positionAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat];
+        }
     }
 }
 
@@ -1690,6 +1687,8 @@ static ALUnityBackgroundCallback backgroundCallback;
         NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithObject: [adView.heightAnchor constraintEqualToConstant: adViewSize.height]];
         
         UILayoutGuide *layoutGuide = superview.safeAreaLayoutGuide;
+        BOOL shouldIgnoreSafeArea = [self shouldIgnoreSafeAreaForAdUnitIdentifier: adUnitIdentifier];
+        NSLayoutAnchor *topAnchor = shouldIgnoreSafeArea ? superview.topAnchor : layoutGuide.topAnchor;
         
         if ( [adViewPosition isEqual: @"top_center"] || [adViewPosition isEqual: @"bottom_center"] )
         {
@@ -1720,7 +1719,7 @@ static ALUnityBackgroundCallback backgroundCallback;
                     
                     if ( [adViewPosition isEqual: @"top_center"] )
                     {
-                        [constraints addObjectsFromArray: @[[adView.topAnchor constraintEqualToAnchor: layoutGuide.topAnchor],
+                        [constraints addObjectsFromArray: @[[adView.topAnchor constraintEqualToAnchor: topAnchor],
                                                             [self.safeAreaBackground.topAnchor constraintEqualToAnchor: superview.topAnchor],
                                                             [self.safeAreaBackground.bottomAnchor constraintEqualToAnchor: adView.topAnchor]]];
                     }
@@ -1740,7 +1739,7 @@ static ALUnityBackgroundCallback backgroundCallback;
                     
                     if ( [adViewPosition isEqual: @"top_center"] )
                     {
-                        [constraints addObjectsFromArray: @[[adView.topAnchor constraintEqualToAnchor: layoutGuide.topAnchor],
+                        [constraints addObjectsFromArray: @[[adView.topAnchor constraintEqualToAnchor: topAnchor],
                                                             [self.safeAreaBackground.topAnchor constraintEqualToAnchor: superview.topAnchor],
                                                             [self.safeAreaBackground.bottomAnchor constraintEqualToAnchor: adView.topAnchor]]];
                     }
@@ -1762,7 +1761,7 @@ static ALUnityBackgroundCallback backgroundCallback;
                 
                 if ( [adViewPosition isEqual: @"top_center"] )
                 {
-                    [constraints addObject: [adView.topAnchor constraintEqualToAnchor: layoutGuide.topAnchor]];
+                    [constraints addObject: [adView.topAnchor constraintEqualToAnchor: topAnchor]];
                 }
                 else // BottomCenter
                 {
@@ -1879,11 +1878,11 @@ static ALUnityBackgroundCallback backgroundCallback;
             if ( [adViewPosition isEqual: @"top_left"] )
             {
                 [constraints addObjectsFromArray: @[[adView.leftAnchor constraintEqualToAnchor: superview.leftAnchor constant: adViewOffset.x],
-                                                    [adView.topAnchor constraintEqualToAnchor: layoutGuide.topAnchor constant: adViewOffset.y]]];
+                                                    [adView.topAnchor constraintEqualToAnchor: topAnchor constant: adViewOffset.y]]];
             }
             else if ( [adViewPosition isEqual: @"top_right"] )
             {
-                [constraints addObjectsFromArray: @[[adView.topAnchor constraintEqualToAnchor: layoutGuide.topAnchor],
+                [constraints addObjectsFromArray: @[[adView.topAnchor constraintEqualToAnchor: topAnchor],
                                                     [adView.rightAnchor constraintEqualToAnchor: superview.rightAnchor]]];
             }
             else if ( [adViewPosition isEqual: @"centered"] )
@@ -2036,6 +2035,17 @@ static ALUnityBackgroundCallback backgroundCallback;
     {
         return self.adInfoDict[adUnitIdentifier];
     }
+}
+
+#pragma mark - Helper
+
+- (BOOL)shouldIgnoreSafeAreaForAdUnitIdentifier:(NSString *)adUnitIdentifier
+{
+    if ( ![self.ignoreSafeAreaLandscapeAdUnitIdentifiers containsObject: adUnitIdentifier] ) return NO;
+    
+    // We should use the superview instead of layout guide if the application's orientation is landscape and the extra parameter is set
+    UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+    return orientation == UIInterfaceOrientationLandscapeRight || orientation == UIInterfaceOrientationLandscapeLeft;
 }
 
 @end
