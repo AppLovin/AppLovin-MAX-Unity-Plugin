@@ -155,6 +155,14 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             try
             {
+                // Ensure directory exists before saving the file
+                var directory = Path.GetDirectoryName(path);
+                if (MaxSdkUtils.IsValidString(directory))
+                {
+                    // Does nothing if directory already exists
+                    Directory.CreateDirectory(directory);
+                }
+
                 using (var xmlWriter = XmlWriter.Create(path, DependenciesFileXmlWriterSettings))
                 {
                     doc.Save(xmlWriter);

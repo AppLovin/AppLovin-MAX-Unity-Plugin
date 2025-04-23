@@ -447,9 +447,19 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 project.SetBuildProperty(unityFrameworkTargetGuid, "SWIFT_VERSION", "5.0");
             }
 
-            // Enable Swift modules
-            project.AddBuildProperty(unityFrameworkTargetGuid, "CLANG_ENABLE_MODULES", "YES");
-            project.AddBuildProperty(unityMainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
+            // Some publishers may configure these settings in their own post-processing scripts.
+            // Only set them if they haven't already been defined to avoid overwriting publisher-defined values.
+            var enableModules = project.GetBuildPropertyForAnyConfig(unityFrameworkTargetGuid, "CLANG_ENABLE_MODULES");
+            if (string.IsNullOrEmpty(enableModules))
+            {
+                project.SetBuildProperty(unityFrameworkTargetGuid, "CLANG_ENABLE_MODULES", "YES");
+            }
+
+            var alwaysEmbedSwiftLibraries = project.GetBuildPropertyForAnyConfig(unityMainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES");
+            if (string.IsNullOrEmpty(alwaysEmbedSwiftLibraries))
+            {
+                project.SetBuildProperty(unityMainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
+            }
         }
 
         private static void CreateSwiftFile(string swiftFilePath)
