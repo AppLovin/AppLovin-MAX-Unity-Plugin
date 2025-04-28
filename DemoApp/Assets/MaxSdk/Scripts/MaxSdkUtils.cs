@@ -581,8 +581,9 @@ public class MaxSdkUtils
     /// <returns>The exported path of the MAX plugin asset or the default export path if the asset is not found.</returns>
     public static string GetAssetPathForExportPath(string exportPath)
     {
-        var assetLabelToFind = "l:al_max_export_path-" + exportPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        var assetGuids = AssetDatabase.FindAssets(assetLabelToFind);
+        var assetLabelToFind = "al_max_export_path-" + exportPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var labelSearchQuery = "l:" + assetLabelToFind;
+        var assetGuids = AssetDatabase.FindAssets(labelSearchQuery);
 
         // Search all assets returned from the label query (may include partial matches)
         foreach (var guid in assetGuids)
@@ -593,14 +594,8 @@ public class MaxSdkUtils
 
             var labels = AssetDatabase.GetLabels(asset);
 
-            // Check if any label exactly matches (without the 'l:' prefix)
-            foreach (var label in labels)
-            {
-                if (label == assetLabelToFind)
-                {
-                    return path;
-                }
-            }
+            // Check if any label exactly matches
+            if (labels.Any(label => label == assetLabelToFind)) return path;
         }
 
         // Fall back to the default path if no exact label match is found
