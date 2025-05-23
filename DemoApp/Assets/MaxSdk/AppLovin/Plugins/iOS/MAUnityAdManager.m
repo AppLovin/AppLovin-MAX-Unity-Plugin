@@ -225,14 +225,14 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 #pragma mark - Banners
 
-- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier atPosition:(nullable NSString *)bannerPosition
+- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier atPosition:(nullable NSString *)bannerPosition isAdaptive:(BOOL)isAdaptive
 {
-    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: [self adViewAdFormatForAdUnitIdentifier: adUnitIdentifier] atPosition: bannerPosition withOffset: CGPointZero];
+    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: [self adViewAdFormatForAdUnitIdentifier: adUnitIdentifier] atPosition: bannerPosition withOffset: CGPointZero isAdaptive: isAdaptive];
 }
 
-- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset
+- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset isAdaptive:(BOOL)isAdaptive
 {
-    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: [self adViewAdFormatForAdUnitIdentifier: adUnitIdentifier] atPosition: DEFAULT_AD_VIEW_POSITION withOffset: CGPointMake(xOffset, yOffset)];
+    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: [self adViewAdFormatForAdUnitIdentifier: adUnitIdentifier] atPosition: DEFAULT_AD_VIEW_POSITION withOffset: CGPointMake(xOffset, yOffset) isAdaptive: isAdaptive];
 }
 
 - (void)loadBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier
@@ -325,12 +325,12 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (void)createMRecWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier atPosition:(nullable NSString *)mrecPosition
 {
-    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: MAAdFormat.mrec atPosition: mrecPosition withOffset: CGPointZero];
+    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: MAAdFormat.mrec atPosition: mrecPosition withOffset: CGPointZero isAdaptive: NO];
 }
 
 - (void)createMRecWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset
 {
-    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: MAAdFormat.mrec atPosition: DEFAULT_AD_VIEW_POSITION withOffset: CGPointMake(xOffset, yOffset)];
+    [self createAdViewWithAdUnitIdentifier: adUnitIdentifier adFormat: MAAdFormat.mrec atPosition: DEFAULT_AD_VIEW_POSITION withOffset: CGPointMake(xOffset, yOffset) isAdaptive: NO];
 }
 
 - (void)loadMRecWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier
@@ -1091,7 +1091,7 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 #pragma mark - Internal Methods
 
-- (void)createAdViewWithAdUnitIdentifier:(NSString *)adUnitIdentifier adFormat:(MAAdFormat *)adFormat atPosition:(NSString *)adViewPosition withOffset:(CGPoint)offset
+- (void)createAdViewWithAdUnitIdentifier:(NSString *)adUnitIdentifier adFormat:(MAAdFormat *)adFormat atPosition:(NSString *)adViewPosition withOffset:(CGPoint)offset isAdaptive:(BOOL)isAdaptive
 {
     max_unity_dispatch_on_main_thread(^{
         [self log: @"Creating %@ with ad unit identifier \"%@\" and position: \"%@\"", adFormat, adUnitIdentifier, adViewPosition];
@@ -1102,7 +1102,7 @@ static ALUnityBackgroundCallback backgroundCallback;
         }
         
         // Retrieve ad view from the map
-        MAAdView *adView = [self retrieveAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat atPosition: adViewPosition withOffset: offset];
+        MAAdView *adView = [self retrieveAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat atPosition: adViewPosition withOffset: offset isAdaptive: isAdaptive];
         adView.hidden = YES;
         self.safeAreaBackground.hidden = YES;
         
@@ -1111,16 +1111,6 @@ static ALUnityBackgroundCallback backgroundCallback;
         [self positionAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat];
         
         NSDictionary<NSString *, NSString *> *extraParameters = self.adViewExtraParametersToSetAfterCreate[adUnitIdentifier];
-        
-        // Enable adaptive banners by default for banners and leaders.
-        if ( [adFormat isBannerOrLeaderAd] )
-        {
-            // Check if there is already a pending setting for adaptive banners. If not, enable them.
-            if ( !extraParameters[@"adaptive_banner"] )
-            {
-                [adView setExtraParameterForKey: @"adaptive_banner" value: @"true"];
-            }
-        }
         
         // Handle initial extra parameters if publisher sets it before creating ad view
         if ( extraParameters )
@@ -1388,6 +1378,8 @@ static ALUnityBackgroundCallback backgroundCallback;
         }
         else if ( [@"adaptive_banner" isEqualToString: key] )
         {
+            [self log: @"Setting adaptive banners via extra parameters is deprecated and will be removed in a future plugin version. Use the CreateBanner(adUnitIdentifier, AdViewConfiguration) API to properly configure adaptive banners."];
+
             BOOL shouldUseAdaptiveBanner = [NSNumber al_numberWithString: value].boolValue;
             if ( shouldUseAdaptiveBanner )
             {
@@ -1405,6 +1397,13 @@ static ALUnityBackgroundCallback backgroundCallback;
             [self.ignoreSafeAreaLandscapeAdUnitIdentifiers addObject: adUnitIdentifier];
             [self positionAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat];
         }
+    }
+    
+    if ( [adFormat isAdViewAd] && [@"clips_to_bounds" isEqualToString: key] )
+    {
+        BOOL clipsToBounds = [NSNumber al_numberWithString: value].boolValue;
+        MAAdView *view = [self retrieveAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat];
+        view.clipsToBounds = clipsToBounds;
     }
 }
 
@@ -1581,16 +1580,33 @@ static ALUnityBackgroundCallback backgroundCallback;
 
 - (MAAdView *)retrieveAdViewForAdUnitIdentifier:(NSString *)adUnitIdentifier adFormat:(MAAdFormat *)adFormat
 {
-    return [self retrieveAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat atPosition: nil withOffset: CGPointZero];
+    return [self retrieveAdViewForAdUnitIdentifier: adUnitIdentifier adFormat: adFormat atPosition: nil withOffset: CGPointZero isAdaptive: YES];
 }
 
-- (MAAdView *)retrieveAdViewForAdUnitIdentifier:(NSString *)adUnitIdentifier adFormat:(MAAdFormat *)adFormat atPosition:(NSString *)adViewPosition withOffset:(CGPoint)offset
+- (MAAdView *)retrieveAdViewForAdUnitIdentifier:(NSString *)adUnitIdentifier adFormat:(MAAdFormat *)adFormat atPosition:(NSString *)adViewPosition withOffset:(CGPoint)offset isAdaptive:(BOOL)isAdaptive
 {
     MAAdView *result = self.adViews[adUnitIdentifier];
     if ( !result && adViewPosition )
-    {
-        result = [[MAAdView alloc] initWithAdUnitIdentifier: adUnitIdentifier adFormat: adFormat sdk: self.sdk];
+    {        
+        MAAdViewConfiguration *config = [MAAdViewConfiguration configurationWithBuilderBlock:^(MAAdViewConfigurationBuilder *builder) {
+            
+            // Set adaptive type only for banner ads. If adaptive is enabled, use ANCHORED; otherwise, fall back to NONE.
+            if ( [adFormat isBannerOrLeaderAd] )
+            {
+                if ( isAdaptive )
+                {
+                    builder.adaptiveType = MAAdViewAdaptiveTypeAnchored;
+                }
+                else
+                {
+                    builder.adaptiveType = MAAdViewAdaptiveTypeNone;
+                    [self.disabledAdaptiveBannerAdUnitIdentifiers addObject:adUnitIdentifier];
+                }
+            }
+        }];
+        
         // There is a Unity bug where if an empty UIView is on screen with user interaction enabled, and a user interacts with it, it just passes the events to random parts of the screen.
+        result = [[MAAdView alloc] initWithAdUnitIdentifier:adUnitIdentifier adFormat:adFormat configuration:config];
         result.userInteractionEnabled = NO;
         result.translatesAutoresizingMaskIntoConstraints = NO;
         result.delegate = self;

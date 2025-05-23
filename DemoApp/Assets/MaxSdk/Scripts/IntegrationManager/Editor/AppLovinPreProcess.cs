@@ -16,6 +16,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 {
     public abstract class AppLovinPreProcess
     {
+        // Use a slightly lower value than max value so pubs have the option to run a post process script after ours.
+        internal const int CallbackOrder = int.MaxValue - 10;
         private const string AppLovinDependenciesFileExportPath = "MaxSdk/AppLovin/Editor/Dependencies.xml";
         private const string ElementNameDependencies = "dependencies";
 

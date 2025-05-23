@@ -91,7 +91,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         public int callbackOrder
         {
-            get { return int.MaxValue; }
+            get { return CallbackOrder; }
         }
     }
 }

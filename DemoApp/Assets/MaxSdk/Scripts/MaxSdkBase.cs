@@ -117,17 +117,53 @@ public abstract class MaxSdkBase
         BottomRight
     }
 
-    public enum BannerPosition
+    public class AdViewConfiguration
     {
-        TopLeft,
-        TopCenter,
-        TopRight,
-        Centered,
-        CenterLeft,
-        CenterRight,
-        BottomLeft,
-        BottomCenter,
-        BottomRight
+        /// <summary>
+        /// The position of the ad.
+        /// </summary>
+        public AdViewPosition Position { get; private set; }
+
+        /// <summary>
+        /// The horizontal (X) position of the banner, relative to the top-left corner of the screen's safe area.
+        /// </summary>
+        public float XCoordinate { get; private set; }
+
+        /// <summary>
+        /// The vertical (Y) position of the banner, relative to the top-left corner of the screen's safe area.
+        /// </summary>
+        public float YCoordinate { get; private set; }
+
+        /// <summary>
+        /// Whether to use adaptive banners.
+        /// </summary>
+        public bool IsAdaptive { get; set; }
+
+        internal bool UseCoordinates { get; private set; }
+
+        /// <summary>
+        /// Creates an AdViewConfiguration with the given AdViewPosition.
+        /// </summary>
+        /// <param name="position">The position of the ad. Must not be null.</param>
+        public AdViewConfiguration(AdViewPosition position)
+        {
+            Position = position;
+            IsAdaptive = true;
+            UseCoordinates = false;
+        }
+
+        /// <summary>
+        /// Creates an AdViewConfiguration with the given x and y coordinates.
+        /// </summary>
+        /// <param name="x">The horizontal (X) position of the banner, relative to the top-left corner of the screen's safe area.</param>
+        /// <param name="y">The vertical (Y) position of the banner, relative to the top-left corner of the screen's safe area.</param>
+        public AdViewConfiguration(float x, float y)
+        {
+            XCoordinate = x;
+            YCoordinate = y;
+            IsAdaptive = true;
+            UseCoordinates = true;
+        }
     }
 
     public class SdkConfiguration
@@ -723,6 +759,22 @@ public abstract class MaxSdkBase
         return Json.Serialize(data);
     }
 
+    #region Obsolete
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use AdViewPosition instead.")]
+    public enum BannerPosition
+    {
+        TopLeft,
+        TopCenter,
+        TopRight,
+        Centered,
+        CenterLeft,
+        CenterRight,
+        BottomLeft,
+        BottomCenter,
+        BottomRight
+    }
+
     [Obsolete("This API has been deprecated and will be removed in a future release.")]
     public enum ConsentDialogState
     {
@@ -730,6 +782,8 @@ public abstract class MaxSdkBase
         Applies,
         DoesNotApply
     }
+
+    #endregion
 }
 
 /// <summary>

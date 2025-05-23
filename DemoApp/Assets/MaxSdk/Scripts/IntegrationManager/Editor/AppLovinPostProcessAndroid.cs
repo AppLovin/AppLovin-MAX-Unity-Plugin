@@ -126,7 +126,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         public int callbackOrder
         {
-            get { return int.MaxValue; }
+            get { return AppLovinPreProcess.CallbackOrder; }
         }
 
         private static void ProcessAndroidManifest(string path)

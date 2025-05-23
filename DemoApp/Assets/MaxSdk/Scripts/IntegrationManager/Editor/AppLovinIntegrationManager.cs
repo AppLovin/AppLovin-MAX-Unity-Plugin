@@ -115,6 +115,8 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private static string AdapterSdkVersion(string adapterVersion)
         {
+            if (string.IsNullOrEmpty(adapterVersion)) return "";
+
             var index = adapterVersion.LastIndexOf(".", StringComparison.Ordinal);
             return index > 0 ? adapterVersion.Substring(0, index) : adapterVersion;
         }

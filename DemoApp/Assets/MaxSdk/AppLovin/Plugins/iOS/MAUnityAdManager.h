@@ -14,8 +14,8 @@ typedef void (*ALUnityBackgroundCallback)(const char* args);
 
 - (void)initializeSdkWithConfiguration:(ALSdkInitializationConfiguration *)initConfig andCompletionHandler:(ALSdkInitializationCompletionHandler)completionHandler;
 
-- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier atPosition:(nullable NSString *)bannerPosition;
-- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset;
+- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier atPosition:(nullable NSString *)bannerPosition isAdaptive:(BOOL)isAdaptive;
+- (void)createBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier x:(CGFloat)xOffset y:(CGFloat)yOffset isAdaptive:(BOOL)isAdaptive;
 - (void)loadBannerWithAdUnitIdentifier:(nullable NSString *)adUnitIdentifier;
 - (void)setBannerBackgroundColorForAdUnitIdentifier:(nullable NSString *)adUnitIdentifier hexColorCode:(nullable NSString *)hexColorCode;
 - (void)setBannerPlacement:(nullable NSString *)placement forAdUnitIdentifier:(nullable NSString *)adUnitIdentifier;

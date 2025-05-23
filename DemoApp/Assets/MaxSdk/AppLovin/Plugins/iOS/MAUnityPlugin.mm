@@ -8,7 +8,7 @@
 
 #import "MAUnityAdManager.h"
 
-#define VERSION @"8.2.2"
+#define VERSION @"8.3.0"
 #define NSSTRING(_X) ( (_X != NULL) ? [NSString stringWithCString: _X encoding: NSStringEncodingConversionAllowLossy].al_stringByTrimmingWhitespace : nil)
 
 @interface NSString (ALUtils)
@@ -293,7 +293,7 @@ extern "C"
         return [ALPrivacySettings isDoNotSellSet];
     }
     
-    void _MaxCreateBanner(const char *adUnitIdentifier, const char *bannerPosition)
+    void _MaxCreateBanner(const char *adUnitIdentifier, const char *bannerPosition, bool isAdaptive)
     {
         if ( !_initializeSdkCalled )
         {
@@ -301,10 +301,10 @@ extern "C"
             return;
         }
         
-        [getAdManager() createBannerWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) atPosition: NSSTRING(bannerPosition)];
+        [getAdManager() createBannerWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) atPosition: NSSTRING(bannerPosition) isAdaptive: isAdaptive];
     }
 
-    void _MaxCreateBannerXY(const char *adUnitIdentifier, const float x, const float y)
+    void _MaxCreateBannerXY(const char *adUnitIdentifier, const float x, const float y, bool isAdaptive)
     {
         if ( !_initializeSdkCalled )
         {
@@ -312,7 +312,7 @@ extern "C"
             return;
         }
         
-        [getAdManager() createBannerWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) x: x y: y];
+        [getAdManager() createBannerWithAdUnitIdentifier: NSSTRING(adUnitIdentifier) x: x y: y isAdaptive: isAdaptive];
     }
     
    void _MaxLoadBanner(const char *adUnitIdentifier)
