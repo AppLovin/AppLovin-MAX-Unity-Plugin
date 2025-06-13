@@ -135,7 +135,7 @@ public abstract class MaxSdkBase
         public float YCoordinate { get; private set; }
 
         /// <summary>
-        /// Whether to use adaptive banners.
+        /// Whether to use adaptive banners. Has no effect on MREC ads.
         /// </summary>
         public bool IsAdaptive { get; set; }
 
@@ -791,46 +791,6 @@ public abstract class MaxSdkBase
 /// </summary>
 internal static class AdPositionExtenstion
 {
-    public static string ToSnakeCaseString(this MaxSdkBase.BannerPosition position)
-    {
-        if (position == MaxSdkBase.BannerPosition.TopLeft)
-        {
-            return "top_left";
-        }
-        else if (position == MaxSdkBase.BannerPosition.TopCenter)
-        {
-            return "top_center";
-        }
-        else if (position == MaxSdkBase.BannerPosition.TopRight)
-        {
-            return "top_right";
-        }
-        else if (position == MaxSdkBase.BannerPosition.Centered)
-        {
-            return "centered";
-        }
-        else if (position == MaxSdkBase.BannerPosition.CenterLeft)
-        {
-            return "center_left";
-        }
-        else if (position == MaxSdkBase.BannerPosition.CenterRight)
-        {
-            return "center_right";
-        }
-        else if (position == MaxSdkBase.BannerPosition.BottomLeft)
-        {
-            return "bottom_left";
-        }
-        else if (position == MaxSdkBase.BannerPosition.BottomCenter)
-        {
-            return "bottom_center";
-        }
-        else // position == MaxSdkBase.BannerPosition.BottomRight
-        {
-            return "bottom_right";
-        }
-    }
-
     public static string ToSnakeCaseString(this MaxSdkBase.AdViewPosition position)
     {
         if (position == MaxSdkBase.AdViewPosition.TopLeft)

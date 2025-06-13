@@ -202,17 +202,17 @@ public class MaxSdkAndroid : MaxSdkBase
     /// Create a new banner.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the banner to create. Must not be null.</param>
-    /// <param name="bannerConfiguration">The configuration for the banner</param>
-    public static void CreateBanner(string adUnitIdentifier, AdViewConfiguration bannerConfiguration)
+    /// <param name="configuration">The configuration for the banner</param>
+    public static void CreateBanner(string adUnitIdentifier, AdViewConfiguration configuration)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "create banner");
-        if (bannerConfiguration.UseCoordinates)
+        if (configuration.UseCoordinates)
         {
-            MaxUnityPluginClass.CallStatic("createBanner", adUnitIdentifier, bannerConfiguration.XCoordinate, bannerConfiguration.YCoordinate, bannerConfiguration.IsAdaptive);
+            MaxUnityPluginClass.CallStatic("createBanner", adUnitIdentifier, configuration.XCoordinate, configuration.YCoordinate, configuration.IsAdaptive);
         }
         else
         {
-            MaxUnityPluginClass.CallStatic("createBanner", adUnitIdentifier, bannerConfiguration.Position.ToSnakeCaseString(), bannerConfiguration.IsAdaptive);
+            MaxUnityPluginClass.CallStatic("createBanner", adUnitIdentifier, configuration.Position.ToSnakeCaseString(), configuration.IsAdaptive);
         }
     }
 
@@ -401,26 +401,18 @@ public class MaxSdkAndroid : MaxSdkBase
     /// Create a new MREC.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to create. Must not be null.</param>
-    /// <param name="mrecPosition">MREC position. Must not be null.</param>
-    public static void CreateMRec(string adUnitIdentifier, AdViewPosition mrecPosition)
+    /// <param name="configuration">The configuration for the MREC.</param>
+    public static void CreateMRec(string adUnitIdentifier, AdViewConfiguration configuration)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
-        MaxUnityPluginClass.CallStatic("createMRec", adUnitIdentifier, mrecPosition.ToSnakeCaseString());
-    }
-
-    /// <summary>
-    /// Create a new MREC with a custom position.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to create. Must not be null.</param>
-    /// <param name="x">The X coordinate (horizontal position) of the MREC relative to the top left corner of the screen.</param>
-    /// <param name="y">The Y coordinate (vertical position) of the MREC relative to the top left corner of the screen.</param>
-    /// <seealso cref="GetMRecLayout">
-    /// The MREC is placed within the safe area of the screen. You can use this to get the absolute position Rect of the MREC on screen.
-    /// </seealso>
-    public static void CreateMRec(string adUnitIdentifier, float x, float y)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
-        MaxUnityPluginClass.CallStatic("createMRec", adUnitIdentifier, x, y);
+        if (configuration.UseCoordinates)
+        {
+            MaxUnityPluginClass.CallStatic("createMRec", adUnitIdentifier, configuration.XCoordinate, configuration.YCoordinate);
+        }
+        else
+        {
+            MaxUnityPluginClass.CallStatic("createMRec", adUnitIdentifier, configuration.Position.ToSnakeCaseString());
+        }
     }
 
     /// <summary>
@@ -938,14 +930,14 @@ public class MaxSdkAndroid : MaxSdkBase
 
     #region Obsolete
 
-    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration bannerConfiguration) instead.")]
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
     public static void CreateBanner(string adUnitIdentifier, BannerPosition bannerPosition)
     {
         // AdViewPosition and BannerPosition share identical enum values, so casting is safe
         CreateBanner(adUnitIdentifier, new AdViewConfiguration((AdViewPosition) bannerPosition));
     }
 
-    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration bannerConfiguration) instead.")]
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
     public static void CreateBanner(string adUnitIdentifier, float x, float y)
     {
         CreateBanner(adUnitIdentifier, new AdViewConfiguration(x, y));
@@ -956,6 +948,18 @@ public class MaxSdkAndroid : MaxSdkBase
     {
         // AdViewPosition and BannerPosition share identical enum values, so casting is safe
         UpdateBannerPosition(adUnitIdentifier, (AdViewPosition) bannerPosition);
+    }
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateMRec(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
+    public static void CreateMRec(string adUnitIdentifier, AdViewPosition mrecPosition)
+    {
+        CreateMRec(adUnitIdentifier, new AdViewConfiguration(mrecPosition));
+    }
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateMRec(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
+    public static void CreateMRec(string adUnitIdentifier, float x, float y)
+    {
+        CreateMRec(adUnitIdentifier, new AdViewConfiguration(x, y));
     }
 
     [Obsolete("This API has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.")]

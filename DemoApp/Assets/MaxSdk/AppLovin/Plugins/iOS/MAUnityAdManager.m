@@ -1533,7 +1533,7 @@ static ALUnityBackgroundCallback backgroundCallback;
     MAInterstitialAd *result = self.interstitials[adUnitIdentifier];
     if ( !result )
     {
-        result = [[MAInterstitialAd alloc] initWithAdUnitIdentifier: adUnitIdentifier sdk: self.sdk];
+        result = [[MAInterstitialAd alloc] initWithAdUnitIdentifier: adUnitIdentifier];
         result.delegate = self;
         result.revenueDelegate = self;
         result.adReviewDelegate = self;
@@ -1550,7 +1550,7 @@ static ALUnityBackgroundCallback backgroundCallback;
     MAAppOpenAd *result = self.appOpenAds[adUnitIdentifier];
     if ( !result )
     {
-        result = [[MAAppOpenAd alloc] initWithAdUnitIdentifier: adUnitIdentifier sdk: self.sdk];
+        result = [[MAAppOpenAd alloc] initWithAdUnitIdentifier: adUnitIdentifier];
         result.delegate = self;
         result.revenueDelegate = self;
         result.expirationDelegate = self;
@@ -1566,7 +1566,7 @@ static ALUnityBackgroundCallback backgroundCallback;
     MARewardedAd *result = self.rewardedAds[adUnitIdentifier];
     if ( !result )
     {
-        result = [MARewardedAd sharedWithAdUnitIdentifier: adUnitIdentifier sdk: self.sdk];
+        result = [MARewardedAd sharedWithAdUnitIdentifier: adUnitIdentifier];
         result.delegate = self;
         result.revenueDelegate = self;
         result.adReviewDelegate = self;

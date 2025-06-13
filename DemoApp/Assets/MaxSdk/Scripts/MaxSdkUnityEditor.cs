@@ -251,31 +251,25 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// Create a new banner.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the banner to create. Must not be null.</param>
-    /// <param name="adViewConfiguration">The configuration for the banner</param>
-    public static void CreateBanner(string adUnitIdentifier, AdViewConfiguration adViewConfiguration)
+    /// <param name="configuration">The configuration for the banner</param>
+    public static void CreateBanner(string adUnitIdentifier, AdViewConfiguration configuration)
     {
-        if (adViewConfiguration.UseCoordinates)
-        {
-            ValidateAdUnitIdentifier(adUnitIdentifier, "create banner");
-            RequestAdUnit(adUnitIdentifier);
-        }
-        else
-        {
-            ValidateAdUnitIdentifier(adUnitIdentifier, "create banner");
-            RequestAdUnit(adUnitIdentifier);
+        ValidateAdUnitIdentifier(adUnitIdentifier, "create banner");
+        RequestAdUnit(adUnitIdentifier);
 
-            if (_showStubAds && !StubBanners.ContainsKey(adUnitIdentifier))
-            {
-                CreateStubBanner(adUnitIdentifier, adViewConfiguration.Position);
-            }
+        if (configuration.UseCoordinates) return;
 
-            ExecuteWithDelay(1f, () =>
-            {
-                var placement = MaxSdkUtils.GetStringFromDictionary(BannerPlacements, adUnitIdentifier);
-                var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnBannerAdLoadedEvent", adUnitIdentifier, placement));
-                MaxSdkCallbacks.ForwardEvent(eventProps);
-            });
+        if (_showStubAds && !StubBanners.ContainsKey(adUnitIdentifier))
+        {
+            CreateStubBanner(adUnitIdentifier, configuration.Position);
         }
+
+        ExecuteWithDelay(1f, () =>
+        {
+            var placement = MaxSdkUtils.GetStringFromDictionary(BannerPlacements, adUnitIdentifier);
+            var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnBannerAdLoadedEvent", adUnitIdentifier, placement));
+            MaxSdkCallbacks.ForwardEvent(eventProps);
+        });
     }
 
     private static void CreateStubBanner(string adUnitIdentifier, AdViewPosition bannerPosition)
@@ -499,11 +493,13 @@ public class MaxSdkUnityEditor : MaxSdkBase
     /// Create a new MREC.
     /// </summary>
     /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to create. Must not be null.</param>
-    /// <param name="mrecPosition">MREC position. Must not be null.</param>
-    public static void CreateMRec(string adUnitIdentifier, AdViewPosition mrecPosition)
+    /// <param name="configuration">The configuration for the MREC.</param>
+    public static void CreateMRec(string adUnitIdentifier, AdViewConfiguration configuration)
     {
         ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
         RequestAdUnit(adUnitIdentifier);
+
+        if (configuration.UseCoordinates) return;
 
         ExecuteWithDelay(1f, () =>
         {
@@ -511,21 +507,6 @@ public class MaxSdkUnityEditor : MaxSdkBase
             var eventProps = Json.Serialize(CreateBaseEventPropsDictionary("OnMRecAdLoadedEvent", adUnitIdentifier, placement));
             MaxSdkCallbacks.ForwardEvent(eventProps);
         });
-    }
-
-    /// <summary>
-    /// Create a new MREC with a custom position.
-    /// </summary>
-    /// <param name="adUnitIdentifier">Ad unit identifier of the MREC to create. Must not be null.</param>
-    /// <param name="x">The X coordinate (horizontal position) of the MREC relative to the top left corner of the screen.</param>
-    /// <param name="y">The Y coordinate (vertical position) of the MREC relative to the top left corner of the screen.</param>
-    /// <seealso cref="GetMRecLayout">
-    /// The MREC is placed within the safe area of the screen. You can use this to get the absolute position Rect of the MREC on screen.
-    /// </seealso>
-    public static void CreateMRec(string adUnitIdentifier, float x, float y)
-    {
-        ValidateAdUnitIdentifier(adUnitIdentifier, "create MREC");
-        RequestAdUnit(adUnitIdentifier);
     }
 
     /// <summary>
@@ -1215,14 +1196,14 @@ public class MaxSdkUnityEditor : MaxSdkBase
 
     #region Obsolete
 
-    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration adViewConfiguration) instead.")]
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
     public static void CreateBanner(string adUnitIdentifier, BannerPosition bannerPosition)
     {
         // AdViewPosition and BannerPosition share identical enum values, so casting is safe
         CreateBanner(adUnitIdentifier, new AdViewConfiguration((AdViewPosition) bannerPosition));
     }
 
-    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration adViewConfiguration) instead.")]
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateBanner(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
     public static void CreateBanner(string adUnitIdentifier, float x, float y)
     {
         CreateBanner(adUnitIdentifier, new AdViewConfiguration(x, y));
@@ -1233,6 +1214,18 @@ public class MaxSdkUnityEditor : MaxSdkBase
     {
         // AdViewPosition and BannerPosition share identical enum values, so casting is safe
         UpdateBannerPosition(adUnitIdentifier, (AdViewPosition) bannerPosition);
+    }
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateMRec(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
+    public static void CreateMRec(string adUnitIdentifier, AdViewPosition mrecPosition)
+    {
+        CreateMRec(adUnitIdentifier, new AdViewConfiguration(mrecPosition));
+    }
+
+    [Obsolete("This API has been deprecated and will be removed in a future release. Please use CreateMRec(string adUnitIdentifier, AdViewConfiguration configuration) instead.")]
+    public static void CreateMRec(string adUnitIdentifier, float x, float y)
+    {
+        CreateMRec(adUnitIdentifier, new AdViewConfiguration(x, y));
     }
 
     [Obsolete("This API has been deprecated and will be removed in a future release. Please set your SDK key in the AppLovin Integration Manager.")]
