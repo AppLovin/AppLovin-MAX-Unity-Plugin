@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using AppLovinMax.Internal;
 using UnityEditor;
 using UnityEditor.Callbacks;
 #if UNITY_2019_3_OR_NEWER
@@ -95,30 +96,22 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 return;
             }
 
-            // Download the ruby script needed to install Quality Service
-            var downloadHandler = new DownloadHandlerFile(outputFilePath);
-            var postJson = string.Format("{{\"sdk_key\" : \"{0}\"}}", sdkKey);
-            var bodyRaw = Encoding.UTF8.GetBytes(postJson);
-            var uploadHandler = new UploadHandlerRaw(bodyRaw);
-            uploadHandler.contentType = "application/json";
-
-            using (var unityWebRequest = new UnityWebRequest("https://api2.safedk.com/v1/build/ios_setup2"))
+            var webRequestConfig = new WebRequestConfig()
             {
-                unityWebRequest.method = UnityWebRequest.kHttpVerbPOST;
-                unityWebRequest.downloadHandler = downloadHandler;
-                unityWebRequest.uploadHandler = uploadHandler;
-                var operation = unityWebRequest.SendWebRequest();
+                DownloadHandler = new DownloadHandlerFile(outputFilePath),
+                JsonString = string.Format("{{\"sdk_key\" : \"{0}\"}}", sdkKey),
+                EndPoint = "https://api2.safedk.com/v1/build/ios_setup2",
+                RequestType = WebRequestType.Post,
+            };
 
-                // Wait for the download to complete or the request to timeout.
-                while (!operation.isDone) { }
+            webRequestConfig.Headers.Add("Content-Type", "application/json");
 
-#if UNITY_2020_1_OR_NEWER
-                if (unityWebRequest.result != UnityWebRequest.Result.Success)
-#else
-                if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
-#endif
+            var maxWebRequest = new MaxWebRequest(webRequestConfig);
+            AppLovinEditorCoroutine.StartCoroutine(maxWebRequest.Send(webResponse =>
+            {
+                if (!webResponse.IsSuccess)
                 {
-                    MaxSdkLogger.UserError("AppLovin Quality Service installation failed. Failed to download script with error: " + unityWebRequest.error);
+                    MaxSdkLogger.UserError("AppLovin Quality Service installation failed. Failed to download script with error: " + webResponse.ErrorMessage);
                     return;
                 }
 
@@ -137,7 +130,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 if (result.ExitCode != 0) MaxSdkLogger.UserError("Failed to set up AppLovin Quality Service");
 
                 MaxSdkLogger.UserDebug(result.Message);
-            }
+            }));
         }
 
         [PostProcessBuild(AppLovinEmbedFrameworksPriority)]
@@ -691,31 +684,28 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 uriBuilder.Query += string.Format("ad_networks={0}", adNetworks);
             }
 
-            using (var unityWebRequest = UnityWebRequest.Get(uriBuilder.ToString()))
+            var webRequestConfig = new WebRequestConfig()
             {
-                var operation = unityWebRequest.SendWebRequest();
-                // Wait for the download to complete or the request to timeout.
-                while (!operation.isDone) { }
+                EndPoint = uriBuilder.ToString()
+            };
 
-#if UNITY_2020_1_OR_NEWER
-                if (unityWebRequest.result != UnityWebRequest.Result.Success)
-#else
-                if (unityWebRequest.isNetworkError || unityWebRequest.isHttpError)
-#endif
-                {
-                    MaxSdkLogger.UserError("Failed to retrieve SKAdNetwork IDs with error: " + unityWebRequest.error);
-                    return new SkAdNetworkData();
-                }
+            var maxWebRequest = new MaxWebRequest(webRequestConfig);
+            var webResponse = maxWebRequest.SendSync();
 
-                try
-                {
-                    return JsonUtility.FromJson<SkAdNetworkData>(unityWebRequest.downloadHandler.text);
-                }
-                catch (Exception exception)
-                {
-                    MaxSdkLogger.UserError("Failed to parse data '" + unityWebRequest.downloadHandler.text + "' with exception: " + exception);
-                    return new SkAdNetworkData();
-                }
+            if (!webResponse.IsSuccess)
+            {
+                MaxSdkLogger.UserError("Failed to retrieve SKAdNetwork IDs with error: " + webResponse.ErrorMessage);
+                return new SkAdNetworkData();
+            }
+
+            try
+            {
+                return JsonUtility.FromJson<SkAdNetworkData>(webResponse.ResponseMessage);
+            }
+            catch (Exception exception)
+            {
+                MaxSdkLogger.UserError("Failed to parse data '" + webResponse.ResponseMessage + "' with exception: " + exception);
+                return new SkAdNetworkData();
             }
         }
 

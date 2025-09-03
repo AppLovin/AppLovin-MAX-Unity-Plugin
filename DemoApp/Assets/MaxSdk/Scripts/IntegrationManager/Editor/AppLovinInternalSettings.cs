@@ -20,7 +20,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
     /// </summary>
     public class AppLovinInternalSettings : ScriptableObject
     {
-        private static AppLovinInternalSettings _instance;
+        private static AppLovinInternalSettings instance;
 
         private const string DefaultUserTrackingDescriptionEn = "This uses device info for more personalized ads and content";
         private const string DefaultUserTrackingDescriptionDe = "Dies benutzt Gerätinformationen für relevantere Werbeinhalte";
@@ -53,33 +53,33 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         {
             get
             {
-                if (_instance != null) return _instance;
+                if (instance != null) return instance;
 
-                _instance = CreateInstance<AppLovinInternalSettings>();
+                instance = CreateInstance<AppLovinInternalSettings>();
 
                 var projectRootPath = Path.GetDirectoryName(Application.dataPath);
                 var settingsFilePath = Path.Combine(projectRootPath, SettingsFilePath);
                 if (!File.Exists(settingsFilePath))
                 {
-                    _instance.Save();
-                    return _instance;
+                    instance.Save();
+                    return instance;
                 }
 
                 var settingsJson = File.ReadAllText(settingsFilePath);
                 if (string.IsNullOrEmpty(settingsJson))
                 {
-                    _instance.Save();
-                    return _instance;
+                    instance.Save();
+                    return instance;
                 }
 
-                JsonUtility.FromJsonOverwrite(settingsJson, _instance);
-                return _instance;
+                JsonUtility.FromJsonOverwrite(settingsJson, instance);
+                return instance;
             }
         }
 
         public void Save()
         {
-            var settingsJson = JsonUtility.ToJson(_instance);
+            var settingsJson = JsonUtility.ToJson(instance);
             try
             {
                 var projectRootPath = Path.GetDirectoryName(Application.dataPath);

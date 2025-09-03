@@ -97,7 +97,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             if (option == 0) // Download
             {
                 MaxSdkLogger.UserDebug("Downloading plugin...");
-                AppLovinIntegrationManager.OnDownloadPluginProgressCallback = AppLovinIntegrationManagerWindow.OnDownloadPluginProgress;
                 AppLovinEditorCoroutine.StartCoroutine(AppLovinIntegrationManager.Instance.DownloadPlugin(data.AppLovinMax));
             }
             else if (option == 1) // Not Now

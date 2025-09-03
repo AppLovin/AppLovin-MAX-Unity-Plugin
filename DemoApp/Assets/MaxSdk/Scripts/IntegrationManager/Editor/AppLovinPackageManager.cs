@@ -155,7 +155,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         /// <returns>The exported path of the MAX plugin asset or an empty list if the asset is not found.</returns>
         private static List<string> GetAssetPathListForExportPath(string exportPath)
         {
-            var assetLabelToFind = "l:al_max_export_path-" + exportPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var assetLabelToFind = "l:al_max_export_path-" + MaxSdkUtils.NormalizeToUnityPath(exportPath);
             var assetGuids = AssetDatabase.FindAssets(assetLabelToFind);
 
             var assetPaths = new List<string>();

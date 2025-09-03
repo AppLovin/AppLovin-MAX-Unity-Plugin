@@ -581,7 +581,7 @@ public class MaxSdkUtils
     /// <returns>The exported path of the MAX plugin asset or the default export path if the asset is not found.</returns>
     public static string GetAssetPathForExportPath(string exportPath)
     {
-        var assetLabelToFind = "al_max_export_path-" + exportPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var assetLabelToFind = "al_max_export_path-" + NormalizeToUnityPath(exportPath);
         var labelSearchQuery = "l:" + assetLabelToFind;
         var assetGuids = AssetDatabase.FindAssets(labelSearchQuery);
 
@@ -600,6 +600,17 @@ public class MaxSdkUtils
 
         // Fall back to the default path if no exact label match is found
         return Path.Combine("Assets", exportPath);
+    }
+
+    /// <summary>
+    /// Turns a path into a Unity compatible path by replacing backslashes with forward slashes.
+    /// This is important when dealing with Unity's AssetDatabase, which expects paths to use forward slashes.
+    /// </summary>
+    /// <param name="path">The path to normalize</param>
+    /// <returns>A Unity compatible normalized path with only forward slashes.</returns>
+    public static string NormalizeToUnityPath(string path)
+    {
+        return path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
     }
 #endif
 }

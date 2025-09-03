@@ -23,7 +23,7 @@ public class AppLovinSettings : ScriptableObject
 {
     private const string SettingsExportPath = "MaxSdk/Resources/AppLovinSettings.asset";
 
-    private static AppLovinSettings _instance;
+    private static AppLovinSettings instance;
 
     [SerializeField] private bool qualityServiceEnabled = true;
     [SerializeField] private string sdkKey;
@@ -41,7 +41,7 @@ public class AppLovinSettings : ScriptableObject
     {
         get
         {
-            if (_instance == null)
+            if (instance == null)
             {
                 // Check for an existing AppLovinSettings somewhere in the project
                 var guids = AssetDatabase.FindAssets("AppLovinSettings t:ScriptableObject");
@@ -53,20 +53,19 @@ public class AppLovinSettings : ScriptableObject
                 if (guids.Length != 0)
                 {
                     var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-                    _instance = AssetDatabase.LoadAssetAtPath<AppLovinSettings>(path);
-                    return _instance;
+                    instance = AssetDatabase.LoadAssetAtPath<AppLovinSettings>(path);
+                    return instance;
                 }
 
-                // If there is no existing AppLovinSettings asset, create one in the default location
                 string settingsFilePath;
                 // The settings file should be under the Assets/ folder so that it can be version controlled and cannot be overriden when updating.
-                // If the plugin is outside the Assets folder, create the settings asset at the default location.
+                // If the plugin is outside the Assets folder or if there is no existing AppLovinSettings asset, create the settings asset at the default location.
                 if (AppLovinIntegrationManager.IsPluginInPackageManager)
                 {
-                    // Note: Can't use absolute path when calling `CreateAsset`. Should use relative path to Assets/ directory.
-                    settingsFilePath = Path.Combine("Assets", SettingsExportPath);
+                    // Note: Can't use absolute path when calling `CreateAsset`. Should use path relative to Assets/ directory.
+                    settingsFilePath = MaxSdkUtils.NormalizeToUnityPath(Path.Combine("Assets", SettingsExportPath));
 
-                    var maxSdkDir = Path.Combine(Application.dataPath, "MaxSdk");
+                    var maxSdkDir = MaxSdkUtils.NormalizeToUnityPath(Path.Combine(Application.dataPath, "MaxSdk"));
                     if (!Directory.Exists(maxSdkDir))
                     {
                         Directory.CreateDirectory(maxSdkDir);
@@ -74,7 +73,7 @@ public class AppLovinSettings : ScriptableObject
                 }
                 else
                 {
-                    settingsFilePath = Path.Combine(AppLovinIntegrationManager.PluginParentDirectory, SettingsExportPath);
+                    settingsFilePath = MaxSdkUtils.NormalizeToUnityPath(Path.Combine(AppLovinIntegrationManager.PluginParentDirectory, SettingsExportPath));
                 }
 
                 var settingsDir = Path.GetDirectoryName(settingsFilePath);
@@ -86,13 +85,13 @@ public class AppLovinSettings : ScriptableObject
                 // On script reload AssetDatabase.FindAssets() can fail and will overwrite AppLovinSettings without this check
                 if (!File.Exists(settingsFilePath))
                 {
-                    _instance = CreateInstance<AppLovinSettings>();
-                    AssetDatabase.CreateAsset(_instance, settingsFilePath);
+                    instance = CreateInstance<AppLovinSettings>();
+                    AssetDatabase.CreateAsset(instance, settingsFilePath);
                     MaxSdkLogger.D("Creating new AppLovinSettings asset at path: " + settingsFilePath);
                 }
             }
 
-            return _instance;
+            return instance;
         }
     }
 
@@ -155,6 +154,6 @@ public class AppLovinSettings : ScriptableObject
     /// </summary>
     public void SaveAsync()
     {
-        EditorUtility.SetDirty(_instance);
+        EditorUtility.SetDirty(instance);
     }
 }
