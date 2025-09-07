@@ -1,5 +1,5 @@
 //
-//  AppLovinInternalSettigns.cs
+//  AppLovinInternalSettings.cs
 //  AppLovin User Engagement Unity Plugin
 //
 //  Created by Santosh Bagadi on 9/15/22.

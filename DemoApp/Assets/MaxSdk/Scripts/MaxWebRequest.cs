@@ -10,7 +10,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using System.Web;
 using UnityEngine;
 using UnityEngine.Networking;
 using AppLovinMax.ThirdParty.MiniJson;
@@ -271,22 +270,14 @@ namespace AppLovinMax.Internal
             if (webRequestConfig.QueryParams.Count == 0) return webRequestConfig.EndPoint;
 
             var uriBuilder = new UriBuilder(webRequestConfig.EndPoint);
-            // Get the existing query parameters if any
-            var query = HttpUtility.ParseQueryString(uriBuilder.Query);
-
-            foreach (var param in webRequestConfig.QueryParams)
-            {
-                query[param.Key] = param.Value;
-            }
-
-            uriBuilder.Query = query.ToString();
+            uriBuilder.Query = webRequestConfig.QueryParams.ToQueryString();
             return uriBuilder.ToString();
         }
     }
 
     public static class MaxWebRequestExtension
     {
-        public static IEnumerator SendAndWait(this UnityWebRequest request)
+        internal static IEnumerator SendAndWait(this UnityWebRequest request)
         {
 #if UNITY_EDITOR
             var operation = request.SendWebRequest();
@@ -298,7 +289,7 @@ namespace AppLovinMax.Internal
 #endif
         }
 
-        public static string ToHttpMethodString(this WebRequestType type)
+        internal static string ToHttpMethodString(this WebRequestType type)
         {
             switch (type)
             {
@@ -309,6 +300,20 @@ namespace AppLovinMax.Internal
                 default:
                     return "GET";
             }
+        }
+
+        internal static string ToQueryString(this Dictionary<string, string> queries)
+        {
+            var queryBuilder = new StringBuilder();
+            foreach (var query in queries)
+            {
+                if (query.Key == null || query.Value == null) continue;
+
+                queryBuilder.Append(queryBuilder.Length == 0 ? "?" : "&");
+                queryBuilder.AppendFormat("{0}={1}", Uri.EscapeDataString(query.Key), Uri.EscapeDataString(query.Value));
+            }
+
+            return queryBuilder.ToString();
         }
     }
 }

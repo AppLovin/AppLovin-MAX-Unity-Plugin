@@ -72,6 +72,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             "MaxSdk/Version.md",
             "MaxSdk/Version.md.meta",
 
+            // The alert_icon.png has been renamed to error_icon.png.
+            "MaxSdk/Resources/Images/alert_icon.png"
+
             // TODO: Add MaxTargetingData and MaxUserSegment when the plugin has enough traction.
         };
 

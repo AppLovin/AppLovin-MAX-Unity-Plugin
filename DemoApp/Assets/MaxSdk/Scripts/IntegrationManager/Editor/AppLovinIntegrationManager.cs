@@ -24,6 +24,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         public Network[] MediatedNetworks;
         public Network[] PartnerMicroSdks;
         public DynamicLibraryToEmbed[] ThirdPartyDynamicLibrariesToEmbed;
+        public Alert[] Alerts;
     }
 
     [Serializable]
@@ -79,6 +80,44 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             FrameworkNames = frameworkNames;
             MinVersion = minVersion;
             MaxVersion = maxVersion;
+        }
+    }
+
+    public enum Severity
+    {
+        Info,
+        Warning,
+        Error
+    }
+
+    [Serializable]
+    public class Alert
+    {
+        public string SeverityType;
+        public string Title;
+        public string Message;
+        public string Url;
+
+        public Severity Severity;
+
+        public void InitializeSeverityEnum()
+        {
+            switch (SeverityType)
+            {
+                case "INFO":
+                    Severity = Severity.Info;
+                    break;
+                case "WARNING":
+                    Severity = Severity.Warning;
+                    break;
+                case "ERROR":
+                    Severity = Severity.Error;
+                    break;
+                default:
+                    MaxSdkLogger.E(string.Format("Alert <{0}> has unsupported severity type <{1}>.", Title, SeverityType));
+                    Severity = Severity.Info;
+                    break;
+            }
         }
     }
 
@@ -354,6 +393,14 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             foreach (var partnerMicroSdk in pluginData.PartnerMicroSdks)
             {
                 AppLovinPackageManager.UpdateCurrentVersions(partnerMicroSdk);
+            }
+
+            if (pluginData.Alerts == null) return pluginData;
+
+            // Initiate Severity enums from the raw strings in the response
+            foreach (var alert in pluginData.Alerts)
+            {
+                alert.InitializeSeverityEnum();
             }
 
             return pluginData;

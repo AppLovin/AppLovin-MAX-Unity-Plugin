@@ -26,8 +26,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string DocumentationAdaptersLink = "https://developers.applovin.com/en/unity/preparing-mediated-networks";
         private const string DocumentationNote = "Please ensure that integration instructions (e.g. permissions, ATS settings, etc) specific to each network are implemented as well. Click the link below for more info:";
         private const string UninstallIconExportPath = "MaxSdk/Resources/Images/uninstall_icon.png";
-        private const string AlertIconExportPath = "MaxSdk/Resources/Images/alert_icon.png";
+        private const string InfoIconExportPath = "MaxSdk/Resources/Images/info_icon.png";
         private const string WarningIconExportPath = "MaxSdk/Resources/Images/warning_icon.png";
+        private const string ErrorIconExportPath = "MaxSdk/Resources/Images/error_icon.png";
 
         private const string QualityServiceRequiresGradleBuildErrorMsg = "AppLovin Quality Service integration via AppLovin Integration Manager requires Custom Gradle Template enabled or Unity 2018.2 or higher.\n" +
                                                                          "If you would like to continue using your existing setup, please add Quality Service Plugin to your build.gradle manually.";
@@ -35,6 +36,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string CustomGradleVersionTooltip = "To set the version to 6.9.3, set the field to: https://services.gradle.org/distributions/gradle-6.9.3-bin.zip";
         private const string CustomGradleToolsVersionTooltip = "To set the version to 4.2.0, set the field to: 4.2.0";
 
+        private const string KeyShowAlerts = "com.applovin.show_alerts";
         private const string KeyShowMicroSdkPartners = "com.applovin.show_micro_sdk_partners";
         private const string KeyShowMediatedNetworks = "com.applovin.show_mediated_networks";
         private const string KeyShowSdkSettings = "com.applovin.show_sdk_settings";
@@ -82,8 +84,9 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
         private AppLovinEditorCoroutine loadDataCoroutine;
         private Texture2D uninstallIcon;
-        private Texture2D alertIcon;
+        private Texture2D infoIcon;
         private Texture2D warningIcon;
+        private Texture2D errorIcon;
 
         public static void ShowManager()
         {
@@ -140,15 +143,20 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             uninstallIcon = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             uninstallIcon.LoadImage(uninstallIconData);
 
-            // Load alert icon texture.
-            var alertIconData = File.ReadAllBytes(MaxSdkUtils.GetAssetPathForExportPath(AlertIconExportPath));
-            alertIcon = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            alertIcon.LoadImage(alertIconData);
+            // Load info icon texture.
+            var infoIconData = File.ReadAllBytes(MaxSdkUtils.GetAssetPathForExportPath(InfoIconExportPath));
+            infoIcon = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            infoIcon.LoadImage(infoIconData);
 
             // Load warning icon texture.
             var warningIconData = File.ReadAllBytes(MaxSdkUtils.GetAssetPathForExportPath(WarningIconExportPath));
             warningIcon = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             warningIcon.LoadImage(warningIconData);
+
+            // Load error icon texture.
+            var errorIconData = File.ReadAllBytes(MaxSdkUtils.GetAssetPathForExportPath(ErrorIconExportPath));
+            errorIcon = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            errorIcon.LoadImage(errorIconData);
         }
 
         private void OnEnable()
@@ -212,12 +220,27 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                 // Draw AppLovin MAX plugin details
                 EditorGUILayout.LabelField("AppLovin MAX Plugin Details", titleLabelStyle);
-
                 DrawPluginDetails();
 
+                // Draw alerts
+                if (pluginData != null && pluginData.Alerts != null && pluginData.Alerts.Length > 0)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    var showAlertDetails = DrawExpandCollapseButton(KeyShowAlerts);
+                    EditorGUILayout.LabelField("Alerts", titleLabelStyle, GUILayout.Width(45));
+                    DrawAlertCount();
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+                    if (showAlertDetails)
+                    {
+                        DrawAlerts();
+                    }
+                }
+
+                // Draw Micro SDK Partners
                 if (pluginData != null && pluginData.PartnerMicroSdks != null)
                 {
-                    DrawCollapsableSection(KeyShowMicroSdkPartners, "AppLovin Micro SDK Partners", DrawPartnerMicroSdks);
+                    DrawCollapsibleSection(KeyShowMicroSdkPartners, "AppLovin Micro SDK Partners", DrawPartnerMicroSdks);
                 }
 
                 // Draw mediated networks);
@@ -241,11 +264,11 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 #endif
 
                 // Draw AppLovin Quality Service settings
-                DrawCollapsableSection(KeyShowSdkSettings, "SDK Settings", DrawQualityServiceSettings);
+                DrawCollapsibleSection(KeyShowSdkSettings, "SDK Settings", DrawQualityServiceSettings);
 
-                DrawCollapsableSection(KeyShowPrivacySettings, "Privacy Settings", DrawPrivacySettings);
+                DrawCollapsibleSection(KeyShowPrivacySettings, "Privacy Settings", DrawPrivacySettings);
 
-                DrawCollapsableSection(KeyShowOtherSettings, "Other Settings", DrawOtherSettings);
+                DrawCollapsibleSection(KeyShowOtherSettings, "Other Settings", DrawOtherSettings);
 
                 // Draw Unity environment details
                 EditorGUILayout.LabelField("Unity Environment Details", titleLabelStyle);
@@ -360,6 +383,84 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             GUILayout.Space(5);
             GUILayout.EndHorizontal();
+        }
+
+        /// <summary>
+        /// Draw the number of each alert type next to the alert section header.
+        /// </summary>
+        private void DrawAlertCount()
+        {
+            if (pluginData == null) return;
+
+            var infoAlertsCount = pluginData.Alerts.Count(alert => alert.Severity == Severity.Info);
+            var warningAlertsCount = pluginData.Alerts.Count(alert => alert.Severity == Severity.Warning);
+            var errorAlertsCount = pluginData.Alerts.Count(alert => alert.Severity == Severity.Error);
+
+            GUILayout.Label(infoIcon, GUILayout.Width(20), GUILayout.Height(20));
+            EditorGUILayout.LabelField(AlertCountToString(infoAlertsCount), GUILayout.Width(20));
+            GUILayout.Label(warningIcon, GUILayout.Width(20), GUILayout.Height(20));
+            EditorGUILayout.LabelField(AlertCountToString(warningAlertsCount), GUILayout.Width(20));
+            GUILayout.Label(errorIcon, GUILayout.Width(20), GUILayout.Height(20));
+            EditorGUILayout.LabelField(AlertCountToString(errorAlertsCount), GUILayout.Width(20));
+        }
+
+        /// <summary>
+        /// Draw the list of alerts grouped by severity.
+        /// </summary>
+        private void DrawAlerts()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(10);
+            using (new EditorGUILayout.VerticalScope("box"))
+            {
+                DrawAlertsOfType(Severity.Error);
+                DrawAlertsOfType(Severity.Warning);
+                DrawAlertsOfType(Severity.Info);
+            }
+
+            GUILayout.Space(5);
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawAlertsOfType(Severity severity)
+        {
+            var alertsOfType = pluginData.Alerts.Where(alert => alert.Severity == severity).ToList();
+            foreach (var alert in alertsOfType)
+            {
+                DrawAlert(alert);
+            }
+        }
+
+        /// <summary>
+        /// Draw a single alert.
+        /// </summary>
+        private void DrawAlert(Alert alert)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(20)))
+                {
+                    GUILayout.Space(2);
+                    GUILayout.Label(GetSeverityIcon(alert.Severity), GUILayout.Width(20), GUILayout.Height(20));
+                }
+
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    GUILayout.Label(alert.Title, headerLabelStyle);
+                    EditorGUILayout.LabelField(alert.Message, wrapTextLabelStyle);
+                    if (MaxSdkUtils.IsValidString(alert.Url))
+                    {
+                        if (GUILayout.Button(new GUIContent(alert.Url), linkLabelStyle))
+                        {
+                            Application.OpenURL(alert.Url);
+                        }
+                    }
+
+                    GUILayout.Space(2);
+                }
+            }
+
+            GUILayout.Space(10);
         }
 
         /// <summary>
@@ -514,7 +615,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
                 if (network.RequiresUpdate)
                 {
-                    GUILayout.Label(new GUIContent {image = alertIcon, tooltip = "Adapter not compatible, please update to the latest version."}, iconStyle);
+                    GUILayout.Label(new GUIContent {image = errorIcon, tooltip = "Adapter not compatible, please update to the latest version."}, iconStyle);
                 }
                 else if ((network.Name.Equals("ADMOB_NETWORK") || network.Name.Equals("GOOGLE_AD_MANAGER_NETWORK")) && shouldShowGoogleWarning)
                 {
@@ -922,7 +1023,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             }
         }
 
-        private void DrawCollapsableSection(string keyShowDetails, string label, Action drawContent)
+        private void DrawCollapsibleSection(string keyShowDetails, string label, Action drawContent)
         {
             EditorGUILayout.BeginHorizontal();
             var showDetails = DrawExpandCollapseButton(keyShowDetails);
@@ -1064,6 +1165,32 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
 
             var networks = pluginData.MediatedNetworks;
             return networks.Any(network => MaxSdkUtils.IsValidString(network.CurrentVersions.Unity) && network.CurrentToLatestVersionComparisonResult == MaxSdkUtils.VersionComparisonResult.Lesser);
+        }
+
+        /// <summary>
+        /// Takes in an int representing the count of an alert and returns it as a string or "9+" if greater than 9.
+        /// </summary>
+        private string AlertCountToString(int count)
+        {
+            return count > 9 ? "9+" : count.ToString();
+        }
+
+        /// <summary>
+        /// Returns the icon for the given severity type.
+        /// </summary>
+        private Texture2D GetSeverityIcon(Severity severity)
+        {
+            switch (severity)
+            {
+                case Severity.Info:
+                    return infoIcon;
+                case Severity.Warning:
+                    return warningIcon;
+                case Severity.Error:
+                    return errorIcon;
+                default:
+                    return infoIcon;
+            }
         }
 
         #endregion
