@@ -39,7 +39,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             {"MINTEGRAL_NETWORK", "android_16.8.51.1_ios_7.7.2.0.1"},
             {"MOBILEFUSE_NETWORK", "android_1.7.6.1_ios_1.7.6.1"},
             {"MOLOCO_NETWORK", "android_3.1.0.1_ios_3.1.3.1"},
-            {"MYTARGET_NETWORK", "android_5.22.1.1_ios_5.21.7.1"},
             {"PUBMATIC_NETWORK", "android_3.9.0.2_ios_3.9.0.2"},
             {"SMAATO_NETWORK", "android_22.7.0.1_ios_22.8.4.1"},
             {"TIKTOK_NETWORK", "android_6.2.0.5.2_ios_6.2.0.7.2"},

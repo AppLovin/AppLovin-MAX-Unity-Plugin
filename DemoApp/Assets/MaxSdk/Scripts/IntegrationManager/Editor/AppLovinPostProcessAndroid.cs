@@ -34,7 +34,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
         private const string KeyMetaDataGoogleOptimizeAdLoading = "com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING";
 
         private const string KeyMetaDataMobileFuseAutoInit = "com.mobilefuse.sdk.disable_auto_init";
-        private const string KeyMetaDataMyTargetAutoInit = "com.my.target.autoInitMode";
 
         private const string KeyMetaDataAppLovinSdkKey = "applovin.sdk.key";
 
@@ -238,16 +237,6 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
                 if (mobileFuseMetaData == null)
                 {
                     elementApplication.Add(CreateMetaDataElement(KeyMetaDataMobileFuseAutoInit, true));
-                }
-            }
-
-            if (AppLovinPackageManager.IsAdapterInstalled("MyTarget"))
-            {
-                var myTargetMetaData = GetMetaDataElement(metaDataElements, KeyMetaDataMyTargetAutoInit);
-                // If MyTarget meta data doesn't exist, add it
-                if (myTargetMetaData == null)
-                {
-                    elementApplication.Add(CreateMetaDataElement(KeyMetaDataMyTargetAutoInit, 0));
                 }
             }
         }

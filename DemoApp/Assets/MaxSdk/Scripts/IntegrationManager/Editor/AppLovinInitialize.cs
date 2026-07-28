@@ -20,6 +20,7 @@ namespace AppLovinMax.Scripts.IntegrationManager.Editor
             "AdColony",
             "Criteo",
             "LinkedIn",
+            "MyTarget",
             "Nend",
             "Snap",
             "Tapjoy",
