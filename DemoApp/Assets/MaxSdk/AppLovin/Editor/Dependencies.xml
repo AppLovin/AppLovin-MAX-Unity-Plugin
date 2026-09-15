@@ -6,4 +6,7 @@
     <iosPods>
         <iosPod name="AppLovinSDK" version="13.6.4" />
     </iosPods>
+    <remoteSwiftPackage url="https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git" version="13.6.4">
+        <swiftPackage name="AppLovinSDK" replacesPod="AppLovinSDK" target="All" />
+    </remoteSwiftPackage>
 </dependencies>
