@@ -21,7 +21,13 @@ extern "C" {
     UIWindow* UnityGetMainWindow(void);
     
     // life cycle management
+#if __has_include(<UnityFramework/UnityInterface.h>)
+    #import <UnityFramework/UnityInterface.h>
+#elif __has_include("UnityInterface.h")
+    #import "UnityInterface.h"
+#else
     int UnityIsPaused(void);
+#endif
     void UnityPause(int pause);
     
     void max_unity_dispatch_on_main_thread(dispatch_block_t block)
