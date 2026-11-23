@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dependencies>
     <androidPackages>
-        <androidPackage spec="com.applovin:applovin-sdk:13.6.4" />
+        <androidPackage spec="com.applovin:applovin-sdk:13.7.0" />
     </androidPackages>
     <iosPods>
-        <iosPod name="AppLovinSDK" version="13.6.4" />
+        <iosPod name="AppLovinSDK" version="13.7.0" />
     </iosPods>
-    <remoteSwiftPackage url="https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git" version="13.6.4">
+    <remoteSwiftPackage url="https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git" version="13.7.0">
         <swiftPackage name="AppLovinSDK" replacesPod="AppLovinSDK" target="All" />
     </remoteSwiftPackage>
 </dependencies>
